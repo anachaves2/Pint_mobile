@@ -1,8 +1,7 @@
 class BadgeRegular {
   final int id;
   final String nome;
-  final String?
-  descricao; // colocar '?' nos valores que podem ser nulos -> ver script das tabelas
+  final String? descricao; // colocar '?' nos valores que podem ser nulos -> ver script das tabelas
   final int? pontos;
   final String? urlImage;
   final int idNivel;
