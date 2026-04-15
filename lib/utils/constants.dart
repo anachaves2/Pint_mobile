@@ -17,6 +17,6 @@ class AppConstants {
   static const String keyUserName = 'user_name'; //nome
   static const String keyUserArea = 'user_area'; //area escolhida pelo consultor
 
-  static const int diasAlertaExpiracao =
-      30; // dias restantes para alertar sobre a expiração de um badge
+  static const int diasAlertaExpiracao = 30; // dias restantes para alertar sobre a expiração de um badge
+
 }
