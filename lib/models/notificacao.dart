@@ -55,7 +55,7 @@ class Notificacao {
       'codigo': codigo,
       'titulo': titulo,
       'descricao': descricao,
-      'data': data?.toIso8601String(),
+      'data': data.toIso8601String(),
       'lida': lida,
       'idCandidatura': idCandidatura,
       'idObjetivo': idObjetivo,
