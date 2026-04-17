@@ -17,6 +17,13 @@ class AppConstants {
   static const String keyUserName = 'user_name'; //nome
   static const String keyUserArea = 'user_area'; //area escolhida pelo consultor
 
+//tabelas da base de dados local (sqflite)
+  static const String tableUsers = 'users';
+  static const String tableBadgesCache = 'badges_cache';
+  static const String tableCandidaturasCache = 'candidaturas_cache';    
+  static const String tableNotificacoesCache = 'notificacoes_cache';
+  static const String tableObjetivosCache = 'objetivos_cache';
+
   static const int diasAlertaExpiracao = 30; // dias restantes para alertar sobre a expiração de um badge
 
 }
