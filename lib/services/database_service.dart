@@ -7,35 +7,33 @@ import 'package:pint_mobile/models/consultor.dart';
 
 class DatabaseService {
   static DatabaseService?
-  _instance; //instância do serviço -> garante que é única
+  _instance; //instância do serviço --> só pode haver uma!
   static Database?
   _database; //conexão à base de dados (tipo Database vem do package sgflite)
 
   DatabaseService._(); //construtor privado
 
   static DatabaseService get instance {
-    //access point ao serviço. Se não existir cria e guarda
+  //devolve a instancia do serviço existente -> se não existir criar
     _instance ??= DatabaseService._();
     return _instance!;
   }
 
-  Future<Database> get database async {
+  Future<Database> get database async {    // getter da base de dados -> método para poder 'mexer' na db
     if (_database != null) return _database!;
     _database = await _initDatabase();
     return _database!;
   }
-
-  //Getter da base de dados - assincrono
-  Future<Database> _initDatabase() async {
-    //metodo privado para criar a base de dados local
+  
+  Future<Database> _initDatabase() async {      //metodo privado para criar a base de dados local
     final dbPath =
-        await getDatabasesPath(); //devolve a pasta onde a db está guardada
+        await getDatabasesPath(); // funçao do sqflite que devolve a pasta onde a db está guardada
     final path = join(
       dbPath,
       AppConstants.dbName,
-    ); //constroi o caminho para o ficheiro
+    ); // função do package 'path' que devolve o caminho completo do ficheiro
 
-    return await openDatabase(
+    return await openDatabase(  //abre a base de dados
       path,
       version: AppConstants.dbVersion,
       onCreate: _onCreate, //chamado quando a db é criada pela primeira vez
