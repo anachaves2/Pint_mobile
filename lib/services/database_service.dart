@@ -4,7 +4,11 @@ import 'package:pint_mobile/utils/constants.dart';
 
 //Modelos
 import 'package:pint_mobile/models/consultor.dart';
-
+import 'package:pint_mobile/models/badge_utilizador.dart';
+import 'package:pint_mobile/models/badge_regular.dart';
+import 'package:pint_mobile/models/candidatura_badge.dart';
+import 'package:pint_mobile/models/notificacao.dart';
+import 'package:pint_mobile/models/objetivo.dart';
 class DatabaseService {
   static DatabaseService?
   _instance; //instância do serviço --> só pode haver uma!
@@ -80,7 +84,12 @@ class DatabaseService {
         idServiceLine INTEGER NOT NULL,
         nomeServiceLine TEXT NOT NULL,
         idArea INTEGER NOT NULL,
-        nomeArea TEXT NOT NULL
+        nomeArea TEXT NOT NULL,
+        dataAtribuicao TEXT NOT NULL,
+        dataExpiracao TEXT NOT NULL,
+        valido INTEGER NOT NULL,
+        urlPublico TEXT,
+        tokenValidacao TEXT
       )
     ''');
 
@@ -126,6 +135,45 @@ class DatabaseService {
         estado TEXT NOT NULL
       )
     ''');
+
+      // Tabela do catálogo de BADGES REGULARES
+    await db.execute('''
+      CREATE TABLE ${AppConstants.tableCatalogoBadges} (
+        id INTEGER PRIMARY KEY,
+        nome TEXT NOT NULL,
+        descricao TEXT,
+        pontos INTEGER,
+        urlImagem TEXT,
+        validadeDias INTEGER,
+        idNivel INTEGER NOT NULL,
+        nomeNivel TEXT NOT NULL,
+        idServiceLine INTEGER NOT NULL,
+        nomeServiceLine TEXT NOT NULL,
+        idArea INTEGER NOT NULL,
+        nomeArea TEXT NOT NULL
+      )
+    ''');
+
+      // Tabela do catálogo de BADGES ESPECIAIS
+    await db.execute('''
+      CREATE TABLE ${AppConstants.tableCatalogoBadgesEspeciais} (
+        id INTEGER PRIMARY KEY,
+        nome TEXT NOT NULL,
+        descricao TEXT,
+        pontos INTEGER,
+        validadeDias INTEGER,
+        urlImagem TEXT
+      )
+    ''');
+
+      // Tabela dos TIPOS DE OBJETIVOS 
+    await db.execute('''
+      CREATE TABLE ${AppConstants.tableTiposObjetivo} (
+        id INTEGER PRIMARY KEY,
+        nome TEXT NOT NULL,
+        descricao TEXT
+      )
+    '''); 
   }
 
   // função chamada para atualizar a versão da base de dados caso sejam feitas alterações

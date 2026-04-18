@@ -23,6 +23,9 @@ class AppConstants {
   static const String tableCandidaturasCache = 'candidaturas_cache';    
   static const String tableNotificacoesCache = 'notificacoes_cache';
   static const String tableObjetivosCache = 'objetivos_cache';
+  static const String tableCatalogoBadges = 'catalogo_badges';
+  static const String tableCatalogoBadgesEspeciais = 'catalogo_badges_especiais';
+  static const String tableTiposObjetivo = 'tipos_objetivo';
 
   static const int diasAlertaExpiracao = 30; // dias restantes para alertar sobre a expiração de um badge
 
