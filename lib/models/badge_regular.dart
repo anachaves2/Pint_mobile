@@ -11,6 +11,7 @@ class BadgeRegular {
   final String nomeServiceLine;
   final int idArea;
   final String nomeArea;
+  final int? validadeDias;
 
   //construtor
   BadgeRegular({
@@ -25,6 +26,7 @@ class BadgeRegular {
     required this.nomeServiceLine,
     required this.idArea,
     required this.nomeArea,
+    this.validadeDias,
   });
 
   //fromJson - converto do formato json da API para o objeto
@@ -42,6 +44,7 @@ class BadgeRegular {
       nomeServiceLine: json['nomeServiceLine'],
       idArea: json['idArea'],
       nomeArea: json['nomeArea'],
+      validadeDias: json['validadeDias'],
     );
   }
 
@@ -59,6 +62,7 @@ class BadgeRegular {
       'nomeServiceLine': nomeServiceLine,
       'idArea': idArea,
       'nomeArea': nomeArea,
+      'validadeDias': validadeDias,
     };
   }
 }

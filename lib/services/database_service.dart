@@ -6,9 +6,12 @@ import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/models/consultor.dart';
 import 'package:pint_mobile/models/badge_utilizador.dart';
 import 'package:pint_mobile/models/badge_regular.dart';
+import 'package:pint_mobile/models/badge_especial.dart';
+import 'package:pint_mobile/models/tipo_objetivo.dart';
 import 'package:pint_mobile/models/candidatura_badge.dart';
 import 'package:pint_mobile/models/notificacao.dart';
 import 'package:pint_mobile/models/objetivo.dart';
+
 class DatabaseService {
   static DatabaseService?
   _instance; //instância do serviço --> só pode haver uma!
@@ -18,18 +21,20 @@ class DatabaseService {
   DatabaseService._(); //construtor privado
 
   static DatabaseService get instance {
-  //devolve a instancia do serviço existente -> se não existir criar
+    //devolve a instancia do serviço existente -> se não existir criar
     _instance ??= DatabaseService._();
     return _instance!;
   }
 
-  Future<Database> get database async {    // getter da base de dados -> método para poder 'mexer' na db
+  Future<Database> get database async {
+    // getter da base de dados -> método para poder 'mexer' na db
     if (_database != null) return _database!;
     _database = await _initDatabase();
     return _database!;
   }
-  
-  Future<Database> _initDatabase() async {      //metodo privado para criar a base de dados local
+
+  Future<Database> _initDatabase() async {
+    //metodo privado para criar a base de dados local
     final dbPath =
         await getDatabasesPath(); // funçao do sqflite que devolve a pasta onde a db está guardada
     final path = join(
@@ -37,7 +42,8 @@ class DatabaseService {
       AppConstants.dbName,
     ); // função do package 'path' que devolve o caminho completo do ficheiro
 
-    return await openDatabase(  //abre a base de dados
+    return await openDatabase(
+      //abre a base de dados
       path,
       version: AppConstants.dbVersion,
       onCreate: _onCreate, //chamado quando a db é criada pela primeira vez
@@ -50,7 +56,6 @@ class DatabaseService {
   // as três plicas ''' servem para poder ter as strings em várias linhas
 
   Future<void> _onCreate(Database db, int version) async {
-   
     // Tabela dos dados do CONSULTOR
     await db.execute('''
       CREATE TABLE ${AppConstants.tableUsers} (
@@ -75,16 +80,19 @@ class DatabaseService {
     await db.execute('''
       CREATE TABLE ${AppConstants.tableBadgesCache} (
         id INTEGER PRIMARY KEY,
-        nome TEXT NOT NULL,
+        idBadgeRegular INTEGER,
+        idBadgeEspecial INTEGER,
+        nomeBadge TEXT NOT NULL,
+        nomeNivel TEXT,
+        idNivel INTEGER,
+        tipoNivel TEXT,
         descricao TEXT,
         pontos INTEGER,
         urlImagem TEXT,
-        idNivel INTEGER NOT NULL,
-        nomeNivel TEXT NOT NULL,
-        idServiceLine INTEGER NOT NULL,
-        nomeServiceLine TEXT NOT NULL,
-        idArea INTEGER NOT NULL,
-        nomeArea TEXT NOT NULL,
+        nomeServiceLine TEXT,
+        idServiceLine INTEGER,
+        nomeArea TEXT,
+        idArea INTEGER,
         dataAtribuicao TEXT NOT NULL,
         dataExpiracao TEXT NOT NULL,
         valido INTEGER NOT NULL,
@@ -136,7 +144,7 @@ class DatabaseService {
       )
     ''');
 
-      // Tabela do catálogo de BADGES REGULARES
+    // Tabela do catálogo de BADGES REGULARES
     await db.execute('''
       CREATE TABLE ${AppConstants.tableCatalogoBadges} (
         id INTEGER PRIMARY KEY,
@@ -154,7 +162,7 @@ class DatabaseService {
       )
     ''');
 
-      // Tabela do catálogo de BADGES ESPECIAIS
+    // Tabela do catálogo de BADGES ESPECIAIS
     await db.execute('''
       CREATE TABLE ${AppConstants.tableCatalogoBadgesEspeciais} (
         id INTEGER PRIMARY KEY,
@@ -166,14 +174,14 @@ class DatabaseService {
       )
     ''');
 
-      // Tabela dos TIPOS DE OBJETIVOS 
+    // Tabela dos TIPOS DE OBJETIVOS
     await db.execute('''
       CREATE TABLE ${AppConstants.tableTiposObjetivo} (
         id INTEGER PRIMARY KEY,
         nome TEXT NOT NULL,
         descricao TEXT
       )
-    '''); 
+    ''');
   }
 
   // função chamada para atualizar a versão da base de dados caso sejam feitas alterações
@@ -210,7 +218,8 @@ class DatabaseService {
         'posicaoRanking': consultor.posicaoRanking,
         'token': token,
       },
-      conflictAlgorithm: ConflictAlgorithm.replace, // substitui o registo se já existir
+      conflictAlgorithm:
+          ConflictAlgorithm.replace, // substitui o registo se já existir
     );
   }
 
@@ -274,11 +283,218 @@ class DatabaseService {
     await db.delete(AppConstants.tableUsers);
   }
 
-  //Métodos CRUD para BADGES --> implementar
+  //Métodos CRUD para BADGES
+
+  //Inserir dados
+  Future<void> saveBadge(List<BadgeUtilizador> badges) async {
+    final db = await database;
+    await db.transaction((tnx) async {
+      await tnx.delete(
+        AppConstants.tableBadgesCache,
+      ); // transaçao tnx para garantir que sao copiados os badges todos
+      for (final badge in badges) {
+        await tnx.insert(
+          AppConstants.tableBadgesCache,
+          {
+            'id': badge.id,
+            'idBadgeRegular': badge.idBadgeRegular,
+            'idBadgeEspecial': badge.idBadgeEspecial,
+            'nomeBadge': badge.nomeBadge,
+            'nomeNivel': badge.nomeNivel,
+            'idNivel': badge.idNivel,
+            'tipoNivel': badge.tipoNivel,
+            'descricao': badge.descricao,
+            'pontos': badge.pontos,
+            'urlImagem': badge.urlImagem,
+            'nomeServiceLine': badge.nomeServiceLine,
+            'idServiceLine': badge.idServiceLine,
+            'nomeArea': badge.nomeArea,
+            'idArea': badge.idArea,
+            'dataAtribuicao': badge.dataAtribuicao.toIso8601String(),
+            'dataExpiracao': badge.dataExpiracao.toIso8601String(),
+            'valido': badge.valido ? 1 : 0,
+            'urlPublico': badge.urlPublico,
+            'tokenValidacao': badge.tokenValidacao,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    });
+  }
+
+  //Ler dados
+  Future<List<BadgeUtilizador>> getBadges() async {
+    final db = await database;
+    final maps = await db.query(AppConstants.tableBadgesCache);
+    return maps
+        .map(
+          (map) => BadgeUtilizador(
+            id: map['id'] as int,
+            idUtilizador: 0,
+            idBadgeRegular: map['idBadgeRegular'] as int?,
+            idBadgeEspecial: map['idBadgeEspecial'] as int?,
+            nomeBadge: map['nomeBadge'] as String,
+            nomeNivel: map['nomeNivel'] as String?,
+            idNivel: map['idNivel'] as int?,
+            tipoNivel: map['tipoNivel'] as String?,
+            urlImagem: map['urlImagem'] as String?,
+            descricao: map['descricao'] as String?,
+            pontos: map['pontos'] as int?,
+            nomeServiceLine: map['nomeServiceLine'] as String?,
+            idServiceLine: map['idServiceLine'] as int?,
+            nomeArea: map['nomeArea'] as String?,
+            idArea: map['idArea'] as int?,
+            dataAtribuicao: DateTime.parse(map['dataAtribuicao'] as String),
+            dataExpiracao: DateTime.parse(map['dataExpiracao'] as String),
+            valido: map['valido'] == 1,
+            urlPublico: map['urlPublico'] as String?,
+            tokenValidacao: map['tokenValidacao'] as String?,
+          ),
+        )
+        .toList();
+  }
+
+  //Apagar dados
+  Future<void> deleteBadge() async {
+    final db = await database;
+    await db.delete(AppConstants.tableBadgesCache);
+  }
 
   //Métodos CRUD para CANDIDATURAS --> implementar
 
   //Métodos CRUD para NOTIFICACÕES --> implementar
 
   //Métodos CRUD para OBJETIVOS --> implementar
+
+  //Métodos CRUD para BADGE REGULAR
+
+//Inserir
+  Future<void> saveCatalogoBadges(List<BadgeRegular> badges) async {
+  final db = await database;
+  await db.transaction((txn) async {
+    await txn.delete(AppConstants.tableCatalogoBadges);
+    for (final badge in badges) {
+      await txn.insert(
+        AppConstants.tableCatalogoBadges,
+        {
+          'id': badge.id,
+          'nome': badge.nome,
+          'descricao': badge.descricao,
+          'pontos': badge.pontos,
+          'urlImagem': badge.urlImage,
+          'validadeDias': badge.validadeDias,
+          'idNivel': badge.idNivel,
+          'nomeNivel': badge.nomeNivel,
+          'idServiceLine': badge.idServiceLine,
+          'nomeServiceLine': badge.nomeServiceLine,
+          'idArea': badge.idArea,
+          'nomeArea': badge.nomeArea,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+  });
+}
+
+//Ler
+  Future<List<BadgeRegular>> getCatalogoBadges() async {
+    final db = await database;
+    final maps = await db.query(AppConstants.tableCatalogoBadges);
+    return maps.map((map) => BadgeRegular(
+      id: map['id'] as int,
+      nome: map['nome'] as String,
+      descricao: map['descricao'] as String?,
+      pontos: map['pontos'] as int?,
+      urlImage: map['urlImagem'] as String?,
+      validadeDias: map['validadeDias'] as int?,
+      idNivel: map['idNivel'] as int,
+      nomeNivel: map['nomeNivel'] as String,
+      idServiceLine: map['idServiceLine'] as int,
+      nomeServiceLine: map['nomeServiceLine'] as String,
+      idArea: map['idArea'] as int,
+      nomeArea: map['nomeArea'] as String,
+    )).toList();
+  }
+    //Eliminar
+  Future<void> deleteCatalogoBadges() async {
+    final db = await database;
+    await db.delete(AppConstants.tableCatalogoBadges);
+  }
+
+    //Métodos CRUD para BADGE ESPECIAL
+
+  Future<void> saveCatalogoBadgesEspeciais(List<BadgeEspecial> badges) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete(AppConstants.tableCatalogoBadgesEspeciais);
+      for (final badge in badges) {
+        await txn.insert(
+          AppConstants.tableCatalogoBadgesEspeciais,
+          {
+            'id': badge.id,
+            'nome': badge.nome,
+            'descricao': badge.descricao,
+            'pontos': badge.pontos,
+            'validadeDias': badge.validadeDias,
+            'urlImagem': badge.urlImagem,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    });
+  }
+
+  Future<List<BadgeEspecial>> getCatalogoBadgesEspeciais() async {
+    final db = await database;
+    final maps = await db.query(AppConstants.tableCatalogoBadgesEspeciais);
+    return maps.map((map) => BadgeEspecial(
+      id: map['id'] as int,
+      nome: map['nome'] as String,
+      descricao: map['descricao'] as String?,
+      pontos: map['pontos'] as int?,
+      validadeDias: map['validadeDias'] as int?,
+      urlImagem: map['urlImagem'] as String?,
+    )).toList();
+  }
+
+  //Eliminar
+  Future<void> deleteCatalogoBadgesEspeciais() async {
+    final db = await database;
+    await db.delete(AppConstants.tableCatalogoBadgesEspeciais);
+  }
+
+    //Métodos CRUD para TIPO OBJETIVOS
+
+  Future<void> saveTiposObjetivo(List<TipoObjetivo> tipos) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete(AppConstants.tableTiposObjetivo);
+      for (final tipo in tipos) {
+        await txn.insert(
+          AppConstants.tableTiposObjetivo,
+          {
+            'id': tipo.id,
+            'nome': tipo.nome,
+            'descricao': tipo.descricao,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    });
+  }
+
+  Future<List<TipoObjetivo>> getTiposObjetivo() async {
+    final db = await database;
+    final maps = await db.query(AppConstants.tableTiposObjetivo);
+    return maps.map((map) => TipoObjetivo(
+      id: map['id'] as int,
+      nome: map['nome'] as String,
+      descricao: map['descricao'] as String?,
+    )).toList();
+  }
+
+  Future<void> deleteTipoObjetivos() async {
+    final db = await database;
+    await db.delete(AppConstants.tableCatalogoBadgesEspeciais);
+  }
 }
