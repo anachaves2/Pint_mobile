@@ -66,6 +66,7 @@ class DatabaseService {
         urlLinkedin TEXT,
         urlFoto TEXT,
         dataMembro TEXT NOT NULL,
+        linguaPadrao TEXT,
         idArea INTEGER NOT NULL,
         nomeArea TEXT NOT NULL,
         idLearningPath INTEGER NOT NULL,
@@ -126,7 +127,10 @@ class DatabaseService {
         titulo TEXT,
         descricao TEXT,
         data TEXT NOT NULL,
-        lida INTEGER NOT NULL
+        lida INTEGER NOT NULL,
+        idObjetivo INTEGER,
+        idBadgeUtilizador INTEGER,
+        idBadgeEspecial INTEGER
       )
     ''');
 
@@ -210,6 +214,7 @@ class DatabaseService {
         'urlLinkedin': consultor.urlLinkedin,
         'urlFoto': consultor.urlFoto,
         'dataMembro': consultor.dataMembro.toIso8601String(),
+        'linguaPadrao': consultor.linguaPadrao,
         'idArea': consultor.idArea,
         'nomeArea': consultor.nomeArea,
         'idLearningPath': consultor.idLearningPath,
@@ -239,6 +244,7 @@ class DatabaseService {
       urlLinkedin: map['urlLinkedin'] as String?,
       urlFoto: map['urlFoto'] as String?,
       dataMembro: DateTime.parse(map['dataMembro'] as String),
+      linguaPadrao: map['linguaPadrao'] as String?,
       idArea: map['idArea'] as int,
       nomeArea: map['nomeArea'] as String,
       idLearningPath: map['idLearningPath'] as int,
@@ -286,7 +292,7 @@ class DatabaseService {
   //Métodos CRUD para BADGES
 
   //Inserir dados
-  Future<void> saveBadge(List<BadgeUtilizador> badges) async {
+  Future<void> saveBadges(List<BadgeUtilizador> badges) async {
     final db = await database;
     await db.transaction((tnx) async {
       await tnx.delete(
@@ -360,68 +366,336 @@ class DatabaseService {
     await db.delete(AppConstants.tableBadgesCache);
   }
 
-  //Métodos CRUD para CANDIDATURAS --> implementar
+  //Métodos CRUD para CANDIDATURAS
 
-  //Métodos CRUD para NOTIFICACÕES --> implementar
+  // Inserir (guardar candidaturas localmente)
+  Future<void> saveCandidaturas(List<CandidaturaBadge> candidaturas) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete(AppConstants.tableCandidaturasCache);
+      for (final candidatura in candidaturas) {
+        await txn.insert(
+          AppConstants.tableCandidaturasCache,
+          {
+            'idTransacao': candidatura.idTransacao,
+            'idCandidatura': candidatura.idCandidatura,
+            'idBadgeRegular': candidatura.idBadgeRegular,
+            'nomeBadge': candidatura.nomeBadge,
+            'nomeNivel': candidatura.nomeNivel,
+            'estadoAtual': candidatura.estadoAtual,
+            'estadoAnterior': candidatura.estadoAnterior,
+            'dataAlteracao': candidatura.dataAlteracao.toIso8601String(),
+            'dataSubmissao': candidatura.dataSubmissao?.toIso8601String(),
+            'dataValidacao': candidatura.dataValidacao?.toIso8601String(),
+            'comentario': candidatura.comentario,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    });
+  }
 
-  //Métodos CRUD para OBJETIVOS --> implementar
+  // Guarda uma candidatura (quando o consultor cria uma nova)
+  Future<void> saveOneCandidatura(CandidaturaBadge candidatura) async {
+    final db = await database;
+    await db.insert(
+      AppConstants.tableCandidaturasCache,
+      {
+        'idTransacao': candidatura.idTransacao,
+        'idCandidatura': candidatura.idCandidatura,
+        'idBadgeRegular': candidatura.idBadgeRegular,
+        'nomeBadge': candidatura.nomeBadge,
+        'nomeNivel': candidatura.nomeNivel,
+        'estadoAtual': candidatura.estadoAtual,
+        'estadoAnterior': candidatura.estadoAnterior,
+        'dataAlteracao': candidatura.dataAlteracao.toIso8601String(),
+        'dataSubmissao': candidatura.dataSubmissao?.toIso8601String(),
+        'dataValidacao': candidatura.dataValidacao?.toIso8601String(),
+        'comentario': candidatura.comentario,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  //Ler Candidaturas
+  Future<List<CandidaturaBadge>> getCandidaturas() async {
+    final db = await database;
+    final maps = await db.query(
+      AppConstants.tableCandidaturasCache,
+      orderBy: 'dataAlteracao DESC',
+    );
+    return maps
+        .map(
+          (map) => CandidaturaBadge(
+            idTransacao: map['idTransacao'] as int,
+            idCandidatura: map['idCandidatura'] as int,
+            idBadgeRegular: map['idBadgeRegular'] as int,
+            idCandidato: 0,
+            nomeBadge: map['nomeBadge'] as String,
+            nomeNivel: map['nomeNivel'] as String?,
+            estadoAtual: map['estadoAtual'] as String,
+            estadoAnterior: map['estadoAnterior'] as String?,
+            dataAlteracao: DateTime.parse(map['dataAlteracao'] as String),
+            dataSubmissao: map['dataSubmissao'] != null
+                ? DateTime.parse(map['dataSubmissao'] as String)
+                : null,
+            dataValidacao: map['dataValidacao'] != null
+                ? DateTime.parse(map['dataValidacao'] as String)
+                : null,
+            comentario: map['comentario'] as String?,
+          ),
+        )
+        .toList();
+  }
+
+  // Actualiza o estado das candidaturas (exemplo: o consultor submeteu)
+  Future<void> updateCandidatura(CandidaturaBadge candidatura) async {
+    final db = await database;
+    await db.update(
+      AppConstants.tableCandidaturasCache,
+      {
+        'estadoAtual': candidatura.estadoAtual,
+        'estadoAnterior': candidatura.estadoAnterior,
+        'dataAlteracao': candidatura.dataAlteracao.toIso8601String(),
+        'dataValidacao': candidatura.dataValidacao?.toIso8601String(),
+        'comentario': candidatura.comentario,
+      },
+      where: 'idCandidatura = ?',
+      whereArgs: [candidatura.idCandidatura],
+    );
+  }
+
+  //Eliminar candidaturas
+  Future<void> deleteCandidaturas() async {
+    final db = await database;
+    await db.delete(AppConstants.tableCandidaturasCache);
+  }
+
+  //Métodos CRUD para NOTIFICACÕES
+
+  //Inserir
+  Future<void> saveNotificacoes(List<Notificacao> notificacoes) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete(AppConstants.tableNotificacoesCache);
+      for (final notificacao in notificacoes) {
+        await txn.insert(
+          AppConstants.tableNotificacoesCache,
+          {
+            'id': notificacao.id,
+            'tipoNotificacao': notificacao.tipoNotificacao,
+            'titulo': notificacao.titulo,
+            'descricao': notificacao.descricao,
+            'data': notificacao.data.toIso8601String(),
+            'lida': notificacao.lida ? 1 : 0,
+            'idCandidatura': notificacao.idCandidatura,
+            'idObjetivo': notificacao.idObjetivo,
+            'idBadgeUtilizador': notificacao.idBadgeUtilizador,
+            'idBadgeEspecial': notificacao.idBadgeEspecial,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    });
+  }
+
+  //Ler
+  Future<List<Notificacao>> getNotificacoes() async {
+    final db = await database;
+    final maps = await db.query(
+      AppConstants.tableNotificacoesCache,
+      orderBy: 'data DESC',
+    );
+    return maps
+        .map(
+          (map) => Notificacao(
+            id: map['id'] as int,
+            tipoNotificacao: map['tipoNotificacao'] as String,
+            titulo: map['titulo'] as String?,
+            descricao: map['descricao'] as String?,
+            data: DateTime.parse(map['data'] as String),
+            lida: map['lida'] == 1,
+            idCandidatura: map['idCandidatura'] as int?,
+            idObjetivo: map['idObjetivo'] as int?,
+            idBadgeUtilizador: map['idBadgeUtilizador'] as int?,
+            idBadgeEspecial: map['idBadgeEspecial'] as int?,
+          ),
+        )
+        .toList();
+  }
+
+  // Marca uma notificação como lida
+  Future<void> markAsRead(int idNotificacao) async {
+    final db = await database;
+    await db.update(
+      AppConstants.tableNotificacoesCache,
+      {'lida': 1},
+      where: 'id = ?',
+      whereArgs: [idNotificacao],
+    );
+  }
+
+  // Apaga uma notificação específica
+  Future<void> deleteNotificacao(int idNotificacao) async {
+    final db = await database;
+    await db.delete(
+      AppConstants.tableNotificacoesCache,
+      where: 'id = ?',
+      whereArgs: [idNotificacao],
+    );
+  }
+
+  // Apaga todas as notificações (limpar cache)
+  Future<void> deleteNotificacoes() async {
+    final db = await database;
+    await db.delete(AppConstants.tableNotificacoesCache);
+  }
+
+  //Métodos CRUD para OBJETIVOS
+
+  //Inserir
+  Future<void> saveObjetivos(List<Objetivo> objetivos) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete(AppConstants.tableObjetivosCache);
+      for (final objetivo in objetivos) {
+        await txn.insert(
+          AppConstants.tableObjetivosCache,
+          {
+            'id': objetivo.id,
+            'idTipoObjetivo': objetivo.idTipoObjetivo,
+            'nomeTipoObjetivo': objetivo.nomeTipoObjetivo,
+            'dataInicio': objetivo.dataInicio.toIso8601String(),
+            'dataFim': objetivo.dataFim.toIso8601String(),
+            'dataConclusao': objetivo.dataConclusao?.toIso8601String(),
+            'alcancado': objetivo.alcancado ? 1 : 0,
+            'estado': objetivo.estado,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    });
+  }
+
+  //Ler
+  Future<List<Objetivo>> getObjetivos() async {
+    final db = await database;
+    final maps = await db.query(AppConstants.tableObjetivosCache);
+    return maps
+        .map(
+          (map) => Objetivo(
+            id: map['id'] as int,
+            idUtilizador: 0,
+            idTipoObjetivo: map['idTipoObjetivo'] as int,
+            nomeTipoObjetivo: map['nomeTipoObjetivo'] as String,
+            dataInicio: DateTime.parse(map['dataInicio'] as String),
+            dataFim: DateTime.parse(map['dataFim'] as String),
+            dataConclusao: map['dataConclusao'] != null
+                ? DateTime.parse(map['dataConclusao'] as String)
+                : null,
+            alcancado: map['alcancado'] == 1,
+            estado: map['estado'] as String,
+          ),
+        )
+        .toList();
+  }
+
+  //Atualizar
+  Future<void> updateObjetivo(Objetivo objetivo) async {
+    final db = await database;
+    await db.update(
+      AppConstants.tableObjetivosCache,
+      {
+        'idTipoObjetivo': objetivo.idTipoObjetivo,
+        'nomeTipoObjetivo': objetivo.nomeTipoObjetivo,
+        'dataInicio': objetivo.dataInicio.toIso8601String(),
+        'dataFim': objetivo.dataFim.toIso8601String(),
+        'dataConclusao': objetivo.dataConclusao?.toIso8601String(),
+        'alcancado': objetivo.alcancado ? 1 : 0,
+        'estado': objetivo.estado,
+      },
+      where: 'id = ?',
+      whereArgs: [objetivo.id],
+    );
+  }
+
+  // Apaga um objetivo específico
+  Future<void> deleteObjetivo(int idObjetivo) async {
+    final db = await database;
+    await db.delete(
+      AppConstants.tableObjetivosCache,
+      where: 'id = ?',
+      whereArgs: [idObjetivo],
+    );
+  }
+
+  // Apaga todos os objetivos
+  Future<void> deleteObjetivos() async {
+    final db = await database;
+    await db.delete(AppConstants.tableObjetivosCache);
+  }
 
   //Métodos CRUD para BADGE REGULAR
 
-//Inserir
+  //Inserir
   Future<void> saveCatalogoBadges(List<BadgeRegular> badges) async {
-  final db = await database;
-  await db.transaction((txn) async {
-    await txn.delete(AppConstants.tableCatalogoBadges);
-    for (final badge in badges) {
-      await txn.insert(
-        AppConstants.tableCatalogoBadges,
-        {
-          'id': badge.id,
-          'nome': badge.nome,
-          'descricao': badge.descricao,
-          'pontos': badge.pontos,
-          'urlImagem': badge.urlImage,
-          'validadeDias': badge.validadeDias,
-          'idNivel': badge.idNivel,
-          'nomeNivel': badge.nomeNivel,
-          'idServiceLine': badge.idServiceLine,
-          'nomeServiceLine': badge.nomeServiceLine,
-          'idArea': badge.idArea,
-          'nomeArea': badge.nomeArea,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-    }
-  });
-}
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete(AppConstants.tableCatalogoBadges);
+      for (final badge in badges) {
+        await txn.insert(
+          AppConstants.tableCatalogoBadges,
+          {
+            'id': badge.id,
+            'nome': badge.nome,
+            'descricao': badge.descricao,
+            'pontos': badge.pontos,
+            'urlImagem': badge.urlImagem,
+            'validadeDias': badge.validadeDias,
+            'idNivel': badge.idNivel,
+            'nomeNivel': badge.nomeNivel,
+            'idServiceLine': badge.idServiceLine,
+            'nomeServiceLine': badge.nomeServiceLine,
+            'idArea': badge.idArea,
+            'nomeArea': badge.nomeArea,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    });
+  }
 
-//Ler
+  //Ler
   Future<List<BadgeRegular>> getCatalogoBadges() async {
     final db = await database;
     final maps = await db.query(AppConstants.tableCatalogoBadges);
-    return maps.map((map) => BadgeRegular(
-      id: map['id'] as int,
-      nome: map['nome'] as String,
-      descricao: map['descricao'] as String?,
-      pontos: map['pontos'] as int?,
-      urlImage: map['urlImagem'] as String?,
-      validadeDias: map['validadeDias'] as int?,
-      idNivel: map['idNivel'] as int,
-      nomeNivel: map['nomeNivel'] as String,
-      idServiceLine: map['idServiceLine'] as int,
-      nomeServiceLine: map['nomeServiceLine'] as String,
-      idArea: map['idArea'] as int,
-      nomeArea: map['nomeArea'] as String,
-    )).toList();
+    return maps
+        .map(
+          (map) => BadgeRegular(
+            id: map['id'] as int,
+            nome: map['nome'] as String,
+            descricao: map['descricao'] as String?,
+            pontos: map['pontos'] as int?,
+            urlImagem: map['urlImagem'] as String?,
+            validadeDias: map['validadeDias'] as int?,
+            idNivel: map['idNivel'] as int,
+            nomeNivel: map['nomeNivel'] as String,
+            idServiceLine: map['idServiceLine'] as int,
+            nomeServiceLine: map['nomeServiceLine'] as String,
+            idArea: map['idArea'] as int,
+            nomeArea: map['nomeArea'] as String,
+          ),
+        )
+        .toList();
   }
-    //Eliminar
+
+  //Eliminar
   Future<void> deleteCatalogoBadges() async {
     final db = await database;
     await db.delete(AppConstants.tableCatalogoBadges);
   }
 
-    //Métodos CRUD para BADGE ESPECIAL
+  //Métodos CRUD para BADGE ESPECIAL
 
   Future<void> saveCatalogoBadgesEspeciais(List<BadgeEspecial> badges) async {
     final db = await database;
@@ -447,14 +721,18 @@ class DatabaseService {
   Future<List<BadgeEspecial>> getCatalogoBadgesEspeciais() async {
     final db = await database;
     final maps = await db.query(AppConstants.tableCatalogoBadgesEspeciais);
-    return maps.map((map) => BadgeEspecial(
-      id: map['id'] as int,
-      nome: map['nome'] as String,
-      descricao: map['descricao'] as String?,
-      pontos: map['pontos'] as int?,
-      validadeDias: map['validadeDias'] as int?,
-      urlImagem: map['urlImagem'] as String?,
-    )).toList();
+    return maps
+        .map(
+          (map) => BadgeEspecial(
+            id: map['id'] as int,
+            nome: map['nome'] as String,
+            descricao: map['descricao'] as String?,
+            pontos: map['pontos'] as int?,
+            validadeDias: map['validadeDias'] as int?,
+            urlImagem: map['urlImagem'] as String?,
+          ),
+        )
+        .toList();
   }
 
   //Eliminar
@@ -463,7 +741,7 @@ class DatabaseService {
     await db.delete(AppConstants.tableCatalogoBadgesEspeciais);
   }
 
-    //Métodos CRUD para TIPO OBJETIVOS
+  //Métodos CRUD para TIPO OBJETIVOS
 
   Future<void> saveTiposObjetivo(List<TipoObjetivo> tipos) async {
     final db = await database;
@@ -472,11 +750,7 @@ class DatabaseService {
       for (final tipo in tipos) {
         await txn.insert(
           AppConstants.tableTiposObjetivo,
-          {
-            'id': tipo.id,
-            'nome': tipo.nome,
-            'descricao': tipo.descricao,
-          },
+          {'id': tipo.id, 'nome': tipo.nome, 'descricao': tipo.descricao},
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
       }
@@ -486,15 +760,19 @@ class DatabaseService {
   Future<List<TipoObjetivo>> getTiposObjetivo() async {
     final db = await database;
     final maps = await db.query(AppConstants.tableTiposObjetivo);
-    return maps.map((map) => TipoObjetivo(
-      id: map['id'] as int,
-      nome: map['nome'] as String,
-      descricao: map['descricao'] as String?,
-    )).toList();
+    return maps
+        .map(
+          (map) => TipoObjetivo(
+            id: map['id'] as int,
+            nome: map['nome'] as String,
+            descricao: map['descricao'] as String?,
+          ),
+        )
+        .toList();
   }
 
   Future<void> deleteTipoObjetivos() async {
     final db = await database;
-    await db.delete(AppConstants.tableCatalogoBadgesEspeciais);
+    await db.delete(AppConstants.tableTiposObjetivo);
   }
 }

@@ -4,7 +4,7 @@ class BadgeRegular {
   final String?
   descricao; // colocar '?' nos valores que podem ser nulos -> ver script das tabelas
   final int? pontos;
-  final String? urlImage;
+  final String? urlImagem;
   final int idNivel;
   final String nomeNivel;
   final int idServiceLine;
@@ -19,7 +19,7 @@ class BadgeRegular {
     required this.nome,
     this.descricao,
     this.pontos,
-    this.urlImage,
+    this.urlImagem,
     required this.idNivel,
     required this.nomeNivel,
     required this.idServiceLine,
@@ -37,7 +37,7 @@ class BadgeRegular {
       nome: json['nome'],
       descricao: json['descricao'],
       pontos: json['pontos'],
-      urlImage: json['urlImagem'],
+      urlImagem: json['urlImagem'],
       idNivel: json['idNivel'],
       nomeNivel: json['nomeNivel'],
       idServiceLine: json['idServiceLine'],
@@ -55,7 +55,7 @@ class BadgeRegular {
       'nome': nome,
       'descricao': descricao,
       'pontos': pontos,
-      'urlImagem': urlImage,
+      'urlImagem': urlImagem,
       'idNivel': idNivel,
       'nomeNivel': nomeNivel,
       'idServiceLine': idServiceLine,
