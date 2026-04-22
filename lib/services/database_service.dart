@@ -35,12 +35,8 @@ class DatabaseService {
 
   Future<Database> _initDatabase() async {
     //metodo privado para criar a base de dados local
-    final dbPath =
-        await getDatabasesPath(); // funçao do sqflite que devolve a pasta onde a db está guardada
-    final path = join(
-      dbPath,
-      AppConstants.dbName,
-    ); // função do package 'path' que devolve o caminho completo do ficheiro
+    final dbPath = await getDatabasesPath(); // funçao do sqflite que devolve a pasta onde a db está guardada
+    final path = join(dbPath, AppConstants.dbName,); // função do package 'path' que devolve o caminho completo do ficheiro.
 
     return await openDatabase(
       //abre a base de dados
