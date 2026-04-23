@@ -11,6 +11,10 @@ import 'package:pint_mobile/models/tipo_objetivo.dart';
 import 'package:pint_mobile/models/candidatura_badge.dart';
 import 'package:pint_mobile/models/notificacao.dart';
 import 'package:pint_mobile/models/objetivo.dart';
+import 'package:pint_mobile/models/estados_candidatura.dart';
+import 'package:pint_mobile/models/historico_candidatura.dart';
+import 'package:pint_mobile/models/evidencia.dart';
+import 'package:pint_mobile/models/requisitos.dart';
 
 class DatabaseService {
   static DatabaseService?
@@ -73,7 +77,7 @@ class DatabaseService {
       )
     ''');
 
-    // Tabela dos BADGES
+    // Tabela dos BADGES conquistados
     await db.execute('''
       CREATE TABLE ${AppConstants.tableBadgesCache} (
         id INTEGER PRIMARY KEY,
@@ -98,53 +102,7 @@ class DatabaseService {
       )
     ''');
 
-    // Tabela das CANDIDATURAS (histórico e dados atuais das candidaturas)
-    await db.execute('''
-      CREATE TABLE ${AppConstants.tableCandidaturasCache} (
-        idTransacao INTEGER PRIMARY KEY,
-        idCandidatura INTEGER NOT NULL,
-        idBadgeRegular INTEGER NOT NULL,
-        nomeBadge TEXT NOT NULL,
-        nomeNivel TEXT,
-        estadoAtual TEXT NOT NULL,
-        estadoAnterior TEXT,
-        dataAlteracao TEXT NOT NULL,
-        dataSubmissao TEXT,
-        dataValidacao TEXT,
-        comentario TEXT
-      )
-    ''');
-
-    // Tabela das NOTIFICACOES
-    await db.execute('''
-      CREATE TABLE ${AppConstants.tableNotificacoesCache} (
-        id INTEGER PRIMARY KEY,
-        tipoNotificacao TEXT NOT NULL,
-        titulo TEXT,
-        descricao TEXT,
-        data TEXT NOT NULL,
-        lida INTEGER NOT NULL,
-        idObjetivo INTEGER,
-        idBadgeUtilizador INTEGER,
-        idBadgeEspecial INTEGER
-      )
-    ''');
-
-    // Tabela dos OBJETIVOS
-    await db.execute('''
-      CREATE TABLE ${AppConstants.tableObjetivosCache} (
-        id INTEGER PRIMARY KEY,
-        idTipoObjetivo INTEGER NOT NULL,
-        nomeTipoObjetivo TEXT NOT NULL,
-        dataInicio TEXT NOT NULL,
-        dataFim TEXT NOT NULL,
-        dataConclusao TEXT,
-        alcancado INTEGER NOT NULL,
-        estado TEXT NOT NULL
-      )
-    ''');
-
-    // Tabela do catálogo de BADGES REGULARES
+      // Tabela do catálogo de BADGES REGULARES
     await db.execute('''
       CREATE TABLE ${AppConstants.tableCatalogoBadges} (
         id INTEGER PRIMARY KEY,
@@ -174,10 +132,98 @@ class DatabaseService {
       )
     ''');
 
+    // Tabela dos ESTADOS DE CANDIDATURA
+    await db.execute('''
+      CREATE TABLE ${AppConstants.tableEstadosCandidatura} (
+        id INTEGER PRIMARY KEY,
+        nomeEstado TEXT NOT NULL,
+        descricao TEXT
+      )
+    ''');
+
+    // Tabela das CANDIDATURAS
+    await db.execute('''
+      CREATE TABLE ${AppConstants.tableCandidaturasCache} (
+        numCandidatura INTEGER PRIMARY KEY,
+        idBadgeRegular INTEGER NOT NULL,
+        idCandidato INTEGER NOT NULL,
+        idEstadoAtual INTEGER NOT NULL,
+        dataCriacao TEXT NOT NULL,
+        nomeBadge TEXT NOT NULL,
+        nomeNivel TEXT,
+        nomeEstadoAtual TEXT NOT NULL
+      )
+    ''');
+
+    // Tabela do HISTÓRICO de candidaturas
+    await db.execute('''
+      CREATE TABLE ${AppConstants.tableHistoricoCandidatura} (
+        idTransacao INTEGER PRIMARY KEY,
+        numCandidatura INTEGER NOT NULL,
+        idResponsavel INTEGER,
+        tipoResponsavel TEXT,
+        dataAlteracao TEXT NOT NULL,
+        idEstadoAtual INTEGER NOT NULL,
+        nomeEstadoAtual TEXT NOT NULL,
+        comentario TEXT
+      )
+    ''');
+
+    // Tabela das EVIDÊNCIAS
+    await db.execute('''
+      CREATE TABLE ${AppConstants.tableEvidenciasCache} (
+        id INTEGER PRIMARY KEY,
+        numCandidatura INTEGER NOT NULL,
+        idRequisito INTEGER NOT NULL,
+        idResponsavel INTEGER,
+        pathFicheiro TEXT NOT NULL,
+        estado TEXT NOT NULL
+      )
+    ''');
+
+    // Tabela das NOTIFICACOES
+    await db.execute('''
+      CREATE TABLE ${AppConstants.tableNotificacoesCache} (
+        id INTEGER PRIMARY KEY,
+        tipoNotificacao TEXT NOT NULL,
+        descricao TEXT,
+        data TEXT NOT NULL,
+        lida INTEGER NOT NULL,
+        numCandidatura INTEGER,
+        idObjetivo INTEGER,
+        idBadgeUtilizador INTEGER,
+        idBadgeEspecial INTEGER
+      )
+    ''');
+
+    // Tabela dos OBJETIVOS
+    await db.execute('''
+      CREATE TABLE ${AppConstants.tableObjetivosCache} (
+        id INTEGER PRIMARY KEY,
+        idTipoObjetivo INTEGER NOT NULL,
+        nomeTipoObjetivo TEXT NOT NULL,
+        dataInicio TEXT NOT NULL,
+        dataFim TEXT NOT NULL,
+        dataConclusao TEXT,
+        alcancado INTEGER NOT NULL,
+        estado TEXT NOT NULL
+      )
+    ''');
+
     // Tabela dos TIPOS DE OBJETIVOS
     await db.execute('''
       CREATE TABLE ${AppConstants.tableTiposObjetivo} (
         id INTEGER PRIMARY KEY,
+        nome TEXT NOT NULL,
+        descricao TEXT
+      )
+    ''');
+
+    // Tabela dos REQUISITOS
+    await db.execute('''
+      CREATE TABLE ${AppConstants.tableRequisitosCache} (
+        id INTEGER PRIMARY KEY,
+        idBadgeRegular INTEGER,
         nome TEXT NOT NULL,
         descricao TEXT
       )
@@ -194,7 +240,7 @@ class DatabaseService {
     //);
     // }
   }
-
+  //==============================================================
   //Métodos CRUD para o CONSULTOR
 
   //Inserir dados (login)
@@ -285,6 +331,7 @@ class DatabaseService {
     await db.delete(AppConstants.tableUsers);
   }
 
+  //=================================================================
   //Métodos CRUD para BADGES
 
   //Inserir dados
@@ -362,28 +409,142 @@ class DatabaseService {
     await db.delete(AppConstants.tableBadgesCache);
   }
 
+  //===================================================================
+  //Métodos CRUD para ESTADOS_CANDIDATURAS
+
+  Future<void> saveEstados(List<EstadoCandidatura> estados) async {
+  final db = await database;
+  await db.transaction((txn) async {
+    await txn.delete(AppConstants.tableEstadosCandidatura);
+    for (final estado in estados) {
+      await txn.insert(
+        AppConstants.tableEstadosCandidatura,
+        {
+          'id': estado.id,
+          'nomeEstado': estado.nomeEstado,
+          'descricao': estado.descricao,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+  });
+}
+
+Future<List<EstadoCandidatura>> getEstados() async {
+  final db = await database;
+  final maps = await db.query(AppConstants.tableEstadosCandidatura);
+  return maps.map((map) => EstadoCandidatura(
+    id: map['id'] as int,
+    nomeEstado: map['nomeEstado'] as String,
+    descricao: map['descricao'] as String?,
+  )).toList();
+}
+
+Future<void> deleteEstados() async {
+  final db = await database;
+  await db.delete(AppConstants.tableEstadosCandidatura);
+}
+
+//=================================================================
   //Métodos CRUD para CANDIDATURAS
 
-  // Inserir (guardar candidaturas localmente)
-  Future<void> saveCandidaturas(List<CandidaturaBadge> candidaturas) async {
+Future<void> saveCandidaturas(List<CandidaturaBadge> candidaturas) async {
+  final db = await database;
+  await db.transaction((txn) async {
+    await txn.delete(AppConstants.tableCandidaturasCache);
+    for (final c in candidaturas) {
+      await txn.insert(
+        AppConstants.tableCandidaturasCache,
+        {
+          'numCandidatura': c.numCandidatura,
+          'idBadgeRegular': c.idBadgeRegular,
+          'idCandidato': c.idCandidato,
+          'idEstadoAtual': c.idEstadoAtual,
+          'dataCriacao': c.dataCriacao.toIso8601String(),
+          'nomeBadge': c.nomeBadge,
+          'nomeNivel': c.nomeNivel,
+          'nomeEstadoAtual': c.nomeEstadoAtual,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+  });
+}
+
+Future<void> saveOneCandidatura(CandidaturaBadge candidatura) async {
+  final db = await database;
+  await db.insert(
+    AppConstants.tableCandidaturasCache,
+    {
+      'numCandidatura': candidatura.numCandidatura,
+      'idBadgeRegular': candidatura.idBadgeRegular,
+      'idCandidato': candidatura.idCandidato,
+      'idEstadoAtual': candidatura.idEstadoAtual,
+      'dataCriacao': candidatura.dataCriacao.toIso8601String(),
+      'nomeBadge': candidatura.nomeBadge,
+      'nomeNivel': candidatura.nomeNivel,
+      'nomeEstadoAtual': candidatura.nomeEstadoAtual,
+    },
+    conflictAlgorithm: ConflictAlgorithm.replace,
+  );
+}
+
+Future<List<CandidaturaBadge>> getCandidaturas() async {
+  final db = await database;
+  final maps = await db.query(
+    AppConstants.tableCandidaturasCache,
+    orderBy: 'dataCriacao DESC',
+  );
+  return maps.map((map) => CandidaturaBadge(
+    numCandidatura: map['numCandidatura'] as int,
+    idBadgeRegular: map['idBadgeRegular'] as int,
+    idCandidato: map['idCandidato'] as int,
+    idEstadoAtual: map['idEstadoAtual'] as int,
+    dataCriacao: DateTime.parse(map['dataCriacao'] as String),
+    nomeBadge: map['nomeBadge'] as String,
+    nomeNivel: map['nomeNivel'] as String?,
+    nomeEstadoAtual: map['nomeEstadoAtual'] as String,
+  )).toList();
+}
+
+Future<void> updateCandidatura(CandidaturaBadge candidatura) async {
+  final db = await database;
+  await db.update(
+    AppConstants.tableCandidaturasCache,
+    {
+      'idEstadoAtual': candidatura.idEstadoAtual,
+      'nomeEstadoAtual': candidatura.nomeEstadoAtual,
+    },
+    where: 'numCandidatura = ?',
+    whereArgs: [candidatura.numCandidatura],
+  );
+}
+
+Future<void> deleteCandidaturas() async {
+  final db = await database;
+  await db.delete(AppConstants.tableCandidaturasCache);
+}
+
+
+//==============================================================
+//Métodos CRUD para HISTORICO_CANDIDATURAS
+
+  Future<void> saveHistorico(List<HistoricoCandidatura> historico) async {
     final db = await database;
     await db.transaction((txn) async {
-      await txn.delete(AppConstants.tableCandidaturasCache);
-      for (final candidatura in candidaturas) {
+      await txn.delete(AppConstants.tableHistoricoCandidatura);
+      for (final h in historico) {
         await txn.insert(
-          AppConstants.tableCandidaturasCache,
+          AppConstants.tableHistoricoCandidatura,
           {
-            'idTransacao': candidatura.idTransacao,
-            'idCandidatura': candidatura.idCandidatura,
-            'idBadgeRegular': candidatura.idBadgeRegular,
-            'nomeBadge': candidatura.nomeBadge,
-            'nomeNivel': candidatura.nomeNivel,
-            'estadoAtual': candidatura.estadoAtual,
-            'estadoAnterior': candidatura.estadoAnterior,
-            'dataAlteracao': candidatura.dataAlteracao.toIso8601String(),
-            'dataSubmissao': candidatura.dataSubmissao?.toIso8601String(),
-            'dataValidacao': candidatura.dataValidacao?.toIso8601String(),
-            'comentario': candidatura.comentario,
+            'idTransacao': h.idTransacao,
+            'numCandidatura': h.numCandidatura,
+            'idResponsavel': h.idResponsavel,
+            'tipoResponsavel': h.tipoResponsavel,
+            'dataAlteracao': h.dataAlteracao.toIso8601String(),
+            'idEstadoAtual': h.idEstadoAtual,
+            'nomeEstadoAtual': h.nomeEstadoAtual,
+            'comentario': h.comentario,
           },
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
@@ -391,103 +552,98 @@ class DatabaseService {
     });
   }
 
-  // Guarda uma candidatura (quando o consultor cria uma nova)
-  Future<void> saveOneCandidatura(CandidaturaBadge candidatura) async {
-    final db = await database;
-    await db.insert(
-      AppConstants.tableCandidaturasCache,
-      {
-        'idTransacao': candidatura.idTransacao,
-        'idCandidatura': candidatura.idCandidatura,
-        'idBadgeRegular': candidatura.idBadgeRegular,
-        'nomeBadge': candidatura.nomeBadge,
-        'nomeNivel': candidatura.nomeNivel,
-        'estadoAtual': candidatura.estadoAtual,
-        'estadoAnterior': candidatura.estadoAnterior,
-        'dataAlteracao': candidatura.dataAlteracao.toIso8601String(),
-        'dataSubmissao': candidatura.dataSubmissao?.toIso8601String(),
-        'dataValidacao': candidatura.dataValidacao?.toIso8601String(),
-        'comentario': candidatura.comentario,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-  }
-
-  //Ler Candidaturas
-  Future<List<CandidaturaBadge>> getCandidaturas() async {
+  Future<List<HistoricoCandidatura>> getHistorico(int numCandidatura) async {
     final db = await database;
     final maps = await db.query(
-      AppConstants.tableCandidaturasCache,
-      orderBy: 'dataAlteracao DESC',
+      AppConstants.tableHistoricoCandidatura,
+      where: 'numCandidatura = ?',
+      whereArgs: [numCandidatura],
+      orderBy: 'dataAlteracao ASC',
     );
-    return maps
-        .map(
-          (map) => CandidaturaBadge(
-            idTransacao: map['idTransacao'] as int,
-            idCandidatura: map['idCandidatura'] as int,
-            idBadgeRegular: map['idBadgeRegular'] as int,
-            idCandidato: 0,
-            nomeBadge: map['nomeBadge'] as String,
-            nomeNivel: map['nomeNivel'] as String?,
-            estadoAtual: map['estadoAtual'] as String,
-            estadoAnterior: map['estadoAnterior'] as String?,
-            dataAlteracao: DateTime.parse(map['dataAlteracao'] as String),
-            dataSubmissao: map['dataSubmissao'] != null
-                ? DateTime.parse(map['dataSubmissao'] as String)
-                : null,
-            dataValidacao: map['dataValidacao'] != null
-                ? DateTime.parse(map['dataValidacao'] as String)
-                : null,
-            comentario: map['comentario'] as String?,
-          ),
-        )
-        .toList();
+    return maps.map((map) => HistoricoCandidatura(
+      idTransacao: map['idTransacao'] as int,
+      numCandidatura: map['numCandidatura'] as int,
+      idResponsavel: map['idResponsavel'] as int?,
+      tipoResponsavel: map['tipoResponsavel'] as String?,
+      dataAlteracao: DateTime.parse(map['dataAlteracao'] as String),
+      idEstadoAtual: map['idEstadoAtual'] as int,
+      nomeEstadoAtual: map['nomeEstadoAtual'] as String,
+      comentario: map['comentario'] as String?,
+    )).toList();
   }
 
-  // Actualiza o estado das candidaturas (exemplo: o consultor submeteu)
-  Future<void> updateCandidatura(CandidaturaBadge candidatura) async {
+  Future<void> deleteHistorico() async {
     final db = await database;
-    await db.update(
-      AppConstants.tableCandidaturasCache,
-      {
-        'estadoAtual': candidatura.estadoAtual,
-        'estadoAnterior': candidatura.estadoAnterior,
-        'dataAlteracao': candidatura.dataAlteracao.toIso8601String(),
-        'dataValidacao': candidatura.dataValidacao?.toIso8601String(),
-        'comentario': candidatura.comentario,
-      },
-      where: 'idCandidatura = ?',
-      whereArgs: [candidatura.idCandidatura],
+    await db.delete(AppConstants.tableHistoricoCandidatura);
+  }
+
+  //=============================================================
+  //Métodos CRUD para EVIDENCIAS
+
+  Future<void> saveEvidencias(List<Evidencia> evidencias) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete(AppConstants.tableEvidenciasCache);
+      for (final e in evidencias) {
+        await txn.insert(
+          AppConstants.tableEvidenciasCache,
+          {
+            'id': e.id,
+            'numCandidatura': e.numCandidatura,
+            'idRequisito': e.idRequisito,
+            'idResponsavel': e.idResponsavel,
+            'pathFicheiro': e.pathFicheiro,
+            'estado': e.estado,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    });
+  }
+
+  Future<List<Evidencia>> getEvidencias(int numCandidatura) async {
+    final db = await database;
+    final maps = await db.query(
+      AppConstants.tableEvidenciasCache,
+      where: 'numCandidatura = ?',
+      whereArgs: [numCandidatura],
     );
+    return maps.map((map) => Evidencia(
+      id: map['id'] as int,
+      numCandidatura: map['numCandidatura'] as int,
+      idRequisito: map['idRequisito'] as int,
+      idResponsavel: map['idResponsavel'] as int?,
+      pathFicheiro: map['pathFicheiro'] as String,
+      estado: map['estado'] as String,
+    )).toList();
   }
 
-  //Eliminar candidaturas
-  Future<void> deleteCandidaturas() async {
+  Future<void> deleteEvidencias() async {
     final db = await database;
-    await db.delete(AppConstants.tableCandidaturasCache);
+    await db.delete(AppConstants.tableEvidenciasCache);
   }
 
-  //Métodos CRUD para NOTIFICACÕES
+    //=======================================================================
+    //Métodos CRUD para NOTIFICACÕES
 
-  //Inserir
+
   Future<void> saveNotificacoes(List<Notificacao> notificacoes) async {
     final db = await database;
     await db.transaction((txn) async {
       await txn.delete(AppConstants.tableNotificacoesCache);
-      for (final notificacao in notificacoes) {
+      for (final n in notificacoes) {
         await txn.insert(
           AppConstants.tableNotificacoesCache,
           {
-            'id': notificacao.id,
-            'tipoNotificacao': notificacao.tipoNotificacao,
-            'titulo': notificacao.titulo,
-            'descricao': notificacao.descricao,
-            'data': notificacao.data.toIso8601String(),
-            'lida': notificacao.lida ? 1 : 0,
-            'idCandidatura': notificacao.idCandidatura,
-            'idObjetivo': notificacao.idObjetivo,
-            'idBadgeUtilizador': notificacao.idBadgeUtilizador,
-            'idBadgeEspecial': notificacao.idBadgeEspecial,
+            'id': n.id,
+            'tipoNotificacao': n.tipoNotificacao,
+            'descricao': n.descricao,
+            'data': n.data.toIso8601String(),
+            'lida': n.lida ? 1 : 0,
+            'numCandidatura': n.numCandidatura,
+            'idObjetivo': n.idObjetivo,
+            'idBadgeUtilizador': n.idBadgeUtilizador,
+            'idBadgeEspecial': n.idBadgeEspecial,
           },
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
@@ -495,32 +651,25 @@ class DatabaseService {
     });
   }
 
-  //Ler
   Future<List<Notificacao>> getNotificacoes() async {
     final db = await database;
     final maps = await db.query(
       AppConstants.tableNotificacoesCache,
       orderBy: 'data DESC',
     );
-    return maps
-        .map(
-          (map) => Notificacao(
-            id: map['id'] as int,
-            tipoNotificacao: map['tipoNotificacao'] as String,
-            titulo: map['titulo'] as String?,
-            descricao: map['descricao'] as String?,
-            data: DateTime.parse(map['data'] as String),
-            lida: map['lida'] == 1,
-            idCandidatura: map['idCandidatura'] as int?,
-            idObjetivo: map['idObjetivo'] as int?,
-            idBadgeUtilizador: map['idBadgeUtilizador'] as int?,
-            idBadgeEspecial: map['idBadgeEspecial'] as int?,
-          ),
-        )
-        .toList();
+    return maps.map((map) => Notificacao(
+      id: map['id'] as int,
+      tipoNotificacao: map['tipoNotificacao'] as String,
+      descricao: map['descricao'] as String?,
+      data: DateTime.parse(map['data'] as String),
+      lida: map['lida'] == 1,
+      numCandidatura: map['numCandidatura'] as int?,
+      idObjetivo: map['idObjetivo'] as int?,
+      idBadgeUtilizador: map['idBadgeUtilizador'] as int?,
+      idBadgeEspecial: map['idBadgeEspecial'] as int?,
+    )).toList();
   }
 
-  // Marca uma notificação como lida
   Future<void> markAsRead(int idNotificacao) async {
     final db = await database;
     await db.update(
@@ -531,7 +680,6 @@ class DatabaseService {
     );
   }
 
-  // Apaga uma notificação específica
   Future<void> deleteNotificacao(int idNotificacao) async {
     final db = await database;
     await db.delete(
@@ -541,12 +689,12 @@ class DatabaseService {
     );
   }
 
-  // Apaga todas as notificações (limpar cache)
   Future<void> deleteNotificacoes() async {
     final db = await database;
     await db.delete(AppConstants.tableNotificacoesCache);
   }
 
+  //===================================================================
   //Métodos CRUD para OBJETIVOS
 
   //Inserir
@@ -631,6 +779,7 @@ class DatabaseService {
     await db.delete(AppConstants.tableObjetivosCache);
   }
 
+  //====================================================================
   //Métodos CRUD para BADGE REGULAR
 
   //Inserir
@@ -691,6 +840,7 @@ class DatabaseService {
     await db.delete(AppConstants.tableCatalogoBadges);
   }
 
+  //========================================================================
   //Métodos CRUD para BADGE ESPECIAL
 
   Future<void> saveCatalogoBadgesEspeciais(List<BadgeEspecial> badges) async {
@@ -737,6 +887,8 @@ class DatabaseService {
     await db.delete(AppConstants.tableCatalogoBadgesEspeciais);
   }
 
+
+  //=========================================================================
   //Métodos CRUD para TIPO OBJETIVOS
 
   Future<void> saveTiposObjetivo(List<TipoObjetivo> tipos) async {
@@ -770,5 +922,47 @@ class DatabaseService {
   Future<void> deleteTipoObjetivos() async {
     final db = await database;
     await db.delete(AppConstants.tableTiposObjetivo);
+  }
+
+  Future<void> saveRequisitos(List<Requisito> requisitos) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete(AppConstants.tableRequisitosCache);
+      for (final r in requisitos) {
+        await txn.insert(
+          AppConstants.tableRequisitosCache,
+          {
+            'id': r.id,
+            'idBadgeRegular': r.idBadgeRegular,
+            'nome': r.nome,
+            'descricao': r.descricao,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    });
+}
+
+//=============================================================
+//Métodos CRUD dos REQUISITOS
+
+  Future<List<Requisito>> getRequisitos(int idBadgeRegular) async {
+    final db = await database;
+    final maps = await db.query(
+      AppConstants.tableRequisitosCache,
+      where: 'idBadgeRegular = ?',
+      whereArgs: [idBadgeRegular],
+    );
+    return maps.map((map) => Requisito(
+      id: map['id'] as int,
+      idBadgeRegular: map['idBadgeRegular'] as int?,
+      nome: map['nome'] as String,
+      descricao: map['descricao'] as String?,
+    )).toList();
+  }
+
+  Future<void> deleteRequisitos() async {
+    final db = await database;
+    await db.delete(AppConstants.tableRequisitosCache);
   }
 }

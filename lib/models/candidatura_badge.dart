@@ -1,84 +1,84 @@
-class CandidaturaBadge {
-  final int idTransacao;       // chave primária única de todas as entradas na tabela (trasações)
-  final int idCandidatura;     // candidatura a que as transações se referem (permite gerar timeline)
-  final int idBadgeRegular;    // badge a que se candidata
-  final int idCandidato;       // consultor que se candidata ao badge
-  final int? idResponsavel;         // responsável pela validação/aprovação
-  final String? tipoResponsavel;    // Talent Manager ou SLL
-  final String nomeBadge; 
-  final String? nomeNivel;
-  final DateTime? dataSubmissao;   // submissão inicial do consultor - NULL se ainda não foi submetida
-  final DateTime dataAlteracao;    // data da alteração -> nunca é null: existe a partir do momento em que a candidatura é criada aberta)
-  final DateTime? dataValidacao;   // data da validação - NULL se ainda nao foi aprovado/rejeitado
-  final String? estadoAnterior;
-  final String estadoAtual;
-  final String? comentario;        //feedback do TM ou SLL
+import 'package:pint_mobile/models/evidencia.dart';
+import 'package:pint_mobile/models/historico_candidatura.dart';
 
-//Construtor
+class CandidaturaBadge {
+  final int numCandidatura; //ID
+  final int idBadgeRegular; // badge a que se candidata
+  final int idCandidato; // consultor que se candidata ao badge
+  final int idEstadoAtual; //FK para estados
+  final DateTime dataCriacao; // quando é submetida pela primeira vez
+
+  //Vem via JOIN da API
+  final String nomeBadge;
+  final String? nomeNivel;
+  final String nomeEstadoAtual;
+
+  //Para carregar as listas de Historico e evidencia se for necessario
+  final List<HistoricoCandidatura>? historico;
+  final List<Evidencia>? evidencias;
+
+  //Construtor
   CandidaturaBadge({
-    required this.idTransacao,
-    required this.idCandidatura,
+    required this.numCandidatura,
     required this.idBadgeRegular,
     required this.idCandidato,
-    this.idResponsavel,
-    this.tipoResponsavel,
+    required this.idEstadoAtual,
+    required this.dataCriacao,
     required this.nomeBadge,
     this.nomeNivel,
-    this.dataSubmissao,
-    required this.dataAlteracao,
-    this.dataValidacao,
-    this.estadoAnterior,
-    required this.estadoAtual,
-    this.comentario,
+    required this.nomeEstadoAtual,
+    this.historico,
+    this.evidencias,
   });
 
-//fromJson - converto do formato json da API para o objeto
-//O método factory recebe o json (convertido em map de strings pelo package http) e traduz
+  //fromJson - converto do formato json da API para o objeto
+  //O método factory recebe o json (convertido em map de strings pelo package http) e traduz
   factory CandidaturaBadge.fromJson(Map<String, dynamic> json) {
     return CandidaturaBadge(
-      idTransacao: json['idTransacao'],
-      idCandidatura: json['idCandidatura'],
+      numCandidatura: json['numCandidatura'],
       idBadgeRegular: json['idBadgeRegular'],
       idCandidato: json['idCandidato'],
-      idResponsavel: json['idResponsavel'],
-      tipoResponsavel: json['tipoResponsavel'],
+      idEstadoAtual: json['idEstadoAtual'],
+      dataCriacao: DateTime.parse(json['dataCriacao']),
       nomeBadge: json['nomeBadge'],
       nomeNivel: json['nomeNivel'],
-      dataSubmissao: json['dataSubmissao'] != null? DateTime.parse(json['dataSubmissao']): null,   //Ternário -> verifica se é null antes de converter
-      dataAlteracao: DateTime.parse(json['dataAlteracao']),
-      dataValidacao: json['dataValidacao'] != null? DateTime.parse(json['dataValidacao']): null,
-      estadoAnterior: json['estadoAnterior'],
-      estadoAtual: json['estadoAtual'],
-      comentario: json['comentario'],
+      nomeEstadoAtual: json ['nomeEstadoAtual'],
+      historico: json ['historico'] != null ? (json['historico'] as List)
+        .map((h) => HistoricoCandidatura.fromJson(h)).toList() : null,
+      evidencias: json['evidencias'] != null ? (json['evidencias'] as List)
+        .map((e) => Evidencia.fromJson(e)).toList() : null
     );
   }
 
-//toJson - inverso do fromJson - converte o objecto em json (envia para a API também em map)
   Map<String, dynamic> toJson() {
     return {
-      'idTransacao': idTransacao,
-      'idCandidatura': idCandidatura,
+      'numCandidatura': numCandidatura,
       'idBadgeRegular': idBadgeRegular,
       'idCandidato': idCandidato,
-      'idResponsavel': idResponsavel,
-      'tipoResponsavel': tipoResponsavel,
+      'idEstadoAtual': idEstadoAtual,
+      'dataCriacao': dataCriacao.toIso8601String(),
       'nomeBadge': nomeBadge,
       'nomeNivel': nomeNivel,
-      'dataSubmissao': dataSubmissao?.toIso8601String(),  // Iso 8601 - norma que define formato da data e hora
-      'dataAlteracao': dataAlteracao.toIso8601String(),
-      'dataValidacao': dataValidacao?.toIso8601String(),
-      'estadoAnterior': estadoAnterior,
-      'estadoAtual': estadoAtual,
-      'comentario': comentario,
+      'nomeEstadoAtual': nomeEstadoAtual,
     };
   }
 
-// Métodos auxiliares
-  bool get estaEmAberto {
-    return estadoAtual == 'Aberta' || estadoAtual == 'Submetida'; // saber se está aberta permite ocultar/mostrar o botão submeter candidatura
-  }
+  // Métodos auxiliares
+  bool get estaEmValidacaoTM => idEstadoAtual == 1;
+  bool get estaEmRetificacaoTM => idEstadoAtual == 2;
+  bool get estaEmValidacaoSLL => idEstadoAtual == 3;
+  bool get estaEmRetificacaoSLL => idEstadoAtual == 4;
+  bool get aprovada => idEstadoAtual == 5;
+  bool get rejeitada => idEstadoAtual == 6;
 
-  bool get estaConcluida {
-    return estadoAtual == 'Aprovada' || estadoAtual == 'Rejeitada'; //saber que está concluída permite retirá-la das candidaturas pendentes
-  }
+  // O consultor pode agir — está à espera de retificação
+  bool get aguardaAcaoConsultor =>
+      estaEmRetificacaoTM || estaEmRetificacaoSLL;
+
+  // Processo concluído
+  bool get estaConcluida => aprovada || rejeitada;
+
+  // Processo em curso (aguarda validação)
+  bool get estaEmValidacao =>
+      estaEmValidacaoTM || estaEmValidacaoSLL;
 }
