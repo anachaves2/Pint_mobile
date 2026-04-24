@@ -51,6 +51,20 @@ class DatabaseService {
     );
   }
 
+    Future<void> updateAreaConsultor({ //Para atualizar a Área do consultor quando vai às defições ou abre a app pela primeira vez
+    required int idArea,
+    required String nomeArea,
+  }) async {
+    final db = await database;
+    await db.update(
+      AppConstants.tableUsers,
+      {
+        'idArea': idArea,
+        'nomeArea': nomeArea,
+      },
+    );
+  }
+
   //criaçao tabelas locais do sqflite (guarda os dados necessarios aos funcionamento offline)
   // só existem 4 tipos de dados em sqflite: INTEGER TEXT REAL e BLOB
   // as três plicas ''' servem para poder ter as strings em várias linhas
