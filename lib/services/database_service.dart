@@ -16,6 +16,9 @@ import 'package:pint_mobile/models/historico_candidatura.dart';
 import 'package:pint_mobile/models/evidencia.dart';
 import 'package:pint_mobile/models/requisitos.dart';
 
+//DEFINIÇÃO DA DB LOCAL -> SQLITE
+
+//SINGLETON
 class DatabaseService {
   static DatabaseService?
   _instance; //instância do serviço --> só pode haver uma!

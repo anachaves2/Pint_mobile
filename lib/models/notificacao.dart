@@ -34,7 +34,7 @@ class Notificacao {
           ? json['lida']
           : json['lida'] ==
                 1, //converte para bool caso 0 ou 1 tenha sido passado com int
-      numCandidatura: json['idCandidatura'],
+      numCandidatura: json['numCandidatura'],
       idObjetivo: json['idObjetivo'],
       idBadgeUtilizador: json['idBadgeUtilizador'],
       idBadgeEspecial: json['idBadgeEspecial'],
@@ -49,7 +49,7 @@ class Notificacao {
       'descricao': descricao,
       'data': data.toIso8601String(),
       'lida': lida,
-      'idCandidatura': numCandidatura,
+      'numCandidatura': numCandidatura,
       'idObjetivo': idObjetivo,
       'idBadgeUtilizador': idBadgeUtilizador,
       'idBadgeEspecial': idBadgeEspecial,
