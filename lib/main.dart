@@ -161,13 +161,13 @@ class MyApp extends StatelessWidget {
       home: estaAutenticado
           ? const PlaceholderScreen(titulo: 'Dashboard') // → DashboardScreen()
           : const LandingPageScreen(),
-          
+
  //============================================================================================
       //ROTAS
       routes: {
         // AUTH
         AppConstants.routeLanding: (ctx) =>
-        const LandingPageScreen(),
+            const LandingPageScreen(),
         AppConstants.routeLogin: (ctx) =>
             const LoginScreen(),
         AppConstants.routeRecuperarPassword: (ctx) =>
