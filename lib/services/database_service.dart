@@ -16,6 +16,9 @@ import 'package:pint_mobile/models/historico_candidatura.dart';
 import 'package:pint_mobile/models/evidencia.dart';
 import 'package:pint_mobile/models/requisitos.dart';
 
+//DEFINIÇÃO DA DB LOCAL -> SQLITE
+
+//SINGLETON
 class DatabaseService {
   static DatabaseService?
   _instance; //instância do serviço --> só pode haver uma!
@@ -48,6 +51,20 @@ class DatabaseService {
       version: AppConstants.dbVersion,
       onCreate: _onCreate, //chamado quando a db é criada pela primeira vez
       onUpgrade: _onUpgrade, //chamado quando a versão muda
+    );
+  }
+
+    Future<void> updateAreaConsultor({ //Para atualizar a Área do consultor quando vai às defições ou abre a app pela primeira vez
+    required int idArea,
+    required String nomeArea,
+  }) async {
+    final db = await database;
+    await db.update(
+      AppConstants.tableUsers,
+      {
+        'idArea': idArea,
+        'nomeArea': nomeArea,
+      },
     );
   }
 
