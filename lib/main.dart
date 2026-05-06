@@ -165,7 +165,7 @@ class MyApp extends StatelessWidget {
       routes: {
         // AUTH
         AppConstants.routeLogin: (ctx) =>
-            const PlaceholderScreen(titulo: 'Login'),
+            const LoginScreen(),
         AppConstants.routeRecuperarPassword: (ctx) =>
             const PlaceholderScreen(titulo: 'Recuperar Password'),
         AppConstants.routeRedefinirPassword1: (ctx) =>
