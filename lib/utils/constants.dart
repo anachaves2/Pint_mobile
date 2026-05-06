@@ -55,6 +55,7 @@ class AppConstants {
   //ROTAS
 
   // AUTH
+  static const String routeLanding = '/landing';
   static const String routeLogin = '/login';
   static const String routeRecuperarPassword = '/recuperar-password';
   static const String routeRedefinirPassword1 = '/redefinir-password-1';

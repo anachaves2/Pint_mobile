@@ -8,7 +8,8 @@ import 'package:pint_mobile/utils/constants.dart';
 
 //IR COLOCANDO OS IMPORTS A MEDIDA QUE FOREM SENDO FEITOS
 //EXEMPLO:
- import 'package:pint_mobile/screens/login_screen.dart';
+ import 'package:pint_mobile/screens/auth/landing_page_screen.dart';
+ import 'package:pint_mobile/screens/auth/login_screen.dart';
 // import 'package:pint_mobile/screens/auth/recuperar_password_screen.dart';
 // import 'package:pint_mobile/screens/auth/redefinir_password1_screen5.dart';
 // import 'package:pint_mobile/screens/auth/login_screen.dart';
@@ -159,11 +160,14 @@ class MyApp extends StatelessWidget {
       //ECRA INICIAL
       home: estaAutenticado
           ? const PlaceholderScreen(titulo: 'Dashboard') // → DashboardScreen()
-          : const LoginScreen(),    // → LoginScreen()
+          : const LandingPageScreen(),
+          
  //============================================================================================
       //ROTAS
       routes: {
         // AUTH
+        AppConstants.routeLanding: (ctx) =>
+        const LandingPageScreen(),
         AppConstants.routeLogin: (ctx) =>
             const LoginScreen(),
         AppConstants.routeRecuperarPassword: (ctx) =>
