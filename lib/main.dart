@@ -8,9 +8,9 @@ import 'package:pint_mobile/utils/constants.dart';
 
 //IR COLOCANDO OS IMPORTS A MEDIDA QUE FOREM SENDO FEITOS
 //EXEMPLO:
-// import 'package:pint_mobile/screens/auth/login_screen.dart';
+// import 'package:pint_mobile/screens/login_screen.dart';
 // import 'package:pint_mobile/screens/auth/recuperar_password_screen.dart';
-// import 'package:pint_mobile/screens/auth/redefinir_password1_screen.dart';
+// import 'package:pint_mobile/screens/auth/redefinir_password1_screen5.dart';
 // import 'package:pint_mobile/screens/auth/redefinir_password2_screen.dart';
 // import 'package:pint_mobile/screens/auth/configuracao_inicial_screen.dart';
 // import 'package:pint_mobile/screens/dashboard/dashboard_screen.dart';
