@@ -97,11 +97,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       decoration: const InputDecoration(
                         labelText: 'Email',
-                        hintText: 'Insere o teu email',
+                        hintText: 'Insira o seu email',
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) return 'Por favor, insere o teu email';
-                        if (!value.contains('@')) return 'Por favor, insere um email válido';
+                        if (!value.contains('@')) return 'Por favor, insira um email válido';
                         return null;
                       },
                     ),
@@ -112,14 +112,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Password',
-                        hintText: 'Insere a tua password',
+                        hintText: 'Insira a sua password',
                         suffixIcon: IconButton(
                           icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off, color: Colors.grey),
                           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
                       ),
                       validator: (value) {
-                        if (value == null || value.isEmpty) return 'Por favor, insere a tua password';
+                        if (value == null || value.isEmpty) return 'Por favor, insira a sua password';
                         return null;
                       },
                     ),
