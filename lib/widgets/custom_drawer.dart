@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
-class CustomDrawer extends StatelessWidget{
+class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
 
   Widget _buildMenuItem(BuildContext context, String title, String routeName) {
@@ -10,19 +11,26 @@ class CustomDrawer extends StatelessWidget{
         ListTile(
           title: Text(
             title,
-            style: const TextStyle(fontSize: 16, color: Color.fromARGB(255, 32, 32, 32)),
+            style: const TextStyle(
+              fontSize: 16, 
+              color: Color.fromARGB(255, 32, 32, 32),
+            ),
           ),
-          trailing: const Icon(Icons.chevron_right, size: 20, color: Color.fromARGB(255, 32, 32, 32)),
-          onTap: (){
-            Navigator.pop(context); 
-            if(routeName.isNotEmpty) {
+          trailing: const Icon(
+            Icons.chevron_right, 
+            size: 20, 
+            color: Color.fromARGB(255, 32, 32, 32),
+          ),
+          onTap: () {
+            Navigator.pop(context);
+            if (routeName.isNotEmpty) {
               Navigator.pushReplacementNamed(context, routeName);
             }
           },
         ),
-        const Divider(height: 1, color: Colors.black12), 
+        const Divider(height: 1, color: Colors.black12),
       ],
-    );  
+    );
   }
 
   @override
@@ -33,30 +41,25 @@ class CustomDrawer extends StatelessWidget{
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical:8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'SOFTINSA',
-                    style: TextStyle(
-                      color: AppConstants.corPrimaria,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                    ),
+                  SvgPicture.asset(
+                    'assets/icons/logo-softinsa.svg',
+                    height: 45,
                   ),
                   IconButton(
                     icon: const Icon(Icons.close, color: AppConstants.corPrimaria),
-                    onPressed: () { 
+                    onPressed: () {
                       Navigator.pop(context);
-                    }, 
+                    },
                   ),
-                ],
+                ], 
               ),
             ),
             const Divider(height: 1, color: Colors.black12),
-            
+
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
@@ -75,6 +78,6 @@ class CustomDrawer extends StatelessWidget{
           ],
         ),
       ),
-    ); // CORRIGIDO: Adicionado o ponto-e-vírgula no final do return
+    );
   }
 }

@@ -27,7 +27,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           builder: (context) {
             return IconButton(
               icon: SvgPicture.asset(
-                'assets/icons/drawer.svg',
+                'assets/icons/drawerprimario.svg',
                 height: 20,
                 colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn),
               ),
@@ -37,13 +37,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             );
           }
         ),
-        title: const Text(
-          'DASHBOARD',
-          style: TextStyle(
-            color: AppConstants.corPrimaria,
-            fontSize: 20,
-            fontWeight: FontWeight.bold, 
-          ),
+        title: SvgPicture.asset(
+          'assets/icons/logo-softinsa.svg',
+          height: 45,
         ),
         actions: [
           IconButton(
