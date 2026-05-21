@@ -18,6 +18,7 @@ import 'package:pint_mobile/utils/constants.dart';
 // import 'package:pint_mobile/screens/auth/redefinir_password2_screen.dart';
 // import 'package:pint_mobile/screens/auth/configuracao_inicial_screen.dart';
  import 'package:pint_mobile/screens/dashboard/dashboard_screen.dart';
+ import 'package:pint_mobile/screens/perfil/perfil_screen.dart';
 // import 'package:pint_mobile/screens/badges/meus_badges_screen.dart';
 // import 'package:pint_mobile/screens/badges/todos_badges_screen.dart';
 // import 'package:pint_mobile/screens/badges/badges_especiais_screen.dart';
@@ -160,7 +161,7 @@ class MyApp extends StatelessWidget {
       //ECRA INICIAL
       home: estaAutenticado
           ? const PlaceholderScreen(titulo: 'Dashboard') // → DashboardScreen()
-          : const DashboardScreen(),
+          : const Perfil(),
 
  //============================================================================================
       //ROTAS
