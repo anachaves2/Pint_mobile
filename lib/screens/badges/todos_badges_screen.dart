@@ -306,7 +306,7 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
           child: Image.network(
             badge.urlImagem!,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _buildIconeLetra(letra, cor),
+            errorBuilder: (_, _, _) => _buildIconeLetra(letra, cor),
           ),
         ),
       );
