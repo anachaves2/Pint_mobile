@@ -12,9 +12,7 @@ class TodosOsBadges extends StatefulWidget {
 }
 
 class _TodosOsBadgesState extends State<TodosOsBadges> {
-  // Lista completa vinda da BD
   List<BadgeUtilizador> _badges = [];
-  // Lista filtrada pela pesquisa
   List<BadgeUtilizador> _badgesFiltrados = [];
   bool _isLoading = true;
   final TextEditingController _pesquisaController = TextEditingController();
@@ -30,12 +28,13 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
 
   @override
   void dispose() {
-    // Liberta o controller quando o ecrã é destruído — boa prática para evitar memory leaks
     _pesquisaController.dispose();
     super.dispose();
   }
 
   Future<void> _carregarBadges() async {
+    // Carrega os badges do utilizador guardados localmente (SQLite)
+    // Estes são sincronizados com a API no momento do login
     final badges = await DatabaseService.instance.getBadges();
 
     // Filtra apenas badges regulares válidos (sem especiais e sem expirados)
@@ -66,36 +65,8 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
     });
   }
 
-  // Dados fictícios para desenvolvimento (remover quando a BD estiver ligada)
-  List<BadgeUtilizador> get _mockBadges {
-    final agora = DateTime.now();
-    return List.generate(6, (i) {
-      final niveis = ['A', 'B', 'C', 'D', 'E'];
-      final nomesNivel = ['Júnior', 'Intermédio', 'Sénior', 'Especialista', 'Líder de Conhecimento'];
-      final nivel = niveis[i % niveis.length];
-      return BadgeUtilizador(
-        id: i + 1,
-        idUtilizador: 1,
-        idBadgeRegular: i + 1,
-        nomeBadge: 'App Developer',
-        nomeNivel: nomesNivel[i % nomesNivel.length],
-        tipoNivel: nivel,
-        dataAtribuicao: agora.subtract(Duration(days: i * 30)),
-        dataExpiracao: agora.add(const Duration(days: 365)),
-        valido: true,
-        nomeServiceLine: 'Mobile Solutions',
-        nomeArea: 'Mobile Apps',
-      );
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    // Usa dados fictícios se a BD estiver vazia
-    final lista = _badgesFiltrados.isEmpty && !_isLoading && _pesquisaController.text.isEmpty
-        ? _mockBadges
-        : _badgesFiltrados;
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: _buildAppBar(),
@@ -103,23 +74,21 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
           ? const Center(child: CircularProgressIndicator(color: _azulPrimario))
           : Column(
               children: [
-                // Barra de pesquisa fixa no topo
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                   child: _buildBarraPesquisa(),
                 ),
-                // Lista de badges
                 Expanded(
                   child: RefreshIndicator(
                     color: _azulPrimario,
                     onRefresh: _carregarBadges,
-                    child: lista.isEmpty
+                    child: _badgesFiltrados.isEmpty
                         ? _buildEstadoVazio()
                         : ListView.builder(
                             padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                            itemCount: lista.length,
+                            itemCount: _badgesFiltrados.length,
                             itemBuilder: (context, index) =>
-                                _buildBadgeCard(lista[index]),
+                                _buildBadgeCard(_badgesFiltrados[index]),
                           ),
                   ),
                 ),
@@ -190,13 +159,14 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
         decoration: InputDecoration(
           hintText: 'Procura...',
           hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-          prefixIcon: Icon(Icons.search, color: Colors.grey.shade400, size: 20),
+          prefixIcon:
+              Icon(Icons.search, color: Colors.grey.shade400, size: 20),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 10),
-          // Botão para limpar a pesquisa
           suffixIcon: _pesquisaController.text.isNotEmpty
               ? IconButton(
-                  icon: Icon(Icons.clear, size: 18, color: Colors.grey.shade400),
+                  icon: Icon(Icons.clear,
+                      size: 18, color: Colors.grey.shade400),
                   onPressed: () {
                     _pesquisaController.clear();
                     _filtrar('');
@@ -229,7 +199,6 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
 
   Widget _buildBadgeCard(BadgeUtilizador badge) {
     return GestureDetector(
-      // Navega para o detalhe do badge ao clicar no card
       onTap: () => Navigator.pushNamed(
         context,
         '/detalhe-badge-regular',
@@ -271,9 +240,7 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
                     Text(
                       badge.nomeNivel!,
                       style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade500,
-                      ),
+                          fontSize: 12, color: Colors.grey.shade500),
                     ),
                   ],
                   const SizedBox(height: 4),
@@ -357,14 +324,13 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
     );
   }
 
-  // Cor do círculo com base no tipo de nível
   Color _corDoNivel(String? tipoNivel) {
     switch (tipoNivel?.toUpperCase()) {
-      case 'A': return const Color(0xFFF5A623); // laranja — Júnior
-      case 'B': return Colors.grey;              // cinza — Intermédio
-      case 'C': return const Color(0xFF4CAF50);  // verde — Sénior
-      case 'D': return const Color(0xFF0066CC);  // azul — Especialista
-      case 'E': return const Color(0xFF9C27B0);  // roxo — Líder de Conhecimento
+      case 'A': return const Color(0xFFF5A623);
+      case 'B': return Colors.grey;
+      case 'C': return const Color(0xFF4CAF50);
+      case 'D': return const Color(0xFF0066CC);
+      case 'E': return const Color(0xFF9C27B0);
       default:  return const Color(0xFF0066CC);
     }
   }
