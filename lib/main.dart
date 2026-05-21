@@ -182,7 +182,7 @@ class MyApp extends StatelessWidget {
  
         // DASHBOARD
         AppConstants.routeDashboard: (ctx) =>
-            const PlaceholderScreen(titulo: 'Dashboard'),
+            const DashboardScreen(),
  
         // BADGES
         AppConstants.routeMeusBadges: (ctx) =>
