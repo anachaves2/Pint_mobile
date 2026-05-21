@@ -646,7 +646,7 @@ class APIService {
           'idTipoObjetivo': idTipoObjetivo,
           'dataInicio': dataInicio.toIso8601String(),
           'dataFim': dataFim.toIso8601String(),
-          if (idLearningPath != null) 'idLearningPath': idLearningPath,
+          'idLearningPath': ?idLearningPath,
         }),
       );
 
