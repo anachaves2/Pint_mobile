@@ -163,7 +163,10 @@ class MyApp extends StatelessWidget {
 
       //===========================================================================================
       //ECRA INICIAL
-      home: const DefinicoesScreen(),
+      home: estaAutenticado
+          ? const DashboardScreen()
+          : const LandingPageScreen(),
+
       //============================================================================================
       //ROTAS
       routes: {
