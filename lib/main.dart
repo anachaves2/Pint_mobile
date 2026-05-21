@@ -33,7 +33,7 @@ import 'package:pint_mobile/screens/perfil/perfil_screen.dart';
 // import 'package:pint_mobile/screens/gamification/ranking_screen.dart';
 import 'package:pint_mobile/screens/notificacoes/notificacoes_screen.dart';
 import 'package:pint_mobile/screens/notificacoes/detalhe_notificacao_screen.dart';
-// import 'package:pint_mobile/screens/settings/definicoes_screen.dart';
+import 'package:pint_mobile/screens/settings/definicoes_screen.dart';
 
 // ============================================================================
 // MAIN -> Ponto de entrada da aplicação:
@@ -163,10 +163,7 @@ class MyApp extends StatelessWidget {
 
       //===========================================================================================
       //ECRA INICIAL
-      home: estaAutenticado
-          ? const DashboardScreen()
-          : const NotificacoesScreen(),
-
+      home: const DefinicoesScreen(),
       //============================================================================================
       //ROTAS
       routes: {
@@ -232,8 +229,7 @@ class MyApp extends StatelessWidget {
 
         // DEFINIÇÕES / PERFIL
         AppConstants.routePerfil: (ctx) => const Perfil(),
-        AppConstants.routeDefinicoes: (ctx) =>
-            const PlaceholderScreen(titulo: 'Definições'),
+        AppConstants.routeDefinicoes: (ctx) => const DefinicoesScreen(),
       },
     );
   }

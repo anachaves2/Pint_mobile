@@ -788,4 +788,58 @@ class APIService {
       return (sucesso: false, erro: 'Sem ligação ao servidor.');
     }
   }
+
+  // LISTAR ÁREAS DISPONÍVEIS — Definições (ecrã 54)
+
+  Future<List<Map<String, dynamic>>> getAreas() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AppConstants.baseUrl}/areas'),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = jsonDecode(response.body);
+        return jsonList
+            .map((j) => {'id': j['id'] as int, 'nome': j['nome'] as String})
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      print('[APIService] getAreas: sem ligação ($e)');
+      return [];
+    }
+  }
+  
+  // ALTERAR PASSWORD — Definições (ecrã 54)
+
+  Future<({bool sucesso, String? erro})> alterarPassword({
+    required String passwordAtual,
+    required String novaPassword,
+  }) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.put(
+        Uri.parse('${AppConstants.baseUrl}/perfil/password'),
+        headers: headers,
+        body: jsonEncode({
+          'passwordAtual': passwordAtual,
+          'novaPassword': novaPassword,
+        }),
+      );
+      if (response.statusCode == 200) {
+        return (sucesso: true, erro: null);
+      }
+      if (response.statusCode == 401) {
+        return (sucesso: false, erro: 'Password atual incorreta.');
+      }
+      final json = jsonDecode(response.body);
+      return (
+        sucesso: false,
+        erro: json['error'] as String? ?? 'Erro ao alterar password',
+      );
+    } catch (e) {
+      return (sucesso: false, erro: 'Sem ligação ao servidor.');
+    }
+  }
 }

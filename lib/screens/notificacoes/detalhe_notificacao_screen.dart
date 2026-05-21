@@ -154,7 +154,7 @@ class DetalheNotificacaoScreen extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: config.cor.withOpacity(0.12),
+                      color: config.cor.withValues(alpha:0.12),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -267,10 +267,10 @@ class DetalheNotificacaoScreen extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: AppConstants.corPrimaria.withOpacity(0.05),
+            color: AppConstants.corPrimaria.withValues(alpha:0.05),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: AppConstants.corPrimaria.withOpacity(0.2),
+              color: AppConstants.corPrimaria.withValues(alpha:0.2),
             ),
           ),
           child: Row(

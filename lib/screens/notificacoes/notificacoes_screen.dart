@@ -163,10 +163,10 @@ class _NotificacoesScreenState extends State<NotificacoesScreen>
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: n.lida ? Colors.white : AppConstants.corPrimaria.withOpacity(0.04),
+            color: n.lida ? Colors.white : AppConstants.corPrimaria.withValues(alpha:0.04),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: n.lida ? Colors.grey.shade200 : AppConstants.corPrimaria.withOpacity(0.2),
+              color: n.lida ? Colors.grey.shade200 : AppConstants.corPrimaria.withValues(alpha:0.2),
             ),
           ),
           child: Row(
@@ -177,7 +177,7 @@ class _NotificacoesScreenState extends State<NotificacoesScreen>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: config.cor.withOpacity(0.12),
+                  color: config.cor.withValues(alpha:0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(config.icone, color: config.cor, size: 22),
