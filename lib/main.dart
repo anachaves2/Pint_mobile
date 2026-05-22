@@ -34,6 +34,7 @@ import 'package:pint_mobile/screens/perfil/perfil_screen.dart';
 import 'package:pint_mobile/screens/notificacoes/notificacoes_screen.dart';
 import 'package:pint_mobile/screens/notificacoes/detalhe_notificacao_screen.dart';
 import 'package:pint_mobile/screens/settings/definicoes_screen.dart';
+import 'package:pint_mobile/screens/settings/alterar_password_screen.dart';
 
 // ============================================================================
 // MAIN -> Ponto de entrada da aplicação:
@@ -233,6 +234,7 @@ class MyApp extends StatelessWidget {
         // DEFINIÇÕES / PERFIL
         AppConstants.routePerfil: (ctx) => const Perfil(),
         AppConstants.routeDefinicoes: (ctx) => const DefinicoesScreen(),
+        AppConstants.routeAlterarPassword: (ctx) => const AlterarPasswordScreen(),
       },
     );
   }

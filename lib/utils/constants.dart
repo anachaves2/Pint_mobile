@@ -98,4 +98,5 @@ class AppConstants {
   // DEFINIÇÕES / PERFIL
   static const String routePerfil = '/perfil';
   static const String routeDefinicoes = '/definicoes';
+  static const String routeAlterarPassword = '/alterar-password';
 }

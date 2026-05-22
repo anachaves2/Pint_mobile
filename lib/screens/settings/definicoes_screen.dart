@@ -247,7 +247,7 @@ class _DefinicoesScreenState extends State<DefinicoesScreen> {
             label: 'Alterar Password',
             onTap: () => Navigator.pushNamed(
               context,
-              AppConstants.routeRedefinirPassword1,
+              AppConstants.routeAlterarPassword,
             ),
           ),
           const SizedBox(height: 32),
