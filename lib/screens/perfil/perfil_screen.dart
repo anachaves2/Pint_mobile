@@ -202,9 +202,9 @@ class _PerfilState extends State<Perfil> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
       decoration: BoxDecoration(
-        border: Border.all(color: cor.withOpacity(0.4)),
+        border: Border.all(color: cor.withValues(alpha: 0.4)),
         borderRadius: BorderRadius.circular(20),
-        color: cor.withOpacity(0.07),
+        color: cor.withValues(alpha: 0.07),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
