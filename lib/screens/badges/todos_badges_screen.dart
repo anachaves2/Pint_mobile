@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pint_mobile/models/badge_utilizador.dart';
 import 'package:pint_mobile/services/database_service.dart';
+import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+
+// ECRÃ TODOS OS BADGES
+// Lista completa de badges regulares válidos do consultor autenticado
+// Acessível a partir do botão "VER TODOS" da secção Recentes do ecrã Os Meus Badges
+// Tem pesquisa em tempo real por nome, nível, área e service line
+// Ao clicar num badge navega para o ecrã de detalhe (DetalhesBadgeRegular)
 
 class TodosOsBadges extends StatefulWidget {
   const TodosOsBadges({super.key});
@@ -12,8 +19,8 @@ class TodosOsBadges extends StatefulWidget {
 }
 
 class _TodosOsBadgesState extends State<TodosOsBadges> {
-  List<BadgeUtilizador> _badges = [];
-  List<BadgeUtilizador> _badgesFiltrados = [];
+  List<BadgeUtilizador> _badges = [];          // lista completa de badges regulares válidos
+  List<BadgeUtilizador> _badgesFiltrados = []; // lista filtrada pela pesquisa
   bool _isLoading = true;
   final TextEditingController _pesquisaController = TextEditingController();
 
@@ -26,18 +33,19 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
     _carregarBadges();
   }
 
+  // Liberta o controller quando o ecrã é destruído — evita memory leaks
   @override
   void dispose() {
     _pesquisaController.dispose();
     super.dispose();
   }
 
+  // Lê os badges do SQLite e filtra apenas os regulares válidos
+  // Ordenados do mais recente para o mais antigo
   Future<void> _carregarBadges() async {
-    // Carrega os badges do utilizador guardados localmente (SQLite)
-    // Estes são sincronizados com a API no momento do login
     final badges = await DatabaseService.instance.getBadges();
 
-    // Filtra apenas badges regulares válidos (sem especiais e sem expirados)
+    // Filtra badges regulares (sem especiais) e não expirados
     final regulares = badges
         .where((b) => b.idBadgeEspecial == null && !b.jaExpirou)
         .toList()
@@ -52,7 +60,14 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
     }
   }
 
-  // Filtra a lista com base no texto de pesquisa
+  // Pull to refresh: sincroniza com a API e relê do SQLite
+  Future<void> _refresh() async {
+    await APIService.instance.sincronizarBadges();
+    await _carregarBadges();
+  }
+
+  // Filtra a lista em tempo real conforme o texto digitado
+  // Pesquisa por nome do badge, nível, área e service line
   void _filtrar(String texto) {
     final query = texto.toLowerCase();
     setState(() {
@@ -71,7 +86,8 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
       backgroundColor: Colors.white,
       appBar: _buildAppBar(),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: _azulPrimario))
+          ? const Center(
+              child: CircularProgressIndicator(color: _azulPrimario))
           : Column(
               children: [
                 Padding(
@@ -81,11 +97,13 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
                 Expanded(
                   child: RefreshIndicator(
                     color: _azulPrimario,
-                    onRefresh: _carregarBadges,
+                    onRefresh: _refresh,
+                    // Mostra estado vazio ou a lista filtrada
                     child: _badgesFiltrados.isEmpty
                         ? _buildEstadoVazio()
                         : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                            padding:
+                                const EdgeInsets.fromLTRB(16, 4, 16, 16),
                             itemCount: _badgesFiltrados.length,
                             itemBuilder: (context, index) =>
                                 _buildBadgeCard(_badgesFiltrados[index]),
@@ -97,6 +115,7 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
     );
   }
 
+  // AppBar com ícones SVG na cor primária da Softinsa
   AppBar _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.white,
@@ -108,9 +127,7 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
             width: 24,
             height: 24,
             colorFilter: const ColorFilter.mode(
-              AppConstants.corPrimaria,
-              BlendMode.srcIn,
-            ),
+                AppConstants.corPrimaria, BlendMode.srcIn),
           ),
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
@@ -132,9 +149,7 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
             width: 24,
             height: 24,
             colorFilter: const ColorFilter.mode(
-              AppConstants.corPrimaria,
-              BlendMode.srcIn,
-            ),
+                AppConstants.corPrimaria, BlendMode.srcIn),
           ),
           onPressed: () => Navigator.pushNamed(context, '/notificacoes'),
         ),
@@ -146,6 +161,8 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
     );
   }
 
+  // Barra de pesquisa com filtro em tempo real
+  // O botão X aparece apenas quando há texto escrito e limpa a pesquisa
   Widget _buildBarraPesquisa() {
     return Container(
       height: 40,
@@ -163,6 +180,7 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
               Icon(Icons.search, color: Colors.grey.shade400, size: 20),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          // Botão para limpar a pesquisa — só aparece quando há texto
           suffixIcon: _pesquisaController.text.isNotEmpty
               ? IconButton(
                   icon: Icon(Icons.clear,
@@ -178,6 +196,8 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
     );
   }
 
+  // Estado vazio — mensagem diferente conforme seja pesquisa sem resultados
+  // ou utilizador sem badges conquistados
   Widget _buildEstadoVazio() {
     return Center(
       child: Column(
@@ -197,12 +217,14 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
     );
   }
 
+  // Card de badge com ícone, nome, nível e datas
+  // Ao clicar navega para o ecrã de detalhe passando o badge como argumento
   Widget _buildBadgeCard(BadgeUtilizador badge) {
     return GestureDetector(
       onTap: () => Navigator.pushNamed(
         context,
         '/detalhe-badge-regular',
-        arguments: badge,
+        arguments: badge, // passa o objeto badge completo para o ecrã de detalhe
       ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
@@ -244,7 +266,21 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
                     ),
                   ],
                   const SizedBox(height: 4),
-                  _buildDatas(badge),
+                  Text(
+                    'Conquistado: ${_formatarData(badge.dataAtribuicao)}',
+                    style: TextStyle(
+                        fontSize: 11, color: Colors.grey.shade500),
+                  ),
+                  Text(
+                    'Válido até: ${_formatarData(badge.dataExpiracao)}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      // data a laranja se está próximo de expirar (< 30 dias)
+                      color: badge.estaProximoDeExpirar
+                          ? Colors.orange.shade400
+                          : Colors.grey.shade500,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -255,12 +291,13 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
     );
   }
 
+  // Ícone circular com a letra do nível ou imagem do badge
+  // Se tiver urlImagem carrega da internet com fallback para a letra
   Widget _buildIconeBadge(BadgeUtilizador badge) {
     final cor = _corDoNivel(badge.tipoNivel);
     final letra = badge.tipoNivel?.isNotEmpty == true
         ? badge.tipoNivel![0].toUpperCase()
         : '?';
-
     if (badge.urlImagem != null) {
       return Container(
         width: 44,
@@ -270,17 +307,15 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
           border: Border.all(color: cor, width: 2),
         ),
         child: ClipOval(
-          child: Image.network(
-            badge.urlImagem!,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => _buildIconeLetra(letra, cor),
-          ),
+          child: Image.network(badge.urlImagem!, fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _buildIconeLetra(letra, cor)),
         ),
       );
     }
     return _buildIconeLetra(letra, cor);
   }
 
+  // Círculo com a letra do nível
   Widget _buildIconeLetra(String letra, Color cor) {
     return Container(
       width: 44,
@@ -294,47 +329,30 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
         child: Text(
           letra,
           style: TextStyle(
-            color: cor,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
+              color: cor, fontWeight: FontWeight.bold, fontSize: 16),
         ),
       ),
     );
   }
 
-  Widget _buildDatas(BadgeUtilizador badge) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Conquistado: ${_formatarData(badge.dataAtribuicao)}',
-          style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-        ),
-        Text(
-          'Válido até: ${_formatarData(badge.dataExpiracao)}',
-          style: TextStyle(
-            fontSize: 11,
-            color: badge.estaProximoDeExpirar
-                ? Colors.orange.shade400
-                : Colors.grey.shade500,
-          ),
-        ),
-      ],
-    );
-  }
-
+  // Cor do círculo com base no tipo de nível (campo TIPO da tabela NIVEL)
   Color _corDoNivel(String? tipoNivel) {
     switch (tipoNivel?.toUpperCase()) {
-      case 'A': return const Color(0xFFF5A623);
-      case 'B': return Colors.grey;
-      case 'C': return const Color(0xFF4CAF50);
-      case 'D': return const Color(0xFF0066CC);
-      case 'E': return const Color(0xFF9C27B0);
-      default:  return const Color(0xFF0066CC);
+      case 'A':
+      case 'JN': return const Color(0xFFF5A623); // laranja — Júnior
+      case 'B':
+      case 'IN': return Colors.grey;              // cinza — Intermédio
+      case 'C':
+      case 'SN': return const Color(0xFF4CAF50);  // verde — Sénior
+      case 'D':
+      case 'EP': return const Color(0xFF0066CC);  // azul — Especialista
+      case 'E':
+      case 'LD': return const Color(0xFF9C27B0);  // roxo — Líder de Conhecimento
+      default:   return const Color(0xFF0066CC);
     }
   }
 
+  // Formata uma data DateTime para o formato DD-MM-AAAA
   String _formatarData(DateTime data) {
     return '${data.day.toString().padLeft(2, '0')}-'
         '${data.month.toString().padLeft(2, '0')}-'

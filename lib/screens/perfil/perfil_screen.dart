@@ -5,6 +5,10 @@ import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 
+//Ecrã do Perfil
+//Mostra os dados pessoais do consultor que está autenticado
+//Os dados são lidos do SQLite local
+
 class Perfil extends StatefulWidget {
   const Perfil({super.key});
 
@@ -16,11 +20,13 @@ class _PerfilState extends State<Perfil> {
   Consultor? _consultor;
   bool _isLoading = true;
 
+//Cores do ecrã (usam sempre a cor primária definida nas constantes globais)
   static const Color _azulPrimario = AppConstants.corPrimaria;
   static const Color _azulClaro = Color(0xFFE8F0FB);
   static const Color _cinzaTexto = Color(0xFF555555);
   static const Color _cinzaClaro = Color(0xFFF5F5F5);
 
+//carrega os dados assim que o ecrã é criado
   @override
   void initState() {
     super.initState();
@@ -39,7 +45,7 @@ class _PerfilState extends State<Perfil> {
     }
   }
 
-  // Atualiza o perfil na API e reflete no SQLite
+  //Envia as alterações do perfil à API e atualiza o SQLite local
   Future<void> _atualizarPerfil(Consultor atualizado) async {
     setState(() => _isLoading = true);
     final resultado = await APIService.instance.atualizarPerfil(atualizado);
@@ -101,6 +107,7 @@ class _PerfilState extends State<Perfil> {
     );
   }
 
+//Appbar com icones SVG na cor primária
   AppBar _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.white,
@@ -150,6 +157,8 @@ class _PerfilState extends State<Perfil> {
     );
   }
 
+//Ecrã de erro quando o SQlite não tem os dados do utilizador
+//Acontece se o utilizador ainda não fez o login ou se o login falhou
   Widget _buildErro() {
     return Center(
       child: Column(
@@ -171,6 +180,8 @@ class _PerfilState extends State<Perfil> {
     );
   }
 
+//Foto de perfil circular
+//Se o consultor não tiver foto (urlFoto == null), mostra o ícone genérico de utilizador
   Widget _buildFotoPerfil() {
     return CircleAvatar(
       radius: 48,
@@ -184,6 +195,7 @@ class _PerfilState extends State<Perfil> {
     );
   }
 
+//Nome do utilizador juntamente com o "Consultor"
   Widget _buildNomeECargo() {
     return Column(
       children: [
@@ -217,6 +229,10 @@ class _PerfilState extends State<Perfil> {
     );
   }
 
+//Posição no ranking e total de pontos
+//Os valores vêm do campo totalPontos e posicao Ranking do modelo consultor
+//São calculados pela API com base na tabela Pontuacao
+//Se não houver dados, mostra posição a "---" e 0 pontos
   Widget _buildRankingEPontos() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -267,6 +283,8 @@ class _PerfilState extends State<Perfil> {
     );
   }
 
+//Secção de informações pessoais do consultor
+//Email, telefone, linkedIn, URL pública e área
   Widget _buildSecaoInformacoes() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,6 +342,7 @@ class _PerfilState extends State<Perfil> {
     );
   }
 
+//Linha individual de informação com icone e texto
   Widget _buildLinhaInfo({
     required IconData icon,
     required String texto,
@@ -360,6 +379,7 @@ class _PerfilState extends State<Perfil> {
     );
   }
 
+//linha divisória entre as linhas de informação
   Widget _buildDivisor() {
     return Divider(
       height: 1,
@@ -370,6 +390,8 @@ class _PerfilState extends State<Perfil> {
     );
   }
 
+//Data em que o consultor se registou na plataforma
+// DD-MM-AAAA
   Widget _buildMembroDesde() {
     final data = _consultor!.dataMembro;
     final dataFormatada =
@@ -388,6 +410,7 @@ class _PerfilState extends State<Perfil> {
     );
   }
 
+//Botão que navega para o ecrã de Definições
   Widget _buildBotaoDefinicoes() {
     return SizedBox(
       width: double.infinity,
