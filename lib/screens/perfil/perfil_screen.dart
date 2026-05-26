@@ -4,6 +4,7 @@ import 'package:pint_mobile/models/consultor.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/widgets/custom_drawer.dart';
 
 //Ecrã do Perfil
 //Mostra os dados pessoais do consultor que está autenticado
@@ -68,6 +69,7 @@ class _PerfilState extends State<Perfil> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      drawer: const CustomDrawer(),
       appBar: _buildAppBar(),
       body: _isLoading
           ? const Center(

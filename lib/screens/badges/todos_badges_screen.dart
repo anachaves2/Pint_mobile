@@ -4,6 +4,7 @@ import 'package:pint_mobile/models/badge_utilizador.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/widgets/custom_drawer.dart';
 
 // ECRÃ TODOS OS BADGES
 // Lista completa de badges regulares válidos do consultor autenticado
@@ -84,6 +85,7 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      drawer: const CustomDrawer(),
       appBar: _buildAppBar(),
       body: _isLoading
           ? const Center(
