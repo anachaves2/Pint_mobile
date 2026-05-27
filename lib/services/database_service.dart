@@ -245,6 +245,13 @@ class DatabaseService {
         descricao TEXT
       )
     ''');
+
+    // Tabela de notificações lidas offline (pendentes de sync)
+    await db.execute('''
+      CREATE TABLE ${AppConstants.tableNotificacoesPendentes} (
+        id INTEGER PRIMARY KEY
+      )
+    '''); 
   }
 
   // função chamada para atualizar a versão da base de dados caso sejam feitas alterações
@@ -646,9 +653,16 @@ Future<void> deleteCandidaturas() async {
 
   Future<void> saveNotificacoes(List<Notificacao> notificacoes) async {
     final db = await database;
+ 
+    // IDs que estão pendentes de sync (lidas offline)
+    final pendentes = await db.query(AppConstants.tableNotificacoesPendentes);
+    final idsPendentes = pendentes.map((r) => r['id'] as int).toSet();
+ 
     await db.transaction((txn) async {
-      await txn.delete(AppConstants.tableNotificacoesCache);
       for (final n in notificacoes) {
+        // Se foi marcada como lida offline, preserva o lida=true mesmo que o backend ainda devolva lida=false
+        final lidaFinal = idsPendentes.contains(n.id) ? true : n.lida;
+ 
         await txn.insert(
           AppConstants.tableNotificacoesCache,
           {
@@ -656,7 +670,7 @@ Future<void> deleteCandidaturas() async {
             'tipoNotificacao': n.tipoNotificacao,
             'descricao': n.descricao,
             'data': n.data.toIso8601String(),
-            'lida': n.lida ? 1 : 0,
+            'lida': lidaFinal ? 1 : 0,
             'numCandidatura': n.numCandidatura,
             'idObjetivo': n.idObjetivo,
             'idBadgeUtilizador': n.idBadgeUtilizador,
@@ -687,11 +701,38 @@ Future<void> deleteCandidaturas() async {
     )).toList();
   }
 
-  Future<void> markAsRead(int idNotificacao) async {
+  Future<void> marcarLidaLocal(int idNotificacao) async {
     final db = await database;
     await db.update(
       AppConstants.tableNotificacoesCache,
       {'lida': 1},
+      where: 'id = ?',
+      whereArgs: [idNotificacao],
+    );
+  }
+
+  // Guarda uma notificação como pendente de sync (lida offline)
+  Future<void> adicionarNotificacaoPendente(int idNotificacao) async {
+    final db = await database;
+    await db.insert(
+      AppConstants.tableNotificacoesPendentes,
+      {'id': idNotificacao},
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+  }
+ 
+  // Devolve todos os IDs pendentes de sync
+  Future<List<int>> getNotificacoesPendentes() async {
+    final db = await database;
+    final maps = await db.query(AppConstants.tableNotificacoesPendentes);
+    return maps.map((r) => r['id'] as int).toList();
+  }
+ 
+  // Remove um ID da fila de pendentes (após sync bem sucedido)
+  Future<void> removerNotificacaoPendente(int idNotificacao) async {
+    final db = await database;
+    await db.delete(
+      AppConstants.tableNotificacoesPendentes,
       where: 'id = ?',
       whereArgs: [idNotificacao],
     );

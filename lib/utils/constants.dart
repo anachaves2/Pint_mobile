@@ -94,7 +94,8 @@ class AppConstants {
   // NOTIFICAÇÕES
   static const String routeNotificacoes = '/notificacoes';
   static const String routeDetalheNotificacao = '/notificacoes/detalhe';
-
+  static const String tableNotificacoesPendentes = 'notificacoes_pendentes_lidas';
+  
   // DEFINIÇÕES / PERFIL
   static const String routePerfil = '/perfil';
   static const String routeDefinicoes = '/definicoes';
