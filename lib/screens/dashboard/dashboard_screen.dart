@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pint_mobile/utils/constants.dart';
@@ -17,29 +18,43 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  // Dados carregados do SQLite
   Consultor? _consultor;
   List<BadgeUtilizador> _badges = [];
   List<BadgeRegular> _catalogoBadges = [];
   List<Notificacao> _notificacoes = [];
-
   bool _isLoading = true;
+
+  // CORREÇÃO 1: StreamSubscription para reagir a sincronizações em background
+  StreamSubscription? _subDados;
 
   @override
   void initState() {
     super.initState();
     _carregarDados();
+
+    // CORREÇÃO 1: Liga-se ao stream global do APIService
+    // Sempre que o APIService terminar uma sincronização, recarrega a UI
+    _subDados = atualizadorDados.stream.listen((_) {
+      _carregarDados();
+    });
   }
 
-  // Carrega dados do SQLite (já sincronizados pelo main.dart)
-  // e dispara nova sincronização em background
-  Future<void> _carregarDados() async {
-    setState(() => _isLoading = true);
+  // CORREÇÃO 1: Cancelar a subscrição ao sair do ecrã (evita memory leaks)
+  @override
+  void dispose() {
+    _subDados?.cancel();
+    super.dispose();
+  }
 
-    // Sincroniza em background sem bloquear a UI
+  Future<void> _carregarDados() async {
+    // Só mostra o spinner na primeira carga
+    if (_consultor == null) {
+      setState(() => _isLoading = true);
+    }
+
+    // Sincroniza em background — o stream vai notificar quando acabar
     APIService.instance.sincronizarTodos();
 
-    // Lê do SQLite local
     final consultor = await DatabaseService.instance.getUser();
     final badges = await DatabaseService.instance.getBadges();
     final catalogo = await DatabaseService.instance.getCatalogoBadges();
@@ -56,13 +71,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  // Contadores para as Ações Rápidas
   int get _totalBadges => _badges.where((b) => b.valido).length;
   int get _totalEspeciais => _badges.where((b) => b.idBadgeEspecial != null && b.valido).length;
   int get _totalPontos => _badges.fold(0, (sum, b) => sum + (b.pontos ?? 0));
   int get _notificacoesNaoLidas => _notificacoes.where((n) => !n.lida).length;
 
-  // Badges recomendados = do catálogo que ainda não tem
   List<BadgeRegular> get _badgesRecomendados {
     final idsConquistados = _badges
         .where((b) => b.idBadgeRegular != null)
@@ -190,30 +203,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildAcaoRapida(
-                icon: Icons.military_tech,
-                label: 'BADGES',
-                valor: '$_totalBadges',
-                rota: AppConstants.routeMeusBadges,
-              ),
-              _buildAcaoRapida(
-                icon: Icons.star,
-                label: 'ESPECIAIS',
-                valor: '$_totalEspeciais',
-                rota: AppConstants.routeBadgesEspeciais,
-              ),
-              _buildAcaoRapida(
-                icon: Icons.description_outlined,
-                label: 'PEDIDOS',
-                valor: '0',
-                rota: AppConstants.routeCandidaturas,
-              ),
-              _buildAcaoRapida(
-                icon: Icons.emoji_events_outlined,
-                label: 'PONTOS',
-                valor: '$_totalPontos',
-                rota: AppConstants.routeGamification,
-              ),
+              _buildAcaoRapida(icon: Icons.military_tech, label: 'BADGES', valor: '$_totalBadges', rota: AppConstants.routeMeusBadges),
+              _buildAcaoRapida(icon: Icons.star, label: 'ESPECIAIS', valor: '$_totalEspeciais', rota: AppConstants.routeBadgesEspeciais),
+              _buildAcaoRapida(icon: Icons.description_outlined, label: 'PEDIDOS', valor: '0', rota: AppConstants.routeCandidaturas),
+              _buildAcaoRapida(icon: Icons.emoji_events_outlined, label: 'PONTOS', valor: '$_totalPontos', rota: AppConstants.routeGamification),
             ],
           ),
         ],
@@ -221,12 +214,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildAcaoRapida({
-    required IconData icon,
-    required String label,
-    required String valor,
-    required String rota,
-  }) {
+  Widget _buildAcaoRapida({required IconData icon, required String label, required String valor, required String rota}) {
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, rota),
       child: Column(
@@ -270,9 +258,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _buildProgressCard(
             icon: Icons.emoji_events_outlined,
             titulo: 'RANKING GAMIFICATION',
-            subtitulo: _consultor?.posicaoRanking != null
-                ? '${_consultor!.posicaoRanking}º lugar'
-                : 'Sem dados',
+            subtitulo: _consultor?.posicaoRanking != null ? '${_consultor!.posicaoRanking}º lugar' : 'Sem dados',
             progresso: 0.6,
             onTap: () => Navigator.pushNamed(context, AppConstants.routeRanking),
           ),
@@ -281,13 +267,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildProgressCard({
-    required IconData icon,
-    required String titulo,
-    required String subtitulo,
-    required double progresso,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildProgressCard({required IconData icon, required String titulo, required String subtitulo, required double progresso, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -301,10 +281,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppConstants.corPrimaria.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
+              decoration: BoxDecoration(color: AppConstants.corPrimaria.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
               child: Icon(icon, color: AppConstants.corPrimaria, size: 24),
             ),
             const SizedBox(width: 12),
@@ -336,7 +313,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // ─── Gamification ─────────────────────────────────────────
   Widget _buildGamificationSection() {
-    // Top 3 badges por pontos (simulando ranking)
     final topBadges = List<BadgeUtilizador>.from(_badges)
       ..sort((a, b) => (b.pontos ?? 0).compareTo(a.pontos ?? 0));
     final top3 = topBadges.take(3).toList();
@@ -346,10 +322,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'GAMIFICATION',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1),
-          ),
+          const Text('GAMIFICATION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1)),
           const SizedBox(height: 8),
           ...List.generate(top3.length, (i) => _buildRankingItem(top3[i], i + 1)),
           if (top3.isEmpty)
@@ -385,25 +358,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: Colors.grey[200],
-            child: const Icon(Icons.person, color: Colors.grey, size: 20),
-          ),
+          CircleAvatar(radius: 18, backgroundColor: Colors.grey[200], child: const Icon(Icons.person, color: Colors.grey, size: 20)),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(badge.nomeBadge ?? 'Badge', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                Text(badge.nomeBadge, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
                 Text('${badge.pontos ?? 0} pontos', style: const TextStyle(fontSize: 11, color: Colors.grey)),
               ],
             ),
           ),
-          Text(
-            '$posicaoº',
-            style: TextStyle(fontWeight: FontWeight.bold, color: cores[posicao - 1], fontSize: 16),
-          ),
+          Text('$posicaoº', style: TextStyle(fontWeight: FontWeight.bold, color: cores[posicao - 1], fontSize: 16)),
         ],
       ),
     );
@@ -416,10 +382,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'BADGES RECOMENDADOS',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1),
-          ),
+          const Text('BADGES RECOMENDADOS', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1)),
           const SizedBox(height: 8),
           ..._badgesRecomendados.map((badge) => _buildBadgeRecomendadoItem(badge)),
           if (_badgesRecomendados.isEmpty)
@@ -455,12 +418,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.orange[100],
-              borderRadius: BorderRadius.circular(8),
-            ),
+            width: 40, height: 40,
+            decoration: BoxDecoration(color: Colors.orange[100], borderRadius: BorderRadius.circular(8)),
             child: const Icon(Icons.military_tech, color: Colors.orange, size: 24),
           ),
           const SizedBox(width: 12),
@@ -475,10 +434,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           Column(
             children: [
-              Text(
-                '${badge.pontos ?? 0}',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: AppConstants.corPrimaria),
-              ),
+              Text('${badge.pontos ?? 0}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppConstants.corPrimaria)),
               const Text('Requisitos', style: TextStyle(fontSize: 10, color: Colors.grey)),
             ],
           ),

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/services/database_service.dart';
@@ -24,6 +25,8 @@ import 'package:pint_mobile/models/estados_candidatura.dart';
 //   Os métodos de sincronização fazem GET à API e guardam no SQLite
 //   A UI lê sempre do SQLite, nunca directamente da API
 //Os nomes dos campos JSON que a API deve devolver estão definidos nos fromJson de cada modelo
+//um Stream Controller global, acessível de qualquer menu
+final StreamController<void> atualizadorDados = StreamController<void>.broadcast();
 
 //SINGLETON - > garante que só há uma instancia da API
 class APIService {

@@ -10,7 +10,7 @@ import 'package:pint_mobile/utils/constants.dart';
 //EXEMPLO:
 import 'package:pint_mobile/screens/auth/landing_page_screen.dart';
 import 'package:pint_mobile/screens/auth/login_screen.dart';
-// import 'package:pint_mobile/screens/auth/recuperar_password_screen.dart';
+import 'package:pint_mobile/screens/auth/recuperar_password_screen.dart';
 // import 'package:pint_mobile/screens/auth/redefinir_password1_screen5.dart';
 // import 'package:pint_mobile/screens/auth/login_screen.dart';
 // import 'package:pint_mobile/screens/auth/recuperar_password_screen.dart';
@@ -175,8 +175,7 @@ class MyApp extends StatelessWidget {
         // AUTH
         AppConstants.routeLanding: (ctx) => const LandingPageScreen(),
         AppConstants.routeLogin: (ctx) => const LoginScreen(),
-        AppConstants.routeRecuperarPassword: (ctx) =>
-            const PlaceholderScreen(titulo: 'Recuperar Password'),
+        AppConstants.routeRecuperarPassword: (ctx) => const RecuperarPasswordScreen(),
         AppConstants.routeRedefinirPassword1: (ctx) =>
             const PlaceholderScreen(titulo: 'Verificar Código'),
         AppConstants.routeRedefinirPassword2: (ctx) =>
