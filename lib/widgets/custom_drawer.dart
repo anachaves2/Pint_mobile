@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart'; 
 import 'package:pint_mobile/utils/constants.dart';
-import 'package:pint_mobile/services/api_service.dart'; // Faltava este import para poder fazer o logout!
+import 'package:pint_mobile/services/api_service.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
 
   // Adicionámos o parâmetro opcional onTapOverride
-  Widget _buildMenuItem(BuildContext context, String title, String routeName, {IconData? leadingIcon, VoidCallback? onTapOverride}) {
+  Widget _buildMenuItem(BuildContext context, String title, String routeName, {VoidCallback? onTapOverride}) {
     return Column(
       children: [
         ListTile(
@@ -27,7 +27,7 @@ class CustomDrawer extends StatelessWidget {
             // Comportamento normal se não houver um onTapOverride
             Navigator.pop(context); // Fecha o Drawer
             if (routeName.isNotEmpty) {
-              Navigator.pushNamed(context, routeName);
+              Navigator.pushReplacementNamed(context, routeName); // Mantém o Replacement!
             }
           },
         ),
@@ -81,21 +81,19 @@ class CustomDrawer extends StatelessWidget {
                   
                   _buildMenuItem(context, 'O Meu Perfil', AppConstants.routePerfil),
                   
-                  // ---> CORREÇÃO AQUI <---
-                  // Passamos a lógica real de logout para o onTapOverride
+                  // LOGOUT CORRIGIDO
                   _buildMenuItem(
                     context, 
                     'Terminar Sessão', 
-                    '', // A rota vazia porque vamos forçar a navegação no onTapOverride
+                    '', 
                     onTapOverride: () async {
-                      Navigator.pop(context); // 1. Fecha o drawer
-                      await APIService.instance.logout(); // 2. Limpa o token e a BD local
+                      Navigator.pop(context); 
+                      await APIService.instance.logout(); 
                       if (context.mounted) {
-                        // 3. Limpa a pilha toda e vai para a página principal (Landing ou Login)
                         Navigator.pushNamedAndRemoveUntil(
                           context,
-                          AppConstants.routeLanding, 
-                          (route) => false, // Remove tudo para trás
+                          AppConstants.routeLogin, // Mudado de routeLanding para routeLogin
+                          (route) => false, 
                         );
                       }
                     }
