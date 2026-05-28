@@ -445,6 +445,22 @@ class APIService {
   Future<void> sincronizarNotificacoes() async {
     try {
       final headers = await _getHeaders();
+
+      // 1. Sincronizar pendentes de lida (lidas offline)
+      final pendentes = await DatabaseService.instance.getNotificacoesPendentes();
+      for (final id in pendentes) {
+        try {
+          final r = await http.put(
+            Uri.parse('${AppConstants.baseUrl}/notificacoes/$id/lida'),
+            headers: headers,
+          );
+          if (r.statusCode == 200) {
+            await DatabaseService.instance.removerNotificacaoPendente(id);
+          }
+        } catch (_) {}
+      }
+
+      // 2. Buscar notificações atualizadas do servidor
       final response = await http.get(
         Uri.parse('${AppConstants.baseUrl}/notificacoes'),
         headers: headers,
@@ -452,9 +468,7 @@ class APIService {
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = jsonDecode(response.body);
-        final notificacoes = jsonList
-            .map((j) => Notificacao.fromJson(j))
-            .toList();
+        final notificacoes = jsonList.map((j) => Notificacao.fromJson(j)).toList();
         await DatabaseService.instance.saveNotificacoes(notificacoes);
       }
     } catch (e) {
@@ -727,7 +741,7 @@ class APIService {
   }
 
   //=========================================================
-  //LIMINAR NOTIFICAÇÃO - Escrãs 48 - 52
+  //ELIMINAR NOTIFICAÇÃO/MARCAR COMO LIDA - Escrãs 48 - 52
 
   Future<({bool sucesso, String? erro})> eliminarNotificacao(
     int idNotificacao,
@@ -754,6 +768,26 @@ class APIService {
       return (sucesso: false, erro: 'Sem ligação ao servidor.');
     }
   }
+
+  Future<void> marcarNotificacaoLida(int idNotificacao) async {
+  await DatabaseService.instance.marcarLidaLocal(idNotificacao);
+
+  try {
+    final headers = await _getHeaders();
+    final response = await http.put(
+      Uri.parse('${AppConstants.baseUrl}/notificacoes/$idNotificacao/lida'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      await DatabaseService.instance.removerNotificacaoPendente(idNotificacao);
+    } else {
+      await DatabaseService.instance.adicionarNotificacaoPendente(idNotificacao);
+    }
+  } catch (_) {
+    await DatabaseService.instance.adicionarNotificacaoPendente(idNotificacao);
+  }
+}
 
   //==============================================================
   //ACTUALIZAR PERFIL - Ecrã 54

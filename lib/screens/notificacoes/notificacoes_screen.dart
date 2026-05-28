@@ -71,7 +71,7 @@ class _NotificacoesScreenState extends State<NotificacoesScreen>
   // Marca como lida no SQLite local e atualiza a UI
   Future<void> _marcarComoLida(Notificacao n) async {
     if (n.lida) return;
-    await DatabaseService.instance.markAsRead(n.id);
+    await APIService.instance.marcarNotificacaoLida(n.id);
     setState(() {
       final idx = _todas.indexWhere((x) => x.id == n.id);
       if (idx != -1) {

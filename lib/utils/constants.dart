@@ -8,8 +8,7 @@ class AppConstants {
   //=========================================
   //API
 
-  static const String baseUrl =
-      'http://10.0.2.2:3001/api'; // URL base da API REST
+  static const String baseUrl = 'http://10.0.2.2:3001/api'; // URL base da API REST
   static const int intervalSincronizacaoMinutos =
       5; // psra sincronizar dados periodicamente
 
@@ -94,7 +93,8 @@ class AppConstants {
   // NOTIFICAÇÕES
   static const String routeNotificacoes = '/notificacoes';
   static const String routeDetalheNotificacao = '/notificacoes/detalhe';
-
+  static const String tableNotificacoesPendentes = 'notificacoes_pendentes_lidas';
+  
   // DEFINIÇÕES / PERFIL
   static const String routePerfil = '/perfil';
   static const String routeDefinicoes = '/definicoes';
