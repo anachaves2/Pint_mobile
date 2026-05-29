@@ -493,6 +493,7 @@ class APIService {
       sincronizarTiposObjetivo(),
       sincronizarEstados(),
     ]);
+    atualizadorDados.add(null); // Notifica a UI para actualizar os dados
   }
 
   //=======================================================

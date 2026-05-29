@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart'; 
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/services/api_service.dart';
-
+ 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
-
-  // Adicionámos o parâmetro opcional onTapOverride
+ 
   Widget _buildMenuItem(BuildContext context, String title, String routeName, {VoidCallback? onTapOverride}) {
     return Column(
       children: [
@@ -24,10 +23,9 @@ class CustomDrawer extends StatelessWidget {
             color: Color.fromARGB(255, 32, 32, 32),
           ),
           onTap: onTapOverride ?? () {
-            // Comportamento normal se não houver um onTapOverride
-            Navigator.pop(context); // Fecha o Drawer
+            Navigator.pop(context);
             if (routeName.isNotEmpty) {
-              Navigator.pushReplacementNamed(context, routeName); // Mantém o Replacement!
+              Navigator.pushReplacementNamed(context, routeName);
             }
           },
         ),
@@ -35,7 +33,43 @@ class CustomDrawer extends StatelessWidget {
       ],
     );
   }
-
+ 
+  Future<void> _terminarSessao(BuildContext context) async {
+    // Fecha o drawer primeiro
+    Navigator.pop(context);
+ 
+    // Mostra o popup de confirmação
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Terminar sessão'),
+        content: const Text('Pretende terminar a sua sessão?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppConstants.corPrimaria,
+            ),
+            child: const Text('Terminar sessão', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+ 
+    if (confirmar == true) {
+      await APIService.instance.logout();
+      navigator.pushNamedAndRemoveUntil(
+        AppConstants.routeLanding,
+        (route) => false,
+      );
+    }
+  }
+ 
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -43,7 +77,7 @@ class CustomDrawer extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            // CABEÇALHO BRANCO
+            // CABEÇALHO
             Container(
               color: Colors.white, 
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -56,15 +90,13 @@ class CustomDrawer extends StatelessWidget {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close, color: Color.fromARGB(255, 0, 0, 0)), 
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ], 
               ),
             ),
             const Divider(height: 1, color: Colors.black12),
-
+ 
             // LISTA DE ITENS
             Expanded(
               child: ListView(
@@ -78,25 +110,14 @@ class CustomDrawer extends StatelessWidget {
                   _buildMenuItem(context, 'Gamification', AppConstants.routeGamification),
                   _buildMenuItem(context, 'Notificações', AppConstants.routeNotificacoes),
                   _buildMenuItem(context, 'Definições', AppConstants.routeDefinicoes),
-                  
                   _buildMenuItem(context, 'O Meu Perfil', AppConstants.routePerfil),
-                  
-                  // LOGOUT CORRIGIDO
+ 
+                  // LOGOUT
                   _buildMenuItem(
-                    context, 
-                    'Terminar Sessão', 
-                    '', 
-                    onTapOverride: () async {
-                      Navigator.pop(context); 
-                      await APIService.instance.logout(); 
-                      if (context.mounted) {
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          AppConstants.routeLogin, // Mudado de routeLanding para routeLogin
-                          (route) => false, 
-                        );
-                      }
-                    }
+                    context,
+                    'Terminar Sessão',
+                    '',
+                    onTapOverride: () => _terminarSessao(context),
                   ),
                 ],
               ),
@@ -107,3 +128,4 @@ class CustomDrawer extends StatelessWidget {
     );
   }
 }
+ 

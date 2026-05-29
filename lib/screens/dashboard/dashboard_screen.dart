@@ -8,6 +8,8 @@ import 'package:pint_mobile/models/consultor.dart';
 import 'package:pint_mobile/models/badge_utilizador.dart';
 import 'package:pint_mobile/models/badge_regular.dart';
 import 'package:pint_mobile/models/notificacao.dart';
+import 'package:pint_mobile/models/candidatura_badge.dart';
+//import 'package:pint_mobile/models/ranking_consultor.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -22,24 +24,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<BadgeUtilizador> _badges = [];
   List<BadgeRegular> _catalogoBadges = [];
   List<Notificacao> _notificacoes = [];
+  List<CandidaturaBadge> _candidaturas = [];
+  //List<RankingConsultor> _ranking = [];
   bool _isLoading = true;
 
-  // CORREÇÃO 1: StreamSubscription para reagir a sincronizações em background
   StreamSubscription? _subDados;
 
   @override
   void initState() {
     super.initState();
     _carregarDados();
-
-    // CORREÇÃO 1: Liga-se ao stream global do APIService
-    // Sempre que o APIService terminar uma sincronização, recarrega a UI
     _subDados = atualizadorDados.stream.listen((_) {
       _carregarDados();
     });
   }
 
-  // CORREÇÃO 1: Cancelar a subscrição ao sair do ecrã (evita memory leaks)
   @override
   void dispose() {
     _subDados?.cancel();
@@ -47,18 +46,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _carregarDados() async {
-    // Só mostra o spinner na primeira carga
     if (_consultor == null) {
       setState(() => _isLoading = true);
     }
 
-    // Sincroniza em background — o stream vai notificar quando acabar
     APIService.instance.sincronizarTodos();
 
     final consultor = await DatabaseService.instance.getUser();
     final badges = await DatabaseService.instance.getBadges();
     final catalogo = await DatabaseService.instance.getCatalogoBadges();
     final notificacoes = await DatabaseService.instance.getNotificacoes();
+    final candidaturas = await DatabaseService.instance.getCandidaturas();
+    //final ranking = await APIService.instance.getRanking();
 
     if (mounted) {
       setState(() {
@@ -66,6 +65,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _badges = badges;
         _catalogoBadges = catalogo;
         _notificacoes = notificacoes;
+        _candidaturas = candidaturas;
+        //_ranking = ranking;
         _isLoading = false;
       });
     }
@@ -106,7 +107,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _buildSearchBar(),
                     _buildAcoesRapidas(),
                     _buildLearningPathSection(),
-                    _buildGamificationSection(),
+                    //_buildGamificationSection(),
                     _buildBadgesRecomendados(),
                     const SizedBox(height: 32),
                   ],
@@ -205,7 +206,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               _buildAcaoRapida(icon: Icons.military_tech, label: 'BADGES', valor: '$_totalBadges', rota: AppConstants.routeMeusBadges),
               _buildAcaoRapida(icon: Icons.star, label: 'ESPECIAIS', valor: '$_totalEspeciais', rota: AppConstants.routeBadgesEspeciais),
-              _buildAcaoRapida(icon: Icons.description_outlined, label: 'PEDIDOS', valor: '0', rota: AppConstants.routeCandidaturas),
+              _buildAcaoRapida(icon: Icons.description_outlined, label: 'PEDIDOS', valor: '${_candidaturas.length}', rota: AppConstants.routeCandidaturas),
               _buildAcaoRapida(icon: Icons.emoji_events_outlined, label: 'PONTOS', valor: '$_totalPontos', rota: AppConstants.routeGamification),
             ],
           ),
@@ -259,7 +260,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: Icons.emoji_events_outlined,
             titulo: 'RANKING GAMIFICATION',
             subtitulo: _consultor?.posicaoRanking != null ? '${_consultor!.posicaoRanking}º lugar' : 'Sem dados',
-            progresso: 0.6,
+            progresso: 0.0,
             onTap: () => Navigator.pushNamed(context, AppConstants.routeRanking),
           ),
         ],
@@ -312,10 +313,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ─── Gamification ─────────────────────────────────────────
-  Widget _buildGamificationSection() {
-    final topBadges = List<BadgeUtilizador>.from(_badges)
-      ..sort((a, b) => (b.pontos ?? 0).compareTo(a.pontos ?? 0));
-    final top3 = topBadges.take(3).toList();
+  /*Widget _buildGamificationSection() {
+    final top3 = _ranking.take(3).toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -324,7 +323,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           const Text('GAMIFICATION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1)),
           const SizedBox(height: 8),
-          ...List.generate(top3.length, (i) => _buildRankingItem(top3[i], i + 1)),
+          ...List.generate(top3.length, (i) => _buildRankingItem(top3[i])),
           if (top3.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
@@ -346,8 +345,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildRankingItem(BadgeUtilizador badge, int posicao) {
+  Widget _buildRankingItem(RankingConsultor consultor) {
     final cores = [Colors.amber, Colors.grey[400]!, Colors.brown[300]!];
+    final corPosicao = consultor.posicao <= 3 ? cores[consultor.posicao - 1] : Colors.grey;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -358,22 +359,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       child: Row(
         children: [
-          CircleAvatar(radius: 18, backgroundColor: Colors.grey[200], child: const Icon(Icons.person, color: Colors.grey, size: 20)),
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: Colors.grey[200],
+            backgroundImage: consultor.urlFoto != null ? NetworkImage(consultor.urlFoto!) : null,
+            child: consultor.urlFoto == null ? const Icon(Icons.person, color: Colors.grey, size: 20) : null,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(badge.nomeBadge, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-                Text('${badge.pontos ?? 0} pontos', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                Text(consultor.nome, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                Text('${consultor.totalPontos} pontos', style: const TextStyle(fontSize: 11, color: Colors.grey)),
               ],
             ),
           ),
-          Text('$posicaoº', style: TextStyle(fontWeight: FontWeight.bold, color: cores[posicao - 1], fontSize: 16)),
+          Text('${consultor.posicao}º', style: TextStyle(fontWeight: FontWeight.bold, color: corPosicao, fontSize: 16)),
         ],
       ),
     );
-  }
+  }*/
 
   // ─── Badges Recomendados ──────────────────────────────────
   Widget _buildBadgesRecomendados() {

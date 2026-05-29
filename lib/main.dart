@@ -12,9 +12,7 @@ import 'package:pint_mobile/screens/auth/landing_page_screen.dart';
 import 'package:pint_mobile/screens/auth/login_screen.dart';
 import 'package:pint_mobile/screens/auth/recuperar_password_screen.dart';
 // import 'package:pint_mobile/screens/auth/redefinir_password1_screen5.dart';
-// import 'package:pint_mobile/screens/auth/login_screen.dart';
-// import 'package:pint_mobile/screens/auth/recuperar_password_screen.dart';
-// import 'package:pint_mobile/screens/auth/redefinir_password1_screen.dart';
+ import 'package:pint_mobile/screens/auth/redefinir_password1_screen.dart';
 // import 'package:pint_mobile/screens/auth/redefinir_password2_screen.dart';
 // import 'package:pint_mobile/screens/auth/configuracao_inicial_screen.dart';
 import 'package:pint_mobile/screens/dashboard/dashboard_screen.dart';
@@ -176,8 +174,7 @@ class MyApp extends StatelessWidget {
         AppConstants.routeLanding: (ctx) => const LandingPageScreen(),
         AppConstants.routeLogin: (ctx) => const LoginScreen(),
         AppConstants.routeRecuperarPassword: (ctx) => const RecuperarPasswordScreen(),
-        AppConstants.routeRedefinirPassword1: (ctx) =>
-            const PlaceholderScreen(titulo: 'Verificar Código'),
+        AppConstants.routeRedefinirPassword1: (ctx) => const RedefinirPassword1Screen(),
         AppConstants.routeRedefinirPassword2: (ctx) =>
             const PlaceholderScreen(titulo: 'Nova Password'),
         AppConstants.routeConfiguracaoInicial: (ctx) =>
@@ -228,8 +225,7 @@ class MyApp extends StatelessWidget {
 
         // NOTIFICAÇÕES
         AppConstants.routeNotificacoes: (ctx) => const NotificacoesScreen(),
-        AppConstants.routeDetalheNotificacao: (ctx) =>
-            const DetalheNotificacaoScreen(),
+        AppConstants.routeDetalheNotificacao: (ctx) => const DetalheNotificacaoScreen(),
 
         // DEFINIÇÕES / PERFIL
         AppConstants.routePerfil: (ctx) => const Perfil(),
