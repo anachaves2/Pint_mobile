@@ -22,9 +22,12 @@ import 'package:pint_mobile/screens/perfil/perfil_screen.dart';
 // import 'package:pint_mobile/screens/badges/badges_especiais_screen.dart';
 // import 'package:pint_mobile/screens/badges/badges_expirados_screen.dart';
 // import 'package:pint_mobile/screens/badges/detalhe_badge_screen.dart';
-// import 'package:pint_mobile/screens/candidaturas/candidaturas_screen.dart';
-// import 'package:pint_mobile/screens/candidaturas/detalhe_candidatura_screen.dart';
-// import 'package:pint_mobile/screens/candidaturas/nova_candidatura_screen.dart';
+import 'package:pint_mobile/screens/candidaturas/candidaturas_screen.dart';
+import 'package:pint_mobile/screens/candidaturas/candidaturas_decorrentes_screen.dart';
+import 'package:pint_mobile/screens/candidaturas/historico_candidaturas_screen.dart';
+import 'package:pint_mobile/screens/candidaturas/detalhes_candidaturas_screen.dart';
+import 'package:pint_mobile/screens/candidaturas/nova_candidatura_screen.dart';
+import 'package:pint_mobile/screens/candidaturas/candidatura_submetida_screen.dart';
 // import 'package:pint_mobile/screens/catalogo/catalogo_screen.dart';
 // import 'package:pint_mobile/screens/catalogo/detalhe_badge_catalogo_screen.dart';
 // import 'package:pint_mobile/screens/objetivos/objetivos_screen.dart';
@@ -198,13 +201,18 @@ class MyApp extends StatelessWidget {
             const PlaceholderScreen(titulo: 'Detalhe do Badge'),
 
         // CANDIDATURAS
-        AppConstants.routeCandidaturas: (ctx) =>
-            const PlaceholderScreen(titulo: 'Candidaturas'),
-        // DetalheCandidatura recebe o numCandidatura como argumento
-        AppConstants.routeDetalheCandidatura: (ctx) =>
-            const PlaceholderScreen(titulo: 'Detalhe da Candidatura'),
-        AppConstants.routeNovaCandidatura: (ctx) =>
-            const PlaceholderScreen(titulo: 'Nova Candidatura'),
+        AppConstants.routeCandidaturas:
+            (ctx) => const Candidaturas(),
+        AppConstants.routeCandidaturasDecorrentes:
+            (ctx) => const CandidaturasADecorrer(),
+        AppConstants.routeHistoricoCandidaturas:
+            (ctx) => const HistoricoCandidaturas(),
+        AppConstants.routeDetalheCandidatura:
+            (ctx) => const DetalhesCandidatura(),
+        AppConstants.routeNovaCandidatura:
+            (ctx) => const NovaCandidatura(),
+        AppConstants.routeCandidaturaSubmetida:
+            (ctx) => const CandidaturaSubmetida(),
 
         // CATÁLOGO
         AppConstants.routeCatalogo: (ctx) =>

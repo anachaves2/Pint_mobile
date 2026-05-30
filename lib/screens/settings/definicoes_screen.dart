@@ -349,7 +349,7 @@ class _DefinicoesScreenState extends State<DefinicoesScreen> {
 
         // Área / nível
         Text(
-          _nomeAreaSelecionada ?? _consultor!.nomeArea,
+          _nomeAreaSelecionada ?? _consultor!.nomeArea ?? '',
           style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
           textAlign: TextAlign.center,
         ),
@@ -379,7 +379,7 @@ class _DefinicoesScreenState extends State<DefinicoesScreen> {
       // Sem áreas carregadas — mostra a atual como texto e um botão de guardar
       return _buildDropdownShell(
         child: Text(
-          _consultor!.nomeArea,
+          _consultor!.nomeArea ?? '',
           style: const TextStyle(fontSize: 15, color: Colors.black87),
         ),
         onTap: null,

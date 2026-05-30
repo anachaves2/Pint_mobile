@@ -34,12 +34,8 @@ class CustomDrawer extends StatelessWidget {
     );
   }
  
-  Future<void> _terminarSessao(BuildContext context) async {
-    // Fecha o drawer primeiro
-    Navigator.pop(context);
- 
-    // Mostra o popup de confirmação
-    final navigator = Navigator.of(context, rootNavigator: true);
+Future<void> _terminarSessao(BuildContext context) async {
+    // 1. Mostrar o popup PRIMEIRO, enquanto o Drawer e o context estão válidos
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -47,11 +43,11 @@ class CustomDrawer extends StatelessWidget {
         content: const Text('Pretende terminar a sua sessão?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
+            onPressed: () => Navigator.pop(ctx, false), // Retorna false
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
+            onPressed: () => Navigator.pop(ctx, true), // Retorna true
             style: ElevatedButton.styleFrom(
               backgroundColor: AppConstants.corPrimaria,
             ),
@@ -60,10 +56,17 @@ class CustomDrawer extends StatelessWidget {
         ],
       ),
     );
- 
-    if (confirmar == true) {
-      await APIService.instance.logout();
-      navigator.pushNamedAndRemoveUntil(
+
+    // Se a pessoa cancelou (clicou fora ou no botão Cancelar), não fazemos mais nada.
+    if (confirmar != true) return;
+
+    // 2. Se confirmou, executamos o logout
+    await APIService.instance.logout();
+
+    // 3. Verificamos se o context ainda está montado (boa prática no Flutter!) e navegamos
+    if (context.mounted) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
         AppConstants.routeLanding,
         (route) => false,
       );
