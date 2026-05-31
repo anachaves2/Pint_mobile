@@ -11,10 +11,10 @@ class Consultor {
   final String? linguaPadrao;
 
   //Dados da tabela Consultor
-  final int idArea;
-  final String nomeArea;
-  final int idLearningPath;
-  final String nomeLearningPath;
+  final int? idArea;
+  final String? nomeArea;
+  final int? idLearningPath;
+  final String? nomeLearningPath;
 
   //Dados calculados pela API
   final int? totalPontos;
@@ -30,10 +30,10 @@ class Consultor {
     this.urlFoto,
     required this.dataMembro,
     this.linguaPadrao,
-    required this.idArea,
-    required this.nomeArea,
-    required this.idLearningPath,
-    required this.nomeLearningPath,
+    this.idArea,
+    this.nomeArea,
+    this.idLearningPath,
+    this.nomeLearningPath,
     this.totalPontos,
     this.posicaoRanking,
   });

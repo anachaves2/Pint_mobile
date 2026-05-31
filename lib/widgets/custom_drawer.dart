@@ -43,11 +43,11 @@ class CustomDrawer extends StatelessWidget {
         content: const Text('Pretende terminar a sua sessão?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
+            onPressed: () => Navigator.pop(ctx, false), // Retorna false
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
+            onPressed: () => Navigator.pop(ctx, true), // Retorna true
             style: ElevatedButton.styleFrom(
               backgroundColor: AppConstants.corPrimaria,
             ),

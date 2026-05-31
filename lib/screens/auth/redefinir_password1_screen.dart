@@ -12,8 +12,8 @@ class RedefinirPassword1Screen extends StatefulWidget {
 
 class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
   // Alterado para 6 controladores
-  final List<TextEditingController> _controllers = List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  final List<TextEditingController> _controllers = List.generate(5, (_) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(5, (_) => FocusNode());
   bool _isLoading = false;
 
   @override
@@ -25,7 +25,7 @@ class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
 
   Future<void> _verificarPin(String email) async {
     final codigo = _controllers.map((c) => c.text).join();
-    if (codigo.length < 6) {
+    if (codigo.length < 5) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Insira os 6 dígitos.'), backgroundColor: AppConstants.corErro));
       return;
     }
@@ -74,7 +74,7 @@ class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
               // Alterado para 6 quadradinhos mais estreitos para caberem no ecrã
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(6, (index) {
+                children: List.generate(5, (index) {
                   return SizedBox(
                     width: 45, 
                     height: 55,
@@ -90,7 +90,7 @@ class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                       ),
                       onChanged: (value) {
-                        if (value.isNotEmpty && index < 5) {
+                        if (value.isNotEmpty && index < 4) {
                           _focusNodes[index + 1].requestFocus();
                         } else if (value.isEmpty && index > 0) {
                           _focusNodes[index - 1].requestFocus();

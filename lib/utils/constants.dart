@@ -8,7 +8,7 @@ class AppConstants {
   //=========================================
   //API
 
-  static const String baseUrl = 'http://10.0.2.2:3001/api'; // URL base da API REST
+  static const String baseUrl = 'http://172.20.10.4:3001/api'; // URL base da API REST
   static const int intervalSincronizacaoMinutos =
       5; // psra sincronizar dados periodicamente
 
@@ -27,8 +27,7 @@ class AppConstants {
   static const String tableNotificacoesCache = 'notificacoes_cache';
   static const String tableObjetivosCache = 'objetivos_cache';
   static const String tableCatalogoBadges = 'catalogo_badges';
-  static const String tableCatalogoBadgesEspeciais =
-      'catalogo_badges_especiais';
+  static const String tableCatalogoBadgesEspeciais = 'catalogo_badges_especiais';
   static const String tableTiposObjetivo = 'tipos_objetivo';
   static const String tableEstadosCandidatura = 'estados_candidatura';
   static const String tableHistoricoCandidatura = 'historico_candidatura';
@@ -74,6 +73,9 @@ class AppConstants {
 
   // CANDIDATURAS
   static const String routeCandidaturas = '/candidaturas';
+  static const String routeCandidaturasDecorrentes = '/candidaturas/decorrentes';
+  static const String routeHistoricoCandidaturas = '/candidaturas/historico';
+  static const String routeCandidaturaSubmetida = '/candidaturas/submetida';
   // Uso com argumento: Navigator.pushNamed(context, routeDetalheCandidatura, arguments: numCandidatura)
   static const String routeDetalheCandidatura = '/candidaturas/detalhe';
   static const String routeNovaCandidatura = '/candidaturas/nova';

@@ -134,7 +134,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
       ),
-      title: SvgPicture.asset('assets/icons/logo-softinsa.svg', height: 45),
+      title: const Text(
+        'Dashboard',
+        style: TextStyle(
+          color: AppConstants.corPrimaria, 
+          fontWeight: FontWeight.bold, 
+          fontSize: 20, // <-- Substitui 'height' por 'fontSize'
+        ),
+      ),
       actions: [
         Stack(
           children: [
