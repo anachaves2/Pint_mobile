@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:go_router/go_router.dart';
 
 class CandidaturaSubmetida extends StatelessWidget {
   const CandidaturaSubmetida({super.key});
@@ -31,7 +32,7 @@ class CandidaturaSubmetida extends StatelessWidget {
           IconButton(
             icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
                 colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
-            onPressed: () => Navigator.pushNamed(context, AppConstants.routeNotificacoes),
+            onPressed: () => context.push(AppConstants.routeNotificacoes),
           ),
         ],
       ),
@@ -82,10 +83,7 @@ class CandidaturaSubmetida extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                    context, AppConstants.routeCandidaturas,
-                    (route) => route.settings.name == AppConstants.routeDashboard,
-                  ),
+                  onPressed: () => context.go(AppConstants.routeCandidaturas),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppConstants.corPrimaria,
                     foregroundColor: Colors.white,
@@ -99,7 +97,7 @@ class CandidaturaSubmetida extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
-                  onPressed: () => Navigator.pushReplacementNamed(context, AppConstants.routeNovaCandidatura),
+                  onPressed: () => context.go(AppConstants.routeNovaCandidatura),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppConstants.corPrimaria,
                     side: const BorderSide(color: AppConstants.corPrimaria),

@@ -6,6 +6,7 @@ import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:go_router/go_router.dart';
 
 class DetalhesCandidatura extends StatefulWidget {
   const DetalhesCandidatura({super.key});
@@ -72,7 +73,7 @@ class _DetalhesCandidaturaState extends State<DetalhesCandidatura> {
           IconButton(
             icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
                 colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
-            onPressed: () => Navigator.pushNamed(context, AppConstants.routeNotificacoes),
+            onPressed: () => context.push(AppConstants.routeNotificacoes),
           ),
         ],
       ),

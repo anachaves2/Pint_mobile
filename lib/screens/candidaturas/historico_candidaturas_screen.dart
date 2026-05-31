@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pint_mobile/models/candidatura_badge.dart';
-import 'package:pint_mobile/screens/candidaturas/candidaturas_screen.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:go_router/go_router.dart';
 
 class HistoricoCandidaturas extends StatefulWidget {
   const HistoricoCandidaturas({super.key});
@@ -57,7 +57,7 @@ class _HistoricoCandidaturasState extends State<HistoricoCandidaturas> {
           IconButton(
             icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
                 colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
-            onPressed: () => Navigator.pushNamed(context, AppConstants.routeNotificacoes),
+            onPressed: () => context.push(AppConstants.routeNotificacoes),
           ),
         ],
       ),
@@ -99,8 +99,7 @@ class _HistoricoCandidaturasState extends State<HistoricoCandidaturas> {
                             separatorBuilder: (_, __) => const SizedBox(height: 8),
                             itemBuilder: (context, i) => _CardHistorico(
                               candidatura: _candidaturas[i],
-                              onTap: () => Navigator.pushNamed(context, AppConstants.routeDetalheCandidatura,
-                                  arguments: _candidaturas[i].numCandidatura).then((_) => _refresh()),
+                              onTap: () => context.push(AppConstants.routeDetalheCandidatura, extra: _candidaturas[i].numCandidatura).then((_) => _refresh()),
                             ),
                           ),
                   ),

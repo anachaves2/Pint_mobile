@@ -15,6 +15,12 @@ import 'package:pint_mobile/screens/notificacoes/detalhe_notificacao_screen.dart
 import 'package:pint_mobile/screens/perfil/perfil_screen.dart';
 import 'package:pint_mobile/screens/settings/definicoes_screen.dart';
 import 'package:pint_mobile/screens/settings/alterar_password_screen.dart';
+import 'package:pint_mobile/screens/candidaturas/candidaturas_screen.dart';
+import 'package:pint_mobile/screens/candidaturas/candidaturas_decorrentes_screen.dart';
+import 'package:pint_mobile/screens/candidaturas/historico_candidaturas_screen.dart';
+import 'package:pint_mobile/screens/candidaturas/candidatura_submetida_screen.dart';
+import 'package:pint_mobile/screens/candidaturas/detalhes_candidaturas_screen.dart';
+import 'package:pint_mobile/screens/candidaturas/nova_candidatura_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: AppConstants.routeLanding,
@@ -30,9 +36,6 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: AppConstants.routeBadgesEspeciais, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Badges Especiais')),
     GoRoute(path: AppConstants.routeBadgesExpirados, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Badges Expirados')),
     GoRoute(path: AppConstants.routeDetalheBadge, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Detalhe do Badge')),
-    GoRoute(path: AppConstants.routeCandidaturas, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Candidaturas')),
-    GoRoute(path: AppConstants.routeDetalheCandidatura, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Detalhe da Candidatura')),
-    GoRoute(path: AppConstants.routeNovaCandidatura, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Nova Candidatura')),
     GoRoute(path: AppConstants.routeCatalogo, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Catálogo')),
     GoRoute(path: AppConstants.routeDetalheCatalogo, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Detalhe do Badge')),
     GoRoute(path: AppConstants.routeObjetivos, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Objetivos')),
@@ -43,6 +46,12 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: AppConstants.routePerfil, builder: (ctx, state) => const Perfil()),
     GoRoute(path: AppConstants.routeDefinicoes, builder: (ctx, state) => const DefinicoesScreen()),
     GoRoute(path: AppConstants.routeAlterarPassword, builder: (ctx, state) => const AlterarPasswordScreen()),
+    GoRoute(path: AppConstants.routeCandidaturasDecorrentes, builder: (ctx, state) => const CandidaturasADecorrer()),
+    GoRoute(path: AppConstants.routeHistoricoCandidaturas, builder: (ctx, state) => const HistoricoCandidaturas()),
+    GoRoute(path: AppConstants.routeCandidaturaSubmetida, builder: (ctx, state) => const CandidaturaSubmetida()),
+    GoRoute(path: AppConstants.routeDetalheCandidatura, builder: (ctx, state) => const DetalhesCandidatura()),
+    GoRoute(path: AppConstants.routeCandidaturas, builder: (ctx, state) => const Candidaturas()),
+    GoRoute(path: AppConstants.routeNovaCandidatura, builder: (ctx, state) => const NovaCandidatura()),  
   ],
 );
 

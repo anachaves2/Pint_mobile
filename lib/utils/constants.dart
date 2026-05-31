@@ -8,7 +8,7 @@ class AppConstants {
   //=========================================
   //API
 
-  static const String baseUrl = 'http://172.20.10.4:3001/api'; // URL base da API REST
+  static const String baseUrl = 'http://10.0.2.2:3001/api'; // URL base da API REST
   static const int intervalSincronizacaoMinutos =
       5; // psra sincronizar dados periodicamente
 

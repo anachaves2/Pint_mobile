@@ -8,6 +8,7 @@ import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:go_router/go_router.dart';
 
 enum _Fase { selecionarBadge, carregarEvidencias }
 
@@ -98,7 +99,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     if (!mounted) return;
     setState(() => _isSubmitting = false);
     if (resultado.sucesso) {
-      Navigator.pushReplacementNamed(context, AppConstants.routeCandidaturaSubmetida, arguments: _numCandidatura);
+      context.go(AppConstants.routeCandidaturaSubmetida, extra: _numCandidatura);
     } else {
       _mostrarErro(resultado.erro ?? 'Erro ao submeter candidatura.');
     }
@@ -135,7 +136,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
           IconButton(
             icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
                 colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
-            onPressed: () => Navigator.pushNamed(context, AppConstants.routeNotificacoes),
+            onPressed: () => context.push(AppConstants.routeNotificacoes),
           ),
         ],
       ),

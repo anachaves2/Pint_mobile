@@ -5,6 +5,7 @@ import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:go_router/go_router.dart';
 
 class Candidaturas extends StatefulWidget {
   const Candidaturas({super.key});
@@ -60,7 +61,7 @@ class _CandidaturasState extends State<Candidaturas> {
           IconButton(
             icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
                 colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
-            onPressed: () => Navigator.pushNamed(context, AppConstants.routeNotificacoes),
+            onPressed: () => context.push(AppConstants.routeNotificacoes),
           ),
         ],
       ),
@@ -97,7 +98,7 @@ class _CandidaturasState extends State<Candidaturas> {
                     const SizedBox(height: 12),
                     Center(
                       child: OutlinedButton.icon(
-                        onPressed: () => Navigator.pushNamed(context, AppConstants.routeNovaCandidatura).then((_) => _refresh()),
+                        onPressed: () => context.push(AppConstants.routeNovaCandidatura).then((_) => _refresh()),
                         icon: const Icon(Icons.add, size: 18, color: AppConstants.corPrimaria),
                         label: const Text('Nova Candidatura', style: TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.w600)),
                         style: OutlinedButton.styleFrom(
@@ -143,13 +144,13 @@ class _CandidaturasState extends State<Candidaturas> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: CardCandidatura(
                   candidatura: c,
-                  onTap: () => Navigator.pushNamed(context, AppConstants.routeDetalheCandidatura, arguments: c.numCandidatura).then((_) => _refresh()),
+                  onTap: () => context.push(AppConstants.routeDetalheCandidatura, extra: c.numCandidatura).then((_) => _refresh()),
                 ),
               )),
         if (lista.length > 3)
           Center(
             child: OutlinedButton(
-              onPressed: () => Navigator.pushNamed(context, rotaVerTodos).then((_) => _refresh()),
+              onPressed: () => context.push(rotaVerTodos).then((_) => _refresh()),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppConstants.corPrimaria),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

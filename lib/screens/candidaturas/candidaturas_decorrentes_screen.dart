@@ -6,6 +6,7 @@ import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:go_router/go_router.dart';
 
 class CandidaturasADecorrer extends StatefulWidget {
   const CandidaturasADecorrer({super.key});
@@ -57,7 +58,7 @@ class _CandidaturasADecorrerState extends State<CandidaturasADecorrer> {
           IconButton(
             icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
                 colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
-            onPressed: () => Navigator.pushNamed(context, AppConstants.routeNotificacoes),
+            onPressed: () => context.push(AppConstants.routeNotificacoes),
           ),
         ],
       ),
@@ -99,8 +100,7 @@ class _CandidaturasADecorrerState extends State<CandidaturasADecorrer> {
                             separatorBuilder: (_, __) => const SizedBox(height: 8),
                             itemBuilder: (context, i) => CardCandidatura(
                               candidatura: _candidaturas[i],
-                              onTap: () => Navigator.pushNamed(context, AppConstants.routeDetalheCandidatura,
-                                  arguments: _candidaturas[i].numCandidatura).then((_) => _refresh()),
+                              onTap: () => context.push(AppConstants.routeDetalheCandidatura, extra: _candidaturas[i].numCandidatura).then((_) => _refresh()),
                             ),
                           ),
                   ),
