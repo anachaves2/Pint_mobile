@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:go_router/go_router.dart';
 
 class RecuperarPasswordScreen extends StatefulWidget {
   const RecuperarPasswordScreen({super.key});
@@ -34,11 +35,8 @@ class _RecuperarPasswordScreenState extends State<RecuperarPasswordScreen> {
 
     if (resultado.sucesso) {
       // Passa o email como argumento para o ecrã seguinte (04 - RedefinirPassword1)
-      Navigator.pushNamed(
-        context,
-        AppConstants.routeRedefinirPassword1,
-        arguments: email,
-      );
+      context.push('${AppConstants.routeRedefinirPassword1}?email=$email');
+
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -59,7 +57,7 @@ class _RecuperarPasswordScreenState extends State<RecuperarPasswordScreen> {
         // Ícone de voltar (a setinha para a esquerda do protótipo)
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.grey, size: 20),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
       ),
       body: SafeArea(

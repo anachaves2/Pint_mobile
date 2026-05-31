@@ -6,6 +6,7 @@ import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:go_router/go_router.dart';
 
 // ============================================================================
 // DefinicoesScreen — Ecrã 54
@@ -141,11 +142,7 @@ class _DefinicoesScreenState extends State<DefinicoesScreen> {
     if (confirmar == true && mounted) {
       await APIService.instance.logout();
       if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          AppConstants.routeLanding,
-          (_) => false,
-        );
+        context.go(AppConstants.routeLanding);
       }
     }
   }
@@ -191,7 +188,7 @@ class _DefinicoesScreenState extends State<DefinicoesScreen> {
             ),
           ),
           onPressed: () =>
-              Navigator.pushNamed(context, AppConstants.routeNotificacoes),
+              context.push(AppConstants.routeNotificacoes),
         ),
       ],
       bottom: PreferredSize(
@@ -245,10 +242,7 @@ class _DefinicoesScreenState extends State<DefinicoesScreen> {
           _buildListItem(
             icone: Icons.lock_outline,
             label: 'Alterar Password',
-            onTap: () => Navigator.pushNamed(
-              context,
-              AppConstants.routeAlterarPassword,
-            ),
+            onTap: () => context.push(AppConstants.routeAlterarPassword),
           ),
           const SizedBox(height: 32),
 

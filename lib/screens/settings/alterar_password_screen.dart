@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:go_router/go_router.dart';
 
 class AlterarPasswordScreen extends StatefulWidget {
   const AlterarPasswordScreen({super.key});
@@ -49,7 +50,7 @@ class _AlterarPasswordScreenState extends State<AlterarPasswordScreen> {
           backgroundColor: AppConstants.corSucesso,
         ),
       );
-      Navigator.pop(context);
+      context.pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

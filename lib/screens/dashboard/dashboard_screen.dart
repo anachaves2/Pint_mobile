@@ -11,6 +11,7 @@ import 'package:pint_mobile/models/notificacao.dart';
 import 'package:pint_mobile/models/candidatura_badge.dart';
 //import 'package:pint_mobile/models/ranking_consultor.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:go_router/go_router.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -143,7 +144,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 height: 24,
                 colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn),
               ),
-              onPressed: () => Navigator.pushNamed(context, AppConstants.routeNotificacoes),
+              onPressed: () => context.push(AppConstants.routeNotificacoes),
             ),
             if (_notificacoesNaoLidas > 0)
               Positioned(
@@ -217,7 +218,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildAcaoRapida({required IconData icon, required String label, required String valor, required String rota}) {
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, rota),
+      onTap: () => context.push(rota),
       child: Column(
         children: [
           Icon(icon, color: AppConstants.corPrimaria, size: 32),
@@ -245,7 +246,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             titulo: 'LEARNING PATH',
             subtitulo: nomeLp,
             progresso: progressoLp.clamp(0.0, 1.0),
-            onTap: () => Navigator.pushNamed(context, AppConstants.routeObjetivos),
+            onTap: () => context.push(AppConstants.routeObjetivos)
           ),
           const SizedBox(height: 8),
           _buildProgressCard(
@@ -253,7 +254,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             titulo: 'BADGES',
             subtitulo: '$conquistadosLp de $totalBadgesLp conquistados',
             progresso: progressoLp.clamp(0.0, 1.0),
-            onTap: () => Navigator.pushNamed(context, AppConstants.routeMeusBadges),
+            onTap: () => context.push(AppConstants.routeMeusBadges)
           ),
           const SizedBox(height: 8),
           _buildProgressCard(
@@ -261,7 +262,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             titulo: 'RANKING GAMIFICATION',
             subtitulo: _consultor?.posicaoRanking != null ? '${_consultor!.posicaoRanking}º lugar' : 'Sem dados',
             progresso: 0.0,
-            onTap: () => Navigator.pushNamed(context, AppConstants.routeRanking),
+            onTap: () => context.push(AppConstants.routeRanking),
           ),
         ],
       ),
@@ -332,7 +333,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 8),
           Center(
             child: OutlinedButton(
-              onPressed: () => Navigator.pushNamed(context, AppConstants.routeRanking),
+              onPressed: () => context.push(AppConstants.routeRanking),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppConstants.corPrimaria),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -399,7 +400,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 8),
           Center(
             child: OutlinedButton(
-              onPressed: () => Navigator.pushNamed(context, AppConstants.routeCatalogo),
+              onPressed: () => context.push(AppConstants.routeCatalogo),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppConstants.corPrimaria),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

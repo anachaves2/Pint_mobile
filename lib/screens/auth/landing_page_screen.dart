@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pint_mobile/utils/constants.dart';
-import 'package:pint_mobile/widgets/custom_logo.dart'; 
+import 'package:pint_mobile/widgets/custom_logo.dart';
+import 'package:go_router/go_router.dart'; 
 
 class LandingPageScreen extends StatelessWidget {
   const LandingPageScreen({super.key});
@@ -43,7 +44,7 @@ class LandingPageScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     // Navega corretamente para o ecrã de login
-                    Navigator.pushNamed(context, AppConstants.routeLogin);
+                    context.push(AppConstants.routeLogin);
                   },
                   child: const Text('Início'),
                 ),

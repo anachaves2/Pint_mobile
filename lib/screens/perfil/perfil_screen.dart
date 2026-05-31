@@ -5,6 +5,7 @@ import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:go_router/go_router.dart';
 
 //Ecrã do Perfil
 //Mostra os dados pessoais do consultor que está autenticado
@@ -149,7 +150,7 @@ class _PerfilState extends State<Perfil> {
               BlendMode.srcIn,
             ),
           ),
-          onPressed: () => Navigator.pushNamed(context, '/notificacoes'),
+          onPressed: () => context.push('/notificacoes'),
         ),
       ],
       bottom: PreferredSize(
@@ -417,7 +418,7 @@ class _PerfilState extends State<Perfil> {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
-        onPressed: () => Navigator.pushNamed(context, '/definicoes'),
+        onPressed: () => context.push('/definicoes'),
         style: OutlinedButton.styleFrom(
           side: const BorderSide(color: _azulPrimario),
           shape: RoundedRectangleBorder(

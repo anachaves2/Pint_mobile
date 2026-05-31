@@ -5,6 +5,7 @@ import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:go_router/go_router.dart';
 
 // ECRÃ TODOS OS BADGES
 // Lista completa de badges regulares válidos do consultor autenticado
@@ -153,7 +154,7 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
             colorFilter: const ColorFilter.mode(
                 AppConstants.corPrimaria, BlendMode.srcIn),
           ),
-          onPressed: () => Navigator.pushNamed(context, '/notificacoes'),
+          onPressed: () => context.push('/notificacoes'),
         ),
       ],
       bottom: PreferredSize(
@@ -223,11 +224,8 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
   // Ao clicar navega para o ecrã de detalhe passando o badge como argumento
   Widget _buildBadgeCard(BadgeUtilizador badge) {
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(
-        context,
-        '/detalhe-badge-regular',
-        arguments: badge, // passa o objeto badge completo para o ecrã de detalhe
-      ),
+      onTap: () => context.push('/detalhe-badge-regular', extra: badge),
+      
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
@@ -310,7 +308,7 @@ class _TodosOsBadgesState extends State<TodosOsBadges> {
         ),
         child: ClipOval(
           child: Image.network(badge.urlImagem!, fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _buildIconeLetra(letra, cor)),
+              errorBuilder: (_, _, _) => _buildIconeLetra(letra, cor)),
         ),
       );
     }

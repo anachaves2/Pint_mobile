@@ -5,6 +5,7 @@ import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:go_router/go_router.dart';
 
 // ECRÃ OS MEUS BADGES
 // Página principal dos badges do consultor autenticado
@@ -159,7 +160,7 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
             colorFilter: const ColorFilter.mode(
                 AppConstants.corPrimaria, BlendMode.srcIn),
           ),
-          onPressed: () => Navigator.pushNamed(context, '/notificacoes'),
+          onPressed: () => context.push('/notificacoes'),
         ),
       ],
       bottom: PreferredSize(
@@ -220,7 +221,7 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
         // Botão "VER TODOS" navega para a lista completa da secção
         Center(
           child: OutlinedButton(
-            onPressed: () => Navigator.pushNamed(context, rotaVerTodos),
+            onPressed: () => context.push(rotaVerTodos),
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: Colors.grey.shade300),
               shape: RoundedRectangleBorder(
@@ -276,14 +277,11 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
       onTap: () {
         // Navega para o ecrã de detalhe correto conforme o tipo
         if (eEspecial) {
-          Navigator.pushNamed(context, '/detalhe-badge-premium',
-              arguments: badge);
+          context.push('/detalhe-badge-premium', extra: badge);
         } else if (eExpirado) {
-          Navigator.pushNamed(context, '/detalhe-badge-expirado',
-              arguments: badge);
+          context.push('/detalhe-badge-expirado', extra: badge);
         } else {
-          Navigator.pushNamed(context, '/detalhe-badge-regular',
-              arguments: badge);
+          context.push('/detalhe-badge-regular', extra: badge);
         }
       },
       child: Container(
@@ -387,7 +385,7 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
         ),
         child: ClipOval(
           child: Image.network(badge.urlImagem!, fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _buildIconeLetra(letra, cor)),
+              errorBuilder: (_, _, _) => _buildIconeLetra(letra, cor)),
         ),
       );
     }

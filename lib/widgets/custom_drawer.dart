@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart'; 
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/services/api_service.dart';
+import 'package:go_router/go_router.dart';
+
  
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
@@ -22,12 +24,11 @@ class CustomDrawer extends StatelessWidget {
             size: 20, 
             color: Color.fromARGB(255, 32, 32, 32),
           ),
-          onTap: onTapOverride ?? () {
-            Navigator.pop(context);
-            if (routeName.isNotEmpty) {
-              Navigator.pushReplacementNamed(context, routeName);
-            }
-          },
+        onTap: onTapOverride ?? () {
+          if (routeName.isNotEmpty) {
+            context.go(routeName);
+          }
+        },
         ),
         const Divider(height: 1, color: Colors.black12),
       ],
@@ -35,11 +36,6 @@ class CustomDrawer extends StatelessWidget {
   }
  
   Future<void> _terminarSessao(BuildContext context) async {
-    // Fecha o drawer primeiro
-    Navigator.pop(context);
- 
-    // Mostra o popup de confirmação
-    final navigator = Navigator.of(context, rootNavigator: true);
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -60,13 +56,12 @@ class CustomDrawer extends StatelessWidget {
         ],
       ),
     );
- 
-    if (confirmar == true) {
+
+    if (confirmar == true && context.mounted) {
       await APIService.instance.logout();
-      navigator.pushNamedAndRemoveUntil(
-        AppConstants.routeLanding,
-        (route) => false,
-      );
+      if (context.mounted) {
+        context.go(AppConstants.routeLogin);
+      }
     }
   }
  

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:pint_mobile/models/notificacao.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:go_router/go_router.dart';
  
 // ============================================================================
 // DetalheNotificacaoScreen — Ecrãs 48 a 52
@@ -194,11 +195,7 @@ class DetalheNotificacaoScreen extends StatelessWidget {
                 context: context,
                 label: 'Ver candidatura',
                 icone: Icons.assignment_outlined,
-                onTap: () => Navigator.pushNamed(
-                  context,
-                  AppConstants.routeDetalheCandidatura,
-                  arguments: notificacao.numCandidatura,
-                ),
+                onTap: () => context.push(AppConstants.routeDetalheCandidatura, extra: notificacao.numCandidatura),
               ),
  
             if (notificacao.idBadgeUtilizador != null)
@@ -206,11 +203,7 @@ class DetalheNotificacaoScreen extends StatelessWidget {
                 context: context,
                 label: 'Ver badge',
                 icone: Icons.workspace_premium_outlined,
-                onTap: () => Navigator.pushNamed(
-                  context,
-                  AppConstants.routeDetalheBadge,
-                  arguments: notificacao.idBadgeUtilizador,
-                ),
+                onTap: () => context.push(AppConstants.routeDetalheBadge, extra: notificacao.idBadgeUtilizador),
               ),
  
             if (notificacao.idObjetivo != null)
@@ -218,10 +211,7 @@ class DetalheNotificacaoScreen extends StatelessWidget {
                 context: context,
                 label: 'Ver objetivos',
                 icone: Icons.track_changes_outlined,
-                onTap: () => Navigator.pushNamed(
-                  context,
-                  AppConstants.routeObjetivos,
-                ),
+                onTap: () => context.push(AppConstants.routeObjetivos),
               ),
  
             const SizedBox(height: 16),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:go_router/go_router.dart';
 
 class RedefinirPassword1Screen extends StatefulWidget {
   const RedefinirPassword1Screen({super.key});
@@ -38,11 +39,8 @@ class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
 
     if (resultado.tokenReset != null) {
       // Passa o token_reset para o ecrã seguinte em vez do PIN
-      Navigator.pushNamed(
-        context, 
-        AppConstants.routeRedefinirPassword2,
-        arguments: resultado.tokenReset, 
-      );
+      context.push('${AppConstants.routeRedefinirPassword2}?token=${resultado.tokenReset}');
+
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(resultado.erro ?? 'Erro'), backgroundColor: AppConstants.corErro));
     }
@@ -50,7 +48,7 @@ class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
 
   @override
   Widget build(BuildContext context) {
-    final email = ModalRoute.of(context)!.settings.arguments as String;
+    final email = GoRouterState.of(context).uri.queryParameters['email'] ?? '';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -59,7 +57,7 @@ class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.grey, size: 20),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
       ),
       body: SafeArea(

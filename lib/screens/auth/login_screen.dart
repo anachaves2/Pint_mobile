@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_logo.dart'; // Import do nosso novo logo!
+import 'package:go_router/go_router.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -52,9 +53,9 @@ class _LoginScreenState extends State<LoginScreen> {
     if (resultado.sucesso) {
       if (mounted) {
         if (!resultado.configuracaoCompleta) {
-          Navigator.pushReplacementNamed(context, AppConstants.routeConfiguracaoInicial);
+          context.go(AppConstants.routeConfiguracaoInicial);
         } else {
-          Navigator.pushReplacementNamed(context, AppConstants.routeDashboard);
+          context.go(AppConstants.routeDashboard);
         }
       }
     } else {
@@ -158,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     TextButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, AppConstants.routeRecuperarPassword);
+                        context.push(AppConstants.routeRecuperarPassword);
                       },
                       child: const Text('Esqueci-me da password', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
                     ),

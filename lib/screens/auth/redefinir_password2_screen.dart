@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:go_router/go_router.dart';
 
 class RedefinirPassword2Screen extends StatefulWidget {
   const RedefinirPassword2Screen({super.key});
@@ -61,8 +62,8 @@ class _RedefinirPassword2ScreenState extends State<RedefinirPassword2Screen> {
                 height: 48,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Limpa todo o histórico e vai para o Login
-                    Navigator.pushNamedAndRemoveUntil(context, AppConstants.routeLogin, (route) => false);
+                    // vai para o Login
+                    context.go(AppConstants.routeLogin);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppConstants.corPrimaria,
@@ -98,7 +99,7 @@ class _RedefinirPassword2ScreenState extends State<RedefinirPassword2Screen> {
 
   @override
   Widget build(BuildContext context) {
-    final tokenReset = ModalRoute.of(context)!.settings.arguments as String;
+    final tokenReset = GoRouterState.of(context).uri.queryParameters['token'] ?? '';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -107,7 +108,7 @@ class _RedefinirPassword2ScreenState extends State<RedefinirPassword2Screen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.grey, size: 20),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
       ),
       body: SafeArea(

@@ -6,6 +6,7 @@ import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
  
 // ============================================================================
 // NotificacoesScreen — Ecrãs 47 / 48
@@ -152,11 +153,7 @@ class _NotificacoesScreenState extends State<NotificacoesScreen>
         onTap: () async {
           await _marcarComoLida(n);
           if (mounted) {
-            Navigator.pushNamed(
-              context,
-              AppConstants.routeDetalheNotificacao,
-              arguments: n,
-            );
+            context.push(AppConstants.routeDetalheNotificacao, extra: n);
           }
         },
         child: Container(
