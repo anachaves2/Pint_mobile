@@ -212,7 +212,7 @@ class _CandidaturasState extends State<Candidaturas> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: AppConstants.corPrimaria.withOpacity(0.12),
+                color: AppConstants.corPrimaria.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -308,7 +308,7 @@ class CardCandidatura extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 2))],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -329,7 +329,7 @@ class CardCandidatura extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                   decoration: BoxDecoration(
-                    color: _corEstado.withOpacity(0.12),
+                    color: _corEstado.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -376,9 +376,9 @@ class CardRascunho extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
         // Borda subtil em tom primário, em vez do amarelo
-        border: Border.all(color: AppConstants.corPrimaria.withOpacity(0.2), width: 1),
+        border: Border.all(color: AppConstants.corPrimaria.withValues(alpha: 0.2), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -405,7 +405,7 @@ class CardRascunho extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: AppConstants.corErro.withOpacity(0.08),
+                    color: AppConstants.corErro.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(Icons.delete_outline, size: 18, color: AppConstants.corErro),
@@ -425,7 +425,7 @@ class CardRascunho extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppConstants.corPrimaria.withOpacity(0.12),
+                  color: AppConstants.corPrimaria.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text(

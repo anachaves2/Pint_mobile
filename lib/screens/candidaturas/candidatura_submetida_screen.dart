@@ -45,7 +45,7 @@ class CandidaturaSubmetida extends StatelessWidget {
               Container(
                 width: 96, height: 96,
                 decoration: BoxDecoration(
-                  color: AppConstants.corSucesso.withOpacity(0.10),
+                  color: AppConstants.corSucesso.withValues(alpha: 0.10),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.check_circle_outline, size: 56, color: AppConstants.corSucesso),

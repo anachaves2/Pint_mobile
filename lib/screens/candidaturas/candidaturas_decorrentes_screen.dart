@@ -97,7 +97,7 @@ class _CandidaturasADecorrerState extends State<CandidaturasADecorrer> {
                         : ListView.separated(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             itemCount: _candidaturas.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 8),
+                            separatorBuilder: (_, _) => const SizedBox(height: 8),
                             itemBuilder: (context, i) => CardCandidatura(
                               candidatura: _candidaturas[i],
                               onTap: () => context.push(AppConstants.routeDetalheCandidatura, extra: _candidaturas[i].numCandidatura).then((_) => _refresh()),

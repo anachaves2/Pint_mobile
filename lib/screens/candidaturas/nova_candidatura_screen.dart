@@ -292,7 +292,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 2))],
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
             ),
             child: Column(children: [
               _linhaInfo('Badge:', _badgeSelecionado!.nome),
@@ -307,7 +307,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
               : ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   itemCount: _badges.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, i) {
                     final b = _badges[i];
                     final selecionado = _badgeSelecionado?.id == b.id;
@@ -316,9 +316,9 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
                       child: Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: selecionado ? AppConstants.corPrimaria.withOpacity(0.06) : Colors.white,
+                          color: selecionado ? AppConstants.corPrimaria.withValues(alpha: 0.06) : Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6, offset: const Offset(0, 2))],
+                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 6, offset: const Offset(0, 2))],
                           border: selecionado ? Border.all(color: AppConstants.corPrimaria, width: 1.5) : null,
                         ),
                         child: Row(
@@ -379,7 +379,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 2))],
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
           ),
           child: Column(children: [
             _linhaInfo('Badge:', _badgeSelecionado!.nome),
@@ -402,7 +402,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
               : ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   itemCount: _requisitos.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, i) => _buildCardRequisito(_requisitos[i]),
                 ),
         ),
@@ -463,8 +463,8 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6, offset: const Offset(0, 2))],
-        border: temEvidencia ? Border.all(color: AppConstants.corSucesso.withOpacity(0.4)) : null,
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 6, offset: const Offset(0, 2))],
+        border: temEvidencia ? Border.all(color: AppConstants.corSucesso.withValues(alpha: 0.4)) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -480,7 +480,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
               Container(
                 width: 44, height: 44,
                 decoration: BoxDecoration(
-                  color: temEvidencia ? AppConstants.corSucesso.withOpacity(0.08) : Colors.grey[100],
+                  color: temEvidencia ? AppConstants.corSucesso.withValues(alpha: 0.08) : Colors.grey[100],
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: emUpload
@@ -505,7 +505,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: temEvidencia ? Colors.black.withOpacity(0.05) : AppConstants.corPrimaria,
+                    color: temEvidencia ? Colors.black.withValues(alpha: 0.5) : AppConstants.corPrimaria,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(

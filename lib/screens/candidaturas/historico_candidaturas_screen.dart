@@ -96,7 +96,7 @@ class _HistoricoCandidaturasState extends State<HistoricoCandidaturas> {
                         : ListView.separated(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             itemCount: _candidaturas.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 8),
+                            separatorBuilder: (_, _) => const SizedBox(height: 8),
                             itemBuilder: (context, i) => _CardHistorico(
                               candidatura: _candidaturas[i],
                               onTap: () => context.push(AppConstants.routeDetalheCandidatura, extra: _candidaturas[i].numCandidatura).then((_) => _refresh()),
@@ -132,7 +132,7 @@ class _CardHistorico extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 2))],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,7 +153,7 @@ class _CardHistorico extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text('Fechado',
@@ -168,7 +168,7 @@ class _CardHistorico extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                   decoration: BoxDecoration(
-                    color: corDecisao.withOpacity(0.12),
+                    color: corDecisao.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(textoDecisao,

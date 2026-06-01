@@ -155,7 +155,7 @@ class _DetalhesCandidaturaState extends State<DetalhesCandidatura> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: Column(
         children: [
@@ -170,7 +170,7 @@ class _DetalhesCandidaturaState extends State<DetalhesCandidatura> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                     decoration: BoxDecoration(
-                      color: corDecisao.withOpacity(0.12),
+                      color: corDecisao.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(textoDecisao, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: corDecisao)),
@@ -240,8 +240,8 @@ class _DetalhesCandidaturaState extends State<DetalhesCandidatura> {
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: corEstado.withOpacity(0.3)),
-      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
+      border: Border.all(color: corEstado.withValues(alpha: 0.3)),
+      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6)],
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,7 +257,7 @@ class _DetalhesCandidaturaState extends State<DetalhesCandidatura> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: corEstado.withOpacity(0.1),
+                color: corEstado.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(textoEstado,
@@ -348,7 +348,7 @@ class _ItemTimeline extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 1))],
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 1))],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -362,7 +362,7 @@ class _ItemTimeline extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.06),
+                            color: Colors.black.withValues(alpha: 0.06),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(entrada.nomeEstadoAtual,
@@ -378,7 +378,7 @@ class _ItemTimeline extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: _corDecisao.withOpacity(0.12),
+                              color: _corDecisao.withValues(alpha: 0.5),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(_textoDecisao, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _corDecisao)),
