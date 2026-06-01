@@ -3,6 +3,7 @@ import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_logo.dart'; // Import do nosso novo logo!
 import 'package:go_router/go_router.dart';
+import 'package:flutter/gestures.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -69,6 +70,44 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
+
+void _mostrarPoliticaPrivacidade(BuildContext context) async {
+  // Mostra loading enquanto busca
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const Center(child: CircularProgressIndicator()),
+  );
+
+  final texto = await APIService.instance.getPoliticaPrivacidade();
+  if (!mounted) return;
+  Navigator.pop(context); // fecha o loading
+
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Política de Privacidade e RGPD'),
+      content: SingleChildScrollView(
+        child: Text(
+          texto ?? 'Não foi possível carregar a política de privacidade.',
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Fechar'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            setState(() => _aceitaPolitica = true);
+            Navigator.pop(ctx);
+          },
+          child: const Text('Aceitar'),
+        ),
+      ],
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -144,12 +183,29 @@ class _LoginScreenState extends State<LoginScreen> {
                           onChanged: (value) => setState(() => _aceitaPolitica = value!),
                           activeColor: AppConstants.corPrimaria,
                         ),
-                        const Expanded(
+                        Expanded(
                           child: Padding(
-                            padding: EdgeInsets.only(top: 12.0),
-                            child: Text(
-                              'Li e aceito a Política de Privacidade e autorizo o tratamento dos meus dados pessoais para efeitos de certificação profissional.',
-                              style: TextStyle(fontSize: 12),
+                            padding: const EdgeInsets.only(top: 12.0),
+                            child: RichText(
+                              text: TextSpan(
+                                style: const TextStyle(fontSize: 12, color: Colors.black87),
+                                children: [
+                                  const TextSpan(text: 'Li e aceito a '),
+                                  TextSpan(
+                                    text: 'Política de Privacidade',
+                                    style: const TextStyle(
+                                      color: AppConstants.corPrimaria,
+                                      fontWeight: FontWeight.bold,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () => _mostrarPoliticaPrivacidade(context),
+                                  ),
+                                  const TextSpan(
+                                    text: ' e autorizo o tratamento dos meus dados pessoais para efeitos de certificação profissional.',
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),

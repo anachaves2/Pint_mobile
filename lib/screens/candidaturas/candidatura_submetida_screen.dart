@@ -9,7 +9,7 @@ class CandidaturaSubmetida extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final numCandidatura = ModalRoute.of(context)?.settings.arguments as int?;
+    final numCandidatura = GoRouterState.of(context).extra as int?;
 
     return Scaffold(
       backgroundColor: Colors.white,

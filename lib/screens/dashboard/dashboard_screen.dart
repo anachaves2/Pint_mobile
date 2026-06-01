@@ -28,6 +28,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<CandidaturaBadge> _candidaturas = [];
   //List<RankingConsultor> _ranking = [];
   bool _isLoading = true;
+  String _pesquisa = '';
 
   StreamSubscription? _subDados;
 
@@ -85,6 +86,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .toSet();
     return _catalogoBadges
         .where((b) => !idsConquistados.contains(b.id))
+        .where((b) => _pesquisa.isEmpty ||
+            b.nome.toLowerCase().contains(_pesquisa.toLowerCase()))
         .take(3)
         .toList();
   }
@@ -137,9 +140,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       title: const Text(
         'Dashboard',
         style: TextStyle(
-          color: AppConstants.corPrimaria, 
-          fontWeight: FontWeight.bold, 
-          fontSize: 20, // <-- Substitui 'height' por 'fontSize'
+          color: AppConstants.corPrimaria,
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
         ),
       ),
       actions: [
@@ -184,8 +187,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           color: Colors.grey[100],
           borderRadius: BorderRadius.circular(24),
         ),
-        child: const TextField(
-          decoration: InputDecoration(
+        child: TextField(
+          onChanged: (value) => setState(() => _pesquisa = value),
+          decoration: const InputDecoration(
             hintText: 'Procurar...',
             hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
             prefixIcon: Icon(Icons.search, color: Colors.grey, size: 20),
@@ -253,7 +257,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             titulo: 'LEARNING PATH',
             subtitulo: nomeLp,
             progresso: progressoLp.clamp(0.0, 1.0),
-            onTap: () => context.push(AppConstants.routeObjetivos)
+            onTap: () => context.push(AppConstants.routeObjetivos),
           ),
           const SizedBox(height: 8),
           _buildProgressCard(
@@ -261,13 +265,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
             titulo: 'BADGES',
             subtitulo: '$conquistadosLp de $totalBadgesLp conquistados',
             progresso: progressoLp.clamp(0.0, 1.0),
-            onTap: () => context.push(AppConstants.routeMeusBadges)
+            onTap: () => context.push(AppConstants.routeMeusBadges),
           ),
           const SizedBox(height: 8),
           _buildProgressCard(
             icon: Icons.emoji_events_outlined,
             titulo: 'RANKING GAMIFICATION',
-            subtitulo: _consultor?.posicaoRanking != null ? '${_consultor!.posicaoRanking}º lugar' : 'Sem dados',
+            subtitulo: _consultor?.posicaoRanking != null
+                ? '${_consultor!.posicaoRanking}º lugar · $_totalPontos pts'
+                : '$_totalPontos pontos acumulados',
             progresso: 0.0,
             onTap: () => context.push(AppConstants.routeRanking),
           ),

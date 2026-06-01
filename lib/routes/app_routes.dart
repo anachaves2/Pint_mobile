@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/models/notificacao.dart';
 
 import 'package:pint_mobile/screens/auth/landing_page_screen.dart';
 import 'package:pint_mobile/screens/auth/login_screen.dart';
 import 'package:pint_mobile/screens/auth/recuperar_password_screen.dart';
 import 'package:pint_mobile/screens/auth/redefinir_password1_screen.dart';
 import 'package:pint_mobile/screens/auth/redefinir_password2_screen.dart';
+import 'package:pint_mobile/screens/auth/configuracao_inicial_screen.dart';
 import 'package:pint_mobile/screens/dashboard/dashboard_screen.dart';
 import 'package:pint_mobile/screens/badges/meus_badges_screen.dart';
 import 'package:pint_mobile/screens/badges/todos_badges_screen.dart';
@@ -30,6 +32,7 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: AppConstants.routeRecuperarPassword, builder: (ctx, state) => const RecuperarPasswordScreen()),
     GoRoute(path: AppConstants.routeRedefinirPassword1, builder: (ctx, state) => const RedefinirPassword1Screen()),
     GoRoute(path: AppConstants.routeRedefinirPassword2, builder: (ctx, state) => const RedefinirPassword2Screen()),
+    GoRoute(path: AppConstants.routeConfiguracaoInicial, builder: (ctx, state) => const ConfiguracaoInicialScreen()),
     GoRoute(path: AppConstants.routeDashboard, builder: (ctx, state) => const DashboardScreen()),
     GoRoute(path: AppConstants.routeMeusBadges, builder: (ctx, state) => const OsMeusBadges()),
     GoRoute(path: AppConstants.routeTodosBadges, builder: (ctx, state) => const TodosOsBadges()),
@@ -42,14 +45,14 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: AppConstants.routeGamification, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Gamification')),
     GoRoute(path: AppConstants.routeRanking, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Ranking')),
     GoRoute(path: AppConstants.routeNotificacoes, builder: (ctx, state) => const NotificacoesScreen()),
-    GoRoute(path: AppConstants.routeDetalheNotificacao, builder: (ctx, state) => const DetalheNotificacaoScreen()),
+    GoRoute(path: AppConstants.routeDetalheNotificacao, builder: (ctx, state) => DetalheNotificacaoScreen(notificacao: state.extra as Notificacao)),
     GoRoute(path: AppConstants.routePerfil, builder: (ctx, state) => const Perfil()),
     GoRoute(path: AppConstants.routeDefinicoes, builder: (ctx, state) => const DefinicoesScreen()),
     GoRoute(path: AppConstants.routeAlterarPassword, builder: (ctx, state) => const AlterarPasswordScreen()),
     GoRoute(path: AppConstants.routeCandidaturasDecorrentes, builder: (ctx, state) => const CandidaturasADecorrer()),
     GoRoute(path: AppConstants.routeHistoricoCandidaturas, builder: (ctx, state) => const HistoricoCandidaturas()),
     GoRoute(path: AppConstants.routeCandidaturaSubmetida, builder: (ctx, state) => const CandidaturaSubmetida()),
-    GoRoute(path: AppConstants.routeDetalheCandidatura, builder: (ctx, state) => const DetalhesCandidatura()),
+    GoRoute(path: AppConstants.routeDetalheCandidatura, builder: (ctx, state) => DetalhesCandidatura(numCandidatura: state.extra as int)),
     GoRoute(path: AppConstants.routeCandidaturas, builder: (ctx, state) => const Candidaturas()),
     GoRoute(path: AppConstants.routeNovaCandidatura, builder: (ctx, state) => const NovaCandidatura()),  
   ],

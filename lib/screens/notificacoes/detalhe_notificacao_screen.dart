@@ -4,6 +4,7 @@ import 'package:pint_mobile/models/notificacao.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:go_router/go_router.dart';
+
  
 // ============================================================================
 // DetalheNotificacaoScreen — Ecrãs 48 a 52
@@ -14,7 +15,8 @@ import 'package:go_router/go_router.dart';
 // ============================================================================
  
 class DetalheNotificacaoScreen extends StatelessWidget {
-  const DetalheNotificacaoScreen({super.key});
+  final Notificacao notificacao;
+  const DetalheNotificacaoScreen({super.key, required this.notificacao});
  
   // ── Configuração visual por tipo ──
   static const Map<String, _TipoConfig> _configs = {
@@ -108,8 +110,6 @@ class DetalheNotificacaoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Recebe o objeto Notificacao via arguments
-    final notificacao =
-        ModalRoute.of(context)!.settings.arguments as Notificacao;
     final config = _configPara(notificacao.tipoNotificacao);
     final dataFmt =
         DateFormat('dd-MM-yyyy  HH:mm').format(notificacao.data);

@@ -880,4 +880,21 @@ class APIService {
       return (sucesso: false, erro: 'Sem ligação ao servidor.');
     }
   }
+  //=============================================================
+  // OBTER POLÍTICA DE PRIVACIDAD - Para ecrã login_screen
+  
+  Future<String?> getPoliticaPrivacidade() async {
+  try {
+    final response = await http.get(
+      Uri.parse('${AppConstants.baseUrl}/auth/politica-privacidade'),
+    );
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      return json['conteudo'] as String?;
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
 }

@@ -26,7 +26,7 @@ class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
   Future<void> _verificarPin(String email) async {
     final codigo = _controllers.map((c) => c.text).join();
     if (codigo.length < 5) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Insira os 6 dígitos.'), backgroundColor: AppConstants.corErro));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Insira os 5 dígitos.'), backgroundColor: AppConstants.corErro));
       return;
     }
 
