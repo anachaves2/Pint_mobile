@@ -54,7 +54,7 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: AppConstants.routeCandidaturaSubmetida, builder: (ctx, state) => const CandidaturaSubmetida()),
     GoRoute(path: AppConstants.routeDetalheCandidatura, builder: (ctx, state) => DetalhesCandidatura(numCandidatura: state.extra as int)),
     GoRoute(path: AppConstants.routeCandidaturas, builder: (ctx, state) => const Candidaturas()),
-    GoRoute(path: AppConstants.routeNovaCandidatura, builder: (ctx, state) => const NovaCandidatura()),  
+    GoRoute(path: AppConstants.routeNovaCandidatura, builder: (ctx, state) => NovaCandidatura(rascunho: state.extra as Map<String, dynamic>?)),
   ],
 );
 

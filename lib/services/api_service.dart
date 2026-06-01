@@ -882,7 +882,7 @@ class APIService {
   }
   //=============================================================
   // OBTER POLÍTICA DE PRIVACIDAD - Para ecrã login_screen
-  
+
   Future<String?> getPoliticaPrivacidade() async {
   try {
     final response = await http.get(
@@ -895,6 +895,65 @@ class APIService {
     return null;
   } catch (e) {
     return null;
+    }
   }
-}
+
+//==========================================================
+// CANCELAR RASCUNHO - apaga uma candidatura em estado 0 (rascunho)
+// Só funciona se a candidatura ainda não foi submetida
+// Apaga também todas as evidências associadas (BD + disco)
+
+  Future<({bool sucesso, String? erro})> cancelarRascunho(
+    int numCandidatura,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.delete(
+        Uri.parse('${AppConstants.baseUrl}/candidaturas/$numCandidatura'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        // Atualiza o SQLite para remover a candidatura da lista local
+        await sincronizarCandidaturas();
+        return (sucesso: true, erro: null);
+      }
+
+      final json = jsonDecode(response.body);
+      return (
+        sucesso: false,
+        erro: json['error'] as String? ?? 'Erro ao cancelar candidatura',
+      );
+    } catch (e) {
+      return (sucesso: false, erro: 'Sem ligação ao servidor.');
+    }
+  }
+
+//==========================================================
+// GET RASCUNHOS - lista os rascunhos do consultor autenticado
+// Devolve uma lista de mapas com info de cada rascunho
+
+  Future<({List<Map<String, dynamic>>? rascunhos, String? erro})> getRascunhos() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AppConstants.baseUrl}/candidaturas/rascunhos'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 8));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> json = jsonDecode(response.body);
+        final rascunhos = json.cast<Map<String, dynamic>>();
+        return (rascunhos: rascunhos, erro: null);
+      }
+
+      final json = jsonDecode(response.body);
+      return (
+        rascunhos: null,
+        erro: json['error'] as String? ?? 'Erro ao obter rascunhos',
+      );
+    } catch (e) {
+      return (rascunhos: null, erro: 'Sem ligação ao servidor.');
+    }
+  }
 }

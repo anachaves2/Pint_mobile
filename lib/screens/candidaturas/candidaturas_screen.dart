@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pint_mobile/models/candidatura_badge.dart';
@@ -16,18 +17,38 @@ class Candidaturas extends StatefulWidget {
 
 class _CandidaturasState extends State<Candidaturas> {
   List<CandidaturaBadge> _candidaturas = [];
+  List<Map<String, dynamic>> _rascunhos = [];
   bool _isLoading = true;
+  StreamSubscription<void>? _subAtualizador;
 
   @override
   void initState() {
     super.initState();
     _carregar();
-    atualizadorDados.stream.listen((_) => _carregar());
+    _subAtualizador = atualizadorDados.stream.listen((_) => _carregar());
+  }
+
+  @override
+  void dispose() {
+    _subAtualizador?.cancel();
+    super.dispose();
   }
 
   Future<void> _carregar() async {
+    // 1) Mostra IMEDIATAMENTE as candidaturas locais (SQLite, rápido e offline).
     final lista = await DatabaseService.instance.getCandidaturas();
-    if (mounted) setState(() { _candidaturas = lista; _isLoading = false; });
+    if (mounted) {
+      setState(() {
+        _candidaturas = lista;
+        _isLoading = false; // tira o spinner já — não espera pela rede
+      });
+    }
+
+    // 2) Carrega os rascunhos em segundo plano (chamada de rede que pode falhar).
+    final resultadoRascunhos = await APIService.instance.getRascunhos();
+    if (mounted) {
+      setState(() => _rascunhos = resultadoRascunhos.rascunhos ?? []);
+    }
   }
 
   Future<void> _refresh() async {
@@ -38,6 +59,55 @@ class _CandidaturasState extends State<Candidaturas> {
 
   List<CandidaturaBadge> get _emProgresso => _candidaturas.where((c) => !c.estaConcluida).toList();
   List<CandidaturaBadge> get _historico => _candidaturas.where((c) => c.estaConcluida).toList();
+
+  // Apaga um rascunho com confirmação
+  Future<void> _apagarRascunho(int numCandidatura) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Apagar rascunho?',
+          style: TextStyle(fontWeight: FontWeight.bold, color: AppConstants.corPrimaria),
+        ),
+        content: const Text(
+          'Esta acção não pode ser desfeita. As evidências carregadas serão removidas.',
+          style: TextStyle(fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Não', style: TextStyle(color: Colors.black54)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'Sim, apagar',
+              style: TextStyle(color: AppConstants.corErro, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+    if (!mounted) return;
+
+    final resultado = await APIService.instance.cancelarRascunho(numCandidatura);
+    if (!mounted) return;
+
+    if (resultado.sucesso) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Rascunho apagado.'), backgroundColor: AppConstants.corSucesso),
+      );
+      await _carregar();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(resultado.erro ?? 'Erro ao apagar'), backgroundColor: AppConstants.corErro),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,8 +125,8 @@ class _CandidaturasState extends State<Candidaturas> {
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: const Text('CANDIDATURAS',
-            style: TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.bold, fontSize: 15, letterSpacing: 1)),
+        title: const Text('Candidaturas',
+            style: TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.bold, fontSize: 20)),
         actions: [
           IconButton(
             icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
@@ -95,7 +165,12 @@ class _CandidaturasState extends State<Candidaturas> {
                       rotaVerTodos: AppConstants.routeCandidaturasDecorrentes,
                       vazioMsg: 'Não tens candidaturas em curso.',
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 24),
+
+                    // ─── SECÇÃO DE RASCUNHOS ────────────────────────────
+                    _buildSecaoRascunhos(),
+                    if (_rascunhos.isNotEmpty) const SizedBox(height: 12),
+
                     Center(
                       child: OutlinedButton.icon(
                         onPressed: () => context.push(AppConstants.routeNovaCandidatura).then((_) => _refresh()),
@@ -119,6 +194,50 @@ class _CandidaturasState extends State<Candidaturas> {
                 ),
               ),
             ),
+    );
+  }
+
+  // Secção de rascunhos — só aparece se houver pelo menos 1
+  Widget _buildSecaoRascunhos() {
+    if (_rascunhos.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text('Rascunhos',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54, letterSpacing: 0.5)),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppConstants.corPrimaria.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '${_rascunhos.length}',
+                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppConstants.corPrimaria),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ..._rascunhos.map((r) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: CardRascunho(
+                rascunho: r,
+                // ↓ ALTERAÇÃO IMPORTANTE: passa o MAP completo (não só o int)
+                onContinuar: () => context
+                    .push(AppConstants.routeNovaCandidatura, extra: r)
+                    .then((_) => _refresh()),
+                onApagar: () {
+                  final num = (r['numCandidatura'] ?? r['num_candidatura']) as int?;
+                  if (num != null) _apagarRascunho(num);
+                },
+              ),
+            )),
+      ],
     );
   }
 
@@ -163,7 +282,7 @@ class _CandidaturasState extends State<Candidaturas> {
   }
 }
 
-// ─── Card reutilizável ───────────────────────────────────────────────────────
+// ─── Card de candidatura (inalterado) ────────────────────────────────────────
 class CardCandidatura extends StatelessWidget {
   final CandidaturaBadge candidatura;
   final VoidCallback onTap;
@@ -222,6 +341,138 @@ class CardCandidatura extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─── Card de rascunho (cores atualizadas — sem amarelo) ──────────────────────
+class CardRascunho extends StatelessWidget {
+  final Map<String, dynamic> rascunho;
+  final VoidCallback onContinuar;
+  final VoidCallback onApagar;
+
+  const CardRascunho({
+    super.key,
+    required this.rascunho,
+    required this.onContinuar,
+    required this.onApagar,
+  });
+
+  String _fmt(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year.toString().substring(2)}';
+
+  @override
+  Widget build(BuildContext context) {
+    final numEvidencias = rascunho['numEvidencias'] as int? ?? 0;
+    final numRequisitos = rascunho['numRequisitos'] as int? ?? 0;
+    final dataStr = rascunho['dataCriacao'] as String? ?? '';
+    final data = DateTime.tryParse(dataStr);
+    final dataFormatada = data != null ? _fmt(data) : '—';
+    final progresso = numRequisitos > 0 ? numEvidencias / numRequisitos : 0.0;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 2))],
+        // Borda subtil em tom primário, em vez do amarelo
+        border: Border.all(color: AppConstants.corPrimaria.withOpacity(0.2), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      rascunho['nomeBadge'] as String? ?? 'Sem nome',
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.black87),
+                    ),
+                    if (rascunho['nomeNivel'] != null)
+                      Text('Nível ${rascunho['nomeNivel']}',
+                          style: const TextStyle(fontSize: 12, color: Colors.black45)),
+                  ],
+                ),
+              ),
+              // Botão de apagar
+              GestureDetector(
+                onTap: onApagar,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppConstants.corErro.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.delete_outline, size: 18, color: AppConstants.corErro),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.calendar_today_outlined, size: 12, color: Colors.black38),
+              const SizedBox(width: 4),
+              Text('Criado em: $dataFormatada',
+                  style: const TextStyle(fontSize: 11, color: Colors.black38)),
+              const Spacer(),
+              // Etiqueta "Rascunho" em tom primário (em vez de amarelo)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppConstants.corPrimaria.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'Rascunho',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppConstants.corPrimaria),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Barra de progresso das evidências
+          Row(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: progresso,
+                    minHeight: 5,
+                    backgroundColor: Colors.black12,
+                    valueColor: const AlwaysStoppedAnimation<Color>(AppConstants.corPrimaria),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                '$numEvidencias / $numRequisitos evidências',
+                style: const TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Botão continuar
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: onContinuar,
+              icon: const Icon(Icons.arrow_forward, size: 16, color: Colors.white),
+              label: const Text('Continuar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppConstants.corPrimaria,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

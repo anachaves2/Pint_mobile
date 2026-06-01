@@ -35,7 +35,10 @@ class _RecuperarPasswordScreenState extends State<RecuperarPasswordScreen> {
 
     if (resultado.sucesso) {
       // Passa o email como argumento para o ecrã seguinte (04 - RedefinirPassword1)
-      context.push('${AppConstants.routeRedefinirPassword1}?email=$email');
+      context.push(
+        AppConstants.routeRedefinirPassword1,
+        extra: email, 
+      );
 
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

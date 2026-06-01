@@ -89,8 +89,8 @@ class _DetalhesCandidaturaState extends State<DetalhesCandidatura> {
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: const Text('CANDIDATURAS',
-            style: TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.bold, fontSize: 15, letterSpacing: 1)),
+        title: const Text('Candidaturas',
+            style: TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.bold, fontSize: 20)),
         actions: [
           IconButton(
             icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,

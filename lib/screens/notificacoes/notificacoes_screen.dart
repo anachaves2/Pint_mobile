@@ -282,7 +282,10 @@ class _NotificacoesScreenState extends State<NotificacoesScreen>
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        title: const Text('NOTIFICAÇÕES'),
+        title: const Text(
+          'Notificações',
+          style: TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.bold, fontSize: 20, letterSpacing: 1),
+          ),
         bottom: TabBar(
           controller: _tabController,
           labelColor: AppConstants.corPrimaria,

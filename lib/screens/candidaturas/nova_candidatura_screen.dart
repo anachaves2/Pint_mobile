@@ -13,7 +13,9 @@ import 'package:go_router/go_router.dart';
 enum _Fase { selecionarBadge, carregarEvidencias }
 
 class NovaCandidatura extends StatefulWidget {
-  const NovaCandidatura({super.key});
+  /// Quando não null, o ecrã abre directamente no modo "continuar rascunho".
+  final Map<String, dynamic>? rascunho;
+  const NovaCandidatura({super.key, this.rascunho});
   @override
   State<NovaCandidatura> createState() => _NovaCandidaturaState();
 }
@@ -29,16 +31,77 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
   final Map<int, String> _ficheirosPendentes = {};
   final Map<int, bool> _uploading = {};
   bool _isSubmitting = false;
+  bool _isCancelling = false;
+
+  // Se true, o ecrã foi aberto para CONTINUAR um rascunho existente.
+  // Caso contrário, é uma candidatura nova (fluxo original).
+  bool _modoRascunho = false;
 
   @override
   void initState() {
     super.initState();
-    _carregarBadges();
+    // O parâmetro [rascunho] é passado directamente pelo route builder (app_routes.dart).
+    // Evita depender de addPostFrameCallback + GoRouterState.of, que pode resolver null.
+    if (widget.rascunho != null) {
+      _carregarRascunho(widget.rascunho!);
+    } else {
+      _carregarBadges();
+    }
   }
 
   Future<void> _carregarBadges() async {
     final badges = await DatabaseService.instance.getCatalogoBadges();
     if (mounted) setState(() { _badges = badges; _isLoadingBadges = false; });
+  }
+
+  // Carrega um rascunho existente — encontra o badge no catálogo local pelo
+  // idBadgeRegular, lê os requisitos e as evidências já guardadas, e salta
+  // diretamente para a fase de carregamento de evidências.
+  Future<void> _carregarRascunho(Map<String, dynamic> rascunho) async {
+    // Lê com cast seguro — o endpoint /rascunhos pode devolver int ou String
+    final numCandidatura = (rascunho['numCandidatura'] ?? rascunho['num_candidatura']) as int?;
+    final idBadge = (rascunho['idBadgeRegular'] ?? rascunho['id_badge_regular']) as int?;
+
+    if (numCandidatura == null || idBadge == null) {
+      if (mounted) {
+        _mostrarErro('Dados do rascunho inválidos (numCandidatura=$numCandidatura, idBadge=$idBadge).');
+        setState(() => _isLoadingBadges = false);
+      }
+      return;
+    }
+
+    // Vai buscar o badge ao catálogo local
+    final badges = await DatabaseService.instance.getCatalogoBadges();
+    BadgeRegular? badge;
+    for (final b in badges) {
+      if (b.id == idBadge) {
+        badge = b;
+        break;
+      }
+    }
+
+    if (!mounted) return;
+
+    if (badge == null) {
+      _mostrarErro('Não foi possível carregar este rascunho.');
+      context.pop();
+      return;
+    }
+
+    // Carrega requisitos do badge e evidências já submetidas
+    final requisitos = await DatabaseService.instance.getRequisitos(idBadge);
+    final evidencias = await DatabaseService.instance.getEvidencias(numCandidatura);
+
+    if (!mounted) return;
+    setState(() {
+      _modoRascunho = true;
+      _numCandidatura = numCandidatura;
+      _badgeSelecionado = badge;
+      _requisitos = requisitos;
+      _evidenciasGuardadas = { for (final e in evidencias) e.idRequisito: e };
+      _fase = _Fase.carregarEvidencias; // salta direto para a fase 2
+      _isLoadingBadges = false;
+    });
   }
 
   Future<void> _criarCandidatura() async {
@@ -105,6 +168,59 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     }
   }
 
+  Future<void> _cancelarCandidatura() async {
+    if (_numCandidatura == null) return;
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Cancelar candidatura?',
+          style: TextStyle(fontWeight: FontWeight.bold, color: AppConstants.corPrimaria),
+        ),
+        content: const Text(
+          'Esta acção não pode ser desfeita. As evidências carregadas serão removidas.',
+          style: TextStyle(fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Não', style: TextStyle(color: Colors.black54)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'Sim, cancelar',
+              style: TextStyle(color: AppConstants.corErro, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+    if (!mounted) return;
+
+    setState(() => _isCancelling = true);
+    final resultado = await APIService.instance.cancelarRascunho(_numCandidatura!);
+    if (!mounted) return;
+    setState(() => _isCancelling = false);
+
+    if (resultado.sucesso) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Candidatura cancelada.'),
+          backgroundColor: AppConstants.corSucesso,
+        ),
+      );
+      context.go(AppConstants.routeCandidaturas);
+    } else {
+      _mostrarErro(resultado.erro ?? 'Erro ao cancelar candidatura.');
+    }
+  }
+
   void _mostrarErro(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: AppConstants.corErro));
   }
@@ -150,8 +266,11 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
                   onTap: () => Navigator.pop(context),
                   child: const Icon(Icons.chevron_left, color: AppConstants.corPrimaria),
                 ),
-                const Text('Nova Candidatura',
-                    style: TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.w600, fontSize: 14)),
+                // Título dinâmico
+                Text(
+                  _modoRascunho ? 'Continuar Rascunho' : 'Nova Candidatura',
+                  style: const TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.w600, fontSize: 14),
+                ),
               ],
             ),
           ),
@@ -289,21 +408,43 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
         ),
         Padding(
           padding: const EdgeInsets.all(16),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _podeSubmeter && !_isSubmitting ? _submeter : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppConstants.corPrimaria,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: Colors.black12,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: (_isSubmitting || _isCancelling) ? null : _cancelarCandidatura,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppConstants.corErro,
+                    side: const BorderSide(color: AppConstants.corErro),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: _isCancelling
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppConstants.corErro),
+                        )
+                      : const Text('Cancelar', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                ),
               ),
-              child: _isSubmitting
-                  ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('Submeter', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: (_podeSubmeter && !_isSubmitting && !_isCancelling) ? _submeter : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppConstants.corPrimaria,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.black12,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text('Submeter', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                ),
+              ),
+            ],
           ),
         ),
       ],

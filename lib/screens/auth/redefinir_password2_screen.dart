@@ -99,7 +99,7 @@ class _RedefinirPassword2ScreenState extends State<RedefinirPassword2Screen> {
 
   @override
   Widget build(BuildContext context) {
-    final tokenReset = GoRouterState.of(context).uri.queryParameters['token'] ?? '';
+    final token = GoRouterState.of(context).extra as String? ?? '';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -132,7 +132,7 @@ class _RedefinirPassword2ScreenState extends State<RedefinirPassword2Screen> {
                       onPressed: () => setState(() => _verPassword = !_verPassword),
                     ),
                   ),
-                  validator: (v) => v!.length < 6 ? 'Mínimo 6 caracteres' : null,
+                  validator: (v) => v!.length < 8 ? 'Mínimo 8 caracteres' : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -153,7 +153,7 @@ class _RedefinirPassword2ScreenState extends State<RedefinirPassword2Screen> {
                   width: 200,
                   height: 48,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : () => _redefinir(tokenReset),
+                    onPressed: _isLoading ? null : () => _redefinir(token),
                     style: ElevatedButton.styleFrom(backgroundColor: AppConstants.corPrimaria, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                     child: _isLoading
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))

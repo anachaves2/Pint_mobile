@@ -121,7 +121,10 @@ class DetalheNotificacaoScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: AppConstants.corPrimaria),
-        title: const Text('NOTIFICAÇÕES'),
+        title: const Text(
+          'Notificações',
+          style: TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.bold, fontSize: 20, letterSpacing: 1),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),

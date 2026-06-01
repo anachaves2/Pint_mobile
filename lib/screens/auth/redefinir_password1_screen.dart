@@ -39,7 +39,10 @@ class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
 
     if (resultado.tokenReset != null) {
       // Passa o token_reset para o ecrã seguinte em vez do PIN
-      context.push('${AppConstants.routeRedefinirPassword2}?token=${resultado.tokenReset}');
+      context.push(
+        AppConstants.routeRedefinirPassword2,
+        extra: resultado.tokenReset,
+      );
 
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(resultado.erro ?? 'Erro'), backgroundColor: AppConstants.corErro));
@@ -48,7 +51,7 @@ class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
 
   @override
   Widget build(BuildContext context) {
-    final email = GoRouterState.of(context).uri.queryParameters['email'] ?? '';
+    final email = GoRouterState.of(context).extra as String? ?? '';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -76,17 +79,18 @@ class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: List.generate(5, (index) {
                   return SizedBox(
-                    width: 45, 
-                    height: 55,
+                    width: 50, 
+                    height: 60,
                     child: TextFormField(
                       controller: _controllers[index],
                       focusNode: _focusNodes[index],
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.center,
                       maxLength: 1,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
                       decoration: InputDecoration(
                         counterText: "",
+                        contentPadding: EdgeInsets.zero,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                       ),
                       onChanged: (value) {
