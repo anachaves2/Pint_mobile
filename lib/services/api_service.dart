@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/services/database_service.dart';
+import 'package:flutter/foundation.dart';
 
 // Modelos
 import 'package:pint_mobile/models/consultor.dart';
@@ -276,7 +277,7 @@ class APIService {
       }
     } catch (e) {
       // Sem internet — mantém os dados locais, a UI continua a funcionar
-      print('[APIService] sincronizarBadges: sem ligação ($e)');
+      debugPrint('[APIService] sincronizarBadges: sem ligação ($e)');
     }
   }
 
@@ -315,7 +316,7 @@ class APIService {
         await DatabaseService.instance.saveRequisitos(requisitos);
       }
     } catch (e) {
-      print('[APIService] sincronizarCatalogo: sem ligação ($e)');
+      debugPrint('[APIService] sincronizarCatalogo: sem ligação ($e)');
     }
   }
 
@@ -339,7 +340,7 @@ class APIService {
         await DatabaseService.instance.saveCandidaturas(candidaturas);
       }
     } catch (e) {
-      print('[APIService] sincronizarCandidaturas: sem ligação ($e)');
+      debugPrint('[APIService] sincronizarCandidaturas: sem ligação ($e)');
     }
   }
   //=======================================================================
@@ -370,7 +371,7 @@ class APIService {
         await DatabaseService.instance.saveEvidencias(evidencias);
       }
     } catch (e) {
-      print('[APIService] sincronizarDetalhesCandidatura: sem ligação ($e)');
+      debugPrint('[APIService] sincronizarDetalhesCandidatura: sem ligação ($e)');
     }
   }
 
@@ -394,7 +395,7 @@ class APIService {
         await DatabaseService.instance.saveEstados(estados);
       }
     } catch (e) {
-      print('[APIService] sincronizarEstados: sem ligação ($e)');
+      debugPrint('[APIService] sincronizarEstados: sem ligação ($e)');
     }
   }
   //==============================================================
@@ -415,7 +416,7 @@ class APIService {
         await DatabaseService.instance.saveObjetivos(objetivos);
       }
     } catch (e) {
-      print('[APIService] sincronizarObjetivos: sem ligação ($e)');
+      debugPrint('[APIService] sincronizarObjetivos: sem ligação ($e)');
     }
   }
 
@@ -437,7 +438,7 @@ class APIService {
         await DatabaseService.instance.saveTiposObjetivo(tipos);
       }
     } catch (e) {
-      print('[APIService] sincronizarTiposObjetivo: sem ligação ($e)');
+      debugPrint('[APIService] sincronizarTiposObjetivo: sem ligação ($e)');
     }
   }
 
@@ -475,7 +476,7 @@ class APIService {
         await DatabaseService.instance.saveNotificacoes(notificacoes);
       }
     } catch (e) {
-      print('[APIService] sincronizarNotificacoes: sem ligação ($e)');
+      debugPrint('[APIService] sincronizarNotificacoes: sem ligação ($e)');
     }
   }
 
@@ -844,7 +845,7 @@ class APIService {
       }
       return [];
     } catch (e) {
-      print('[APIService] getAreas: sem ligação ($e)');
+      debugPrint('[APIService] getAreas: sem ligação ($e)');
       return [];
     }
   }

@@ -293,7 +293,7 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
           border: Border.all(color: Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -399,7 +399,7 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
       height: 44,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: cor.withOpacity(0.15),
+        color: cor.withValues(alpha: 0.15),
         border: Border.all(color: cor, width: 2),
       ),
       child: Center(
