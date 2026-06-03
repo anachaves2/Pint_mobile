@@ -1,4 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 // SharedPreferences — Aula 9
 // Guarda preferências simples do utilizador de forma persistente
@@ -12,6 +15,7 @@ class PreferenciasService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_chaveToken, token);
     await prefs.setString(_chaveEmail, email);
+    debugPrint('Token hash (SHA-256): ${hashToken(token)}');
   }
 
   // Ler token guardado
@@ -42,5 +46,11 @@ class PreferenciasService {
   Future<void> limpar() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+  }
+
+  static String hashToken(String token){
+    final bytes = utf8.encode(token);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
   }
 }
