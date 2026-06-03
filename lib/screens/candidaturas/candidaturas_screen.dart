@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/models/candidatura_badge.dart';
-import 'package:pint_mobile/providers/utilizador_provider.dart';
+import 'package:pint_mobile/providers/candidatura_provider.dart';
 import 'package:pint_mobile/services/api_service.dart';
-import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
@@ -18,15 +17,17 @@ class Candidaturas extends ConsumerStatefulWidget {
 }
 
 class _CandidaturasState extends ConsumerState<Candidaturas> {
-  List<CandidaturaBadge> _candidaturas = [];
   List<Map<String, dynamic>> _rascunhos = [];
   StreamSubscription<void>? _subAtualizador;
 
   @override
   void initState() {
     super.initState();
-    _carregar();
-    _subAtualizador = atualizadorDados.stream.listen((_) => _carregar());
+    _carregarRascunhos();
+    _subAtualizador = atualizadorDados.stream.listen((_) {
+      ref.invalidate(candidaturasProvider);
+      _carregarRascunhos();
+    });
   }
 
   @override
@@ -35,30 +36,12 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
     super.dispose();
   }
 
-  Future<void> _carregar() async {
-    final lista = await DatabaseService.instance.getCandidaturas();
-    if (mounted) {
-      setState(() {
-        _candidaturas = lista;
-      });
-    }
-
+  Future<void> _carregarRascunhos() async {
     final resultadoRascunhos = await APIService.instance.getRascunhos();
     if (mounted) {
       setState(() => _rascunhos = resultadoRascunhos.rascunhos ?? []);
     }
   }
-
-  Future<void> _refresh() async {
-    await APIService.instance.sincronizarCandidaturas();
-    await APIService.instance.sincronizarEstados();
-    await _carregar();
-  }
-
-  List<CandidaturaBadge> get _emProgresso =>
-      _candidaturas.where((c) => !c.estaConcluida).toList();
-  List<CandidaturaBadge> get _historico =>
-      _candidaturas.where((c) => c.estaConcluida).toList();
 
   Future<void> _apagarRascunho(int numCandidatura) async {
     final confirmar = await showDialog<bool>(
@@ -102,7 +85,7 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
             content: Text('Rascunho apagado.'),
             backgroundColor: AppConstants.corSucesso),
       );
-      await _carregar();
+      _carregarRascunhos();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -145,87 +128,90 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
           ),
         ],
       ),
-      // ─── FutureBuilder — Aula 6 ───────────────────────────────────────
-      body: FutureBuilder<List<CandidaturaBadge>>(
-        future: DatabaseService.instance.getCandidaturas(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-                child: CircularProgressIndicator(
-                    color: AppConstants.corPrimaria));
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Erro: ${snapshot.error}'));
-          } else {
-            return RefreshIndicator(
-              color: AppConstants.corPrimaria,
-              onRefresh: _refresh,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (_emProgresso.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.chevron_left,
-                                size: 18, color: AppConstants.corPrimaria),
-                            Text(
-                              '${_emProgresso.length} candidatura${_emProgresso.length == 1 ? '' : 's'} a decorrer',
-                              style: const TextStyle(
-                                  color: AppConstants.corPrimaria,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13),
-                            ),
-                          ],
-                        ),
-                      ),
-                    _buildSecao(
-                      titulo: 'Em progresso',
-                      lista: _emProgresso,
-                      rotaVerTodos: AppConstants.routeCandidaturasDecorrentes,
-                      vazioMsg: 'Não tens candidaturas em curso.',
-                    ),
-                    const SizedBox(height: 24),
-                    _buildSecaoRascunhos(),
-                    if (_rascunhos.isNotEmpty) const SizedBox(height: 12),
-                    Center(
-                      child: OutlinedButton.icon(
-                        onPressed: () => context
-                            .push(AppConstants.routeNovaCandidatura)
-                            .then((_) => _refresh()),
-                        icon: const Icon(Icons.add,
-                            size: 18, color: AppConstants.corPrimaria),
-                        label: const Text('Nova Candidatura',
-                            style: TextStyle(
+      // ─── Riverpod — Aula 10 ───────────────────────────────────────────
+      body: ref.watch(candidaturasProvider).when(
+        data: (candidaturas) {
+          final emProgresso = candidaturas.where((c) => !c.estaConcluida).toList();
+          final historico = candidaturas.where((c) => c.estaConcluida).toList();
+
+          return RefreshIndicator(
+            color: AppConstants.corPrimaria,
+            onRefresh: () async {
+              await APIService.instance.sincronizarCandidaturas();
+              await APIService.instance.sincronizarEstados();
+              ref.invalidate(candidaturasProvider);
+              await _carregarRascunhos();
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (emProgresso.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.chevron_left,
+                              size: 18, color: AppConstants.corPrimaria),
+                          Text(
+                            '${emProgresso.length} candidatura${emProgresso.length == 1 ? '' : 's'} a decorrer',
+                            style: const TextStyle(
                                 color: AppConstants.corPrimaria,
-                                fontWeight: FontWeight.w600)),
-                        style: OutlinedButton.styleFrom(
-                          side:
-                              const BorderSide(color: AppConstants.corPrimaria),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20)),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 10),
-                        ),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    _buildSecao(
-                      titulo: 'Histórico',
-                      lista: _historico,
-                      rotaVerTodos: AppConstants.routeHistoricoCandidaturas,
-                      vazioMsg: 'Ainda não tens candidaturas concluídas.',
+                  _buildSecao(
+                    titulo: 'Em progresso',
+                    lista: emProgresso,
+                    rotaVerTodos: AppConstants.routeCandidaturasDecorrentes,
+                    vazioMsg: 'Não tens candidaturas em curso.',
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSecaoRascunhos(),
+                  if (_rascunhos.isNotEmpty) const SizedBox(height: 12),
+                  Center(
+                    child: OutlinedButton.icon(
+                      onPressed: () => context
+                          .push(AppConstants.routeNovaCandidatura)
+                          .then((_) {
+                        ref.invalidate(candidaturasProvider);
+                        _carregarRascunhos();
+                      }),
+                      icon: const Icon(Icons.add,
+                          size: 18, color: AppConstants.corPrimaria),
+                      label: const Text('Nova Candidatura',
+                          style: TextStyle(
+                              color: AppConstants.corPrimaria,
+                              fontWeight: FontWeight.w600)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppConstants.corPrimaria),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 10),
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSecao(
+                    titulo: 'Histórico',
+                    lista: historico,
+                    rotaVerTodos: AppConstants.routeHistoricoCandidaturas,
+                    vazioMsg: 'Ainda não tens candidaturas concluídas.',
+                  ),
+                ],
               ),
-            );
-          }
+            ),
+          );
         },
+        loading: () => const Center(
+            child: CircularProgressIndicator(color: AppConstants.corPrimaria)),
+        error: (err, _) => Center(child: Text('Erro: $err')),
       ),
     );
   }
@@ -246,8 +232,7 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
                     letterSpacing: 0.5)),
             const SizedBox(width: 6),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: AppConstants.corPrimaria.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(10),
@@ -269,7 +254,10 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
                 rascunho: r,
                 onContinuar: () => context
                     .push(AppConstants.routeNovaCandidatura, extra: r)
-                    .then((_) => _refresh()),
+                    .then((_) {
+                  ref.invalidate(candidaturasProvider);
+                  _carregarRascunhos();
+                }),
                 onApagar: () {
                   final num =
                       (r['numCandidatura'] ?? r['num_candidatura']) as int?;
@@ -314,14 +302,15 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
                   onTap: () => context
                       .push(AppConstants.routeDetalheCandidatura,
                           extra: c.numCandidatura)
-                      .then((_) => _refresh()),
+                      .then((_) => ref.invalidate(candidaturasProvider)),
                 ),
               )),
         if (lista.length > 3)
           Center(
             child: OutlinedButton(
-              onPressed: () =>
-                  context.push(rotaVerTodos).then((_) => _refresh()),
+              onPressed: () => context
+                  .push(rotaVerTodos)
+                  .then((_) => ref.invalidate(candidaturasProvider)),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppConstants.corPrimaria),
                 shape: RoundedRectangleBorder(
@@ -381,8 +370,7 @@ class CardCandidatura extends StatelessWidget {
                     color: Colors.black87)),
             if (candidatura.nomeNivel != null)
               Text('Nível ${candidatura.nomeNivel!}',
-                  style:
-                      const TextStyle(fontSize: 12, color: Colors.black45)),
+                  style: const TextStyle(fontSize: 12, color: Colors.black45)),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -390,12 +378,12 @@ class CardCandidatura extends StatelessWidget {
                     size: 12, color: Colors.black38),
                 const SizedBox(width: 4),
                 Text('Criado em: ${_fmt(candidatura.dataCriacao)}',
-                    style: const TextStyle(
-                        fontSize: 11, color: Colors.black38)),
+                    style:
+                        const TextStyle(fontSize: 11, color: Colors.black38)),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                   decoration: BoxDecoration(
                     color: _corEstado.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(20),
@@ -455,8 +443,7 @@ class CardRascunho extends StatelessWidget {
               offset: const Offset(0, 2))
         ],
         border: Border.all(
-            color: AppConstants.corPrimaria.withValues(alpha: 0.2),
-            width: 1),
+            color: AppConstants.corPrimaria.withValues(alpha: 0.2), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -502,8 +489,7 @@ class CardRascunho extends StatelessWidget {
                   size: 12, color: Colors.black38),
               const SizedBox(width: 4),
               Text('Criado em: $dataFormatada',
-                  style:
-                      const TextStyle(fontSize: 11, color: Colors.black38)),
+                  style: const TextStyle(fontSize: 11, color: Colors.black38)),
               const Spacer(),
               Container(
                 padding:

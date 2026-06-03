@@ -23,3 +23,5 @@ class UtilizadorNotifier extends AsyncNotifier<Consultor?> {
 final utilizadorProvider = 
   AsyncNotifierProvider<UtilizadorNotifier, Consultor?> (
     UtilizadorNotifier.new);
+
+    
