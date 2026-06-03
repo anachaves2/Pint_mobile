@@ -6,6 +6,7 @@ import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/services/notificacoes_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +28,11 @@ void main() async {
     );
   }
 
-  runApp(const MyApp());
+  runApp(
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
