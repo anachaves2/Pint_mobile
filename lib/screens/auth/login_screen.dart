@@ -4,15 +4,17 @@ import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_logo.dart'; // Import do nosso novo logo!
 import 'package:go_router/go_router.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pint_mobile/providers/utilizador_provider.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -54,8 +56,10 @@ class _LoginScreenState extends State<LoginScreen> {
     if (resultado.sucesso) {
       if (mounted) {
         if (!resultado.configuracaoCompleta) {
+          ref.invalidate(utilizadorProvider);
           context.go(AppConstants.routeConfiguracaoInicial);
         } else {
+          ref.invalidate(utilizadorProvider);
           context.go(AppConstants.routeDashboard);
         }
       }

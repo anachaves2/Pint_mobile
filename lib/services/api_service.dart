@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:pint_mobile/services/preferencias_service.dart';
 
 // Modelos
 import 'package:pint_mobile/models/consultor.dart';
@@ -89,6 +90,11 @@ class APIService {
 
         // Guarda o consultor e o token no SQLite
         await DatabaseService.instance.saveUser(consultor, token);
+
+        // Guarda o token e email também nas preferências para acesso fácil e rápido
+        final prefs = PreferenciasService();
+        await prefs.guardarSessao(token, consultor.email);
+        await prefs.guardarUltimaSync();
 
         return (
           sucesso: true,
