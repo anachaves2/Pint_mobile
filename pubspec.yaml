@@ -50,6 +50,11 @@ dependencies:
   # Para lembretes de objetivos e alertas de expiração de badges
   flutter_local_notifications: ^17.2.2
 
+  # --- Notificações Push (Firebase Cloud Messaging) ---
+  # Recebe notificações enviadas pelo backend mesmo com a app fechada
+  firebase_core: ^3.6.0
+  firebase_messaging: ^15.1.3
+
   # --- PDF ---
   # Para gerar e fazer download de certificados em PDF
   pdf: ^3.10.8

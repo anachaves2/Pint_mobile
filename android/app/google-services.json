@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "508419875999",
+    "project_id": "pintmobile-a6b3c",
+    "storage_bucket": "pintmobile-a6b3c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:508419875999:android:13f49a113d9d0f8c316eaa",
+        "android_client_info": {
+          "package_name": "com.example.pint_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBj_eCC5oW5chfD8fb0cIAnaArbWomSXVI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

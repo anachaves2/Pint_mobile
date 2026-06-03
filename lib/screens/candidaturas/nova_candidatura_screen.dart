@@ -292,7 +292,8 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+              border: Border.all(color: Colors.black.withValues(alpha: 0.06), width: 1),
             ),
             child: Column(children: [
               _linhaInfo('Badge:', _badgeSelecionado!.nome),
@@ -318,15 +319,23 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
                         decoration: BoxDecoration(
                           color: selecionado ? AppConstants.corPrimaria.withValues(alpha: 0.06) : Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 6, offset: const Offset(0, 2))],
-                          border: selecionado ? Border.all(color: AppConstants.corPrimaria, width: 1.5) : null,
+                          // Sombra muito subtil para um look clean
+                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+                          border: Border.all(
+                            color: selecionado ? AppConstants.corPrimaria : Colors.black.withValues(alpha: 0.06),
+                            width: selecionado ? 1.5 : 1,
+                          ),
                         ),
                         child: Row(
                           children: [
+                            // Ícone de medalha em tom azul (paleta da app) em vez de laranja
                             Container(
                               width: 40, height: 40,
-                              decoration: BoxDecoration(color: Colors.orange[100], borderRadius: BorderRadius.circular(8)),
-                              child: const Icon(Icons.military_tech, color: Colors.orange, size: 22),
+                              decoration: BoxDecoration(
+                                color: AppConstants.corPrimaria.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.military_tech, color: AppConstants.corPrimaria, size: 22),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -379,7 +388,8 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+            border: Border.all(color: Colors.black.withValues(alpha: 0.06), width: 1),
           ),
           child: Column(children: [
             _linhaInfo('Badge:', _badgeSelecionado!.nome),
@@ -463,8 +473,14 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 6, offset: const Offset(0, 2))],
-        border: temEvidencia ? Border.all(color: AppConstants.corSucesso.withValues(alpha: 0.4)) : null,
+        // Sombra subtil para um look clean
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+        border: Border.all(
+          color: temEvidencia
+              ? AppConstants.corSucesso.withValues(alpha: 0.4)
+              : Colors.black.withValues(alpha: 0.06),
+          width: temEvidencia ? 1 : 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -505,13 +521,16 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: temEvidencia ? Colors.black.withValues(alpha: 0.5) : AppConstants.corPrimaria,
+                    // Cinzento subtil em vez de preto a 50% (que parecia carregado)
+                    color: temEvidencia
+                        ? Colors.black.withValues(alpha: 0.05)
+                        : AppConstants.corPrimaria,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     temEvidencia ? Icons.refresh : Icons.upload_outlined,
                     size: 18,
-                    color: temEvidencia ? Colors.black45 : Colors.white,
+                    color: temEvidencia ? Colors.black54 : Colors.white,
                   ),
                 ),
               ),
