@@ -8,7 +8,7 @@ class AppConstants {
   //=========================================
   //API
 
-  static const String baseUrl = 'http://192.168.1.80:3001/api'; // URL base da API REST
+  static const String baseUrl = 'http://10.0.2.2:3001/api'; // URL base da API REST
   static const int intervalSincronizacaoMinutos =
       5; // psra sincronizar dados periodicamente
 
@@ -70,6 +70,8 @@ class AppConstants {
   static const String routeBadgesExpirados = '/badges/expirados';
   // Uso com argumento: Navigator.pushNamed(context, routeDetalheBadge, arguments: badge.id)
   static const String routeDetalheBadge = '/badges/detalhe';
+  static const String routeDetalheBadgePremium = '/badges/detalhe-premium';
+  static const String routeDetalheBadgeExpirado = '/badges/detalhe-expirado';
 
   // CANDIDATURAS
   static const String routeCandidaturas = '/candidaturas';

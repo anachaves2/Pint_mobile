@@ -1,136 +1,156 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/models/badge_utilizador.dart';
-import 'package:pint_mobile/services/database_service.dart';
-import 'package:pint_mobile/services/api_service.dart';
+import 'package:pint_mobile/providers/badges_provider.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/utils/badge_utils.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
 
-// ECRÃ OS MEUS BADGES
-// Página principal dos badges do consultor autenticado
-// Dividida em 3 secções: Recentes, Especiais e Expirados
-// Cada secção mostra até 3 badges com botão "VER TODOS" que navega para a lista completa
-// Os dados são lidos do SQLite local (sincronizados no login pelo APIService)
+// ECRÃ OS MEUS BADGES — Screen 10 da PAF
+// Dividida em 3 secções: Recentes, Especiais e Expirados.
+// Cada secção mostra até 3 badges com botão "VER TODOS".
+//
+// MIGRAÇÃO SQLITE → RIVERPOD:
+//   Antes: initState() → DatabaseService.instance.getBadges()
+//   Agora:  ref.watch(badgesProvider) devolve AsyncValue<List<BadgeUtilizador>>
+//
+// ConsumerStatefulWidget porque precisamos de um TextEditingController
+// para a barra de pesquisa (que agora é funcional).
 
-class OsMeusBadges extends StatefulWidget {
+class OsMeusBadges extends ConsumerStatefulWidget {
   const OsMeusBadges({super.key});
 
   @override
-  State<OsMeusBadges> createState() => _OsMeusBadgesState();
+  ConsumerState<OsMeusBadges> createState() => _OsMeusBadgesState();
 }
 
-class _OsMeusBadgesState extends State<OsMeusBadges> {
-  List<BadgeUtilizador> _badges = []; // todos os badges do utilizador (regulares + especiais + expirados)
-  bool _isLoading = true;
+class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
+  final TextEditingController _pesquisaController = TextEditingController();
+  String _queryPesquisa = '';
 
   static const Color _azulPrimario = AppConstants.corPrimaria;
   static const Color _cinzaClaro = Color(0xFFF5F5F5);
 
   @override
-  void initState() {
-    super.initState();
-    _carregarBadges();
+  void dispose() {
+    _pesquisaController.dispose();
+    super.dispose();
   }
 
-  // Lê todos os badges do SQLite local
-  Future<void> _carregarBadges() async {
-    final badges = await DatabaseService.instance.getBadges();
-    if (mounted) {
-      setState(() {
-        _badges = badges;
-        _isLoading = false;
-      });
-    }
+  // Filtra todos os badges com base no texto de pesquisa.
+  // Usado nas 3 secções para que a barra funcione globalmente.
+  List<BadgeUtilizador> _filtrar(List<BadgeUtilizador> lista) {
+    if (_queryPesquisa.isEmpty) return lista;
+    final q = _queryPesquisa.toLowerCase();
+    return lista.where((b) {
+      return b.nomeBadge.toLowerCase().contains(q) ||
+          (b.nomeNivel?.toLowerCase().contains(q) ?? false) ||
+          (b.nomeArea?.toLowerCase().contains(q) ?? false) ||
+          (b.nomeServiceLine?.toLowerCase().contains(q) ?? false);
+    }).toList();
   }
 
-  // Pull to refresh: sincroniza com a API e relê do SQLite
-  Future<void> _refresh() async {
-    await APIService.instance.sincronizarBadges();
-    await _carregarBadges();
-  }
-
-  // Filtra os 3 badges regulares válidos mais recentes (ordenados por data de atribuição)
-  List<BadgeUtilizador> get _badgesRecentes {
-    final lista = _badges
+  // Getters que filtram a lista completa vinda do provider
+  List<BadgeUtilizador> _badgesRecentes(List<BadgeUtilizador> todos) {
+    final lista = todos
         .where((b) => b.valido && b.idBadgeEspecial == null)
         .toList()
       ..sort((a, b) => b.dataAtribuicao.compareTo(a.dataAtribuicao));
-    return lista.take(3).toList();
+    return _filtrar(lista).take(3).toList();
   }
 
-  // Filtra os 3 badges especiais válidos mais recentes
-  List<BadgeUtilizador> get _badgesEspeciais {
-    final lista = _badges
+  List<BadgeUtilizador> _badgesEspeciais(List<BadgeUtilizador> todos) {
+    final lista = todos
         .where((b) => b.idBadgeEspecial != null && b.valido)
         .toList()
       ..sort((a, b) => b.dataAtribuicao.compareTo(a.dataAtribuicao));
-    return lista.take(3).toList();
+    return _filtrar(lista).take(3).toList();
   }
 
-  // Filtra os 3 badges mais recentemente expirados
-  List<BadgeUtilizador> get _badgesExpirados {
-    final lista = _badges.where((b) => b.jaExpirou).toList()
+  List<BadgeUtilizador> _badgesExpirados(List<BadgeUtilizador> todos) {
+    final lista = todos.where((b) => b.jaExpirou).toList()
       ..sort((a, b) => b.dataExpiracao.compareTo(a.dataExpiracao));
-    return lista.take(3).toList();
+    return _filtrar(lista).take(3).toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    // ref.watch(badgesProvider) subscreve o provider —
+    // o widget reconstrói-se automaticamente quando os dados mudam.
+    final badgesAsync = ref.watch(badgesProvider);
+
     return Scaffold(
       backgroundColor: Colors.white,
       drawer: const CustomDrawer(),
       appBar: _buildAppBar(),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: _azulPrimario))
-          : RefreshIndicator(
-              color: _azulPrimario,
-              onRefresh: _refresh,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildBarraPesquisa(),
-                    const SizedBox(height: 20),
-                    // Secção de badges regulares recentes → navega para TodosOsBadges
-                    _buildSecao(
-                      titulo: 'RECENTES',
-                      badges: _badgesRecentes,
-                      rotaVerTodos: '/todos-badges',
-                    ),
-                    const SizedBox(height: 24),
-                    // Secção de badges especiais → navega para BadgesEspeciais
-                    _buildSecao(
-                      titulo: 'ESPECIAIS',
-                      badges: _badgesEspeciais,
-                      rotaVerTodos: '/badges-especiais',
-                    ),
-                    const SizedBox(height: 24),
-                    // Secção de badges expirados → navega para BadgesExpirados
-                    _buildSecao(
-                      titulo: 'EXPIRADOS',
-                      badges: _badgesExpirados,
-                      rotaVerTodos: '/badges-expirados',
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
+      body: badgesAsync.when(
+        loading: () =>
+            const Center(child: CircularProgressIndicator(color: _azulPrimario)),
+        error: (err, _) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, color: Colors.grey.shade300, size: 64),
+              const SizedBox(height: 16),
+              Text('Erro ao carregar badges',
+                  style: TextStyle(color: Colors.grey.shade400)),
+              const SizedBox(height: 16),
+              OutlinedButton(
+                // Invalida o provider → build() corre novamente → relê do SQLite
+                onPressed: () => ref.invalidate(badgesProvider),
+                child: const Text('Tentar novamente'),
               ),
+            ],
+          ),
+        ),
+        data: (todos) => RefreshIndicator(
+          color: _azulPrimario,
+          // Pull to refresh chama atualizar() no notifier → sincroniza API + SQLite
+          onRefresh: () => ref.read(badgesProvider.notifier).atualizar(),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildBarraPesquisa(),
+                const SizedBox(height: 20),
+                _buildSecao(
+                  titulo: 'RECENTES',
+                  badges: _badgesRecentes(todos),
+                  rotaVerTodos: AppConstants.routeTodosBadges,
+                ),
+                const SizedBox(height: 24),
+                _buildSecao(
+                  titulo: 'ESPECIAIS',
+                  badges: _badgesEspeciais(todos),
+                  rotaVerTodos: AppConstants.routeBadgesEspeciais,
+                ),
+                const SizedBox(height: 24),
+                _buildSecao(
+                  titulo: 'EXPIRADOS',
+                  badges: _badgesExpirados(todos),
+                  rotaVerTodos: AppConstants.routeBadgesExpirados,
+                ),
+                const SizedBox(height: 20),
+              ],
             ),
+          ),
+        ),
+      ),
     );
   }
 
-  // AppBar com ícones SVG na cor primária da Softinsa
+  // ─── AppBar ───────────────────────────────────────────────────────────────
+
   AppBar _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
       leading: Builder(
-        builder: (context) => IconButton(
+        builder: (ctx) => IconButton(
           icon: SvgPicture.asset(
             'assets/icons/drawerprimario.svg',
             width: 24,
@@ -138,7 +158,7 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
             colorFilter: const ColorFilter.mode(
                 AppConstants.corPrimaria, BlendMode.srcIn),
           ),
-          onPressed: () => Scaffold.of(context).openDrawer(),
+          onPressed: () => Scaffold.of(ctx).openDrawer(),
         ),
       ),
       title: const Text(
@@ -160,7 +180,7 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
             colorFilter: const ColorFilter.mode(
                 AppConstants.corPrimaria, BlendMode.srcIn),
           ),
-          onPressed: () => context.push('/notificacoes'),
+          onPressed: () => context.push(AppConstants.routeNotificacoes),
         ),
       ],
       bottom: PreferredSize(
@@ -170,8 +190,10 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
     );
   }
 
-  // Barra de pesquisa visual — ainda sem funcionalidade de filtro
-  // neste ecrã porque só mostra 3 badges por secção
+  // ─── Barra de pesquisa ────────────────────────────────────────────────────
+  // Agora é funcional: atualiza _queryPesquisa → setState → _filtrar() corre
+  // em todos os getters das secções → os cards filtram em tempo real.
+
   Widget _buildBarraPesquisa() {
     return Container(
       height: 40,
@@ -180,20 +202,30 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: TextField(
+        controller: _pesquisaController,
+        onChanged: (texto) => setState(() => _queryPesquisa = texto),
         decoration: InputDecoration(
           hintText: 'Procura...',
           hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-          prefixIcon:
-              Icon(Icons.search, color: Colors.grey.shade400, size: 20),
+          prefixIcon: Icon(Icons.search, color: Colors.grey.shade400, size: 20),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          suffixIcon: _pesquisaController.text.isNotEmpty
+              ? IconButton(
+                  icon: Icon(Icons.clear, size: 18, color: Colors.grey.shade400),
+                  onPressed: () {
+                    _pesquisaController.clear();
+                    setState(() => _queryPesquisa = '');
+                  },
+                )
+              : null,
         ),
       ),
     );
   }
 
-  // Secção genérica com título, lista de badges e botão "VER TODOS"
-  // Reutilizada para Recentes, Especiais e Expirados
+  // ─── Secção genérica ──────────────────────────────────────────────────────
+
   Widget _buildSecao({
     required String titulo,
     required List<BadgeUtilizador> badges,
@@ -212,13 +244,11 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
           ),
         ),
         const SizedBox(height: 10),
-        // Se não houver badges nesta secção, mostra estado vazio
         if (badges.isEmpty)
           _buildEstadoVazio()
         else
           ...badges.map((badge) => _buildBadgeCard(badge)),
         const SizedBox(height: 8),
-        // Botão "VER TODOS" navega para a lista completa da secção
         Center(
           child: OutlinedButton(
             onPressed: () => context.push(rotaVerTodos),
@@ -226,8 +256,7 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
               side: BorderSide(color: Colors.grey.shade300),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(6)),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
             ),
             child: const Text(
               'VER TODOS',
@@ -244,7 +273,6 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
     );
   }
 
-  // Estado vazio — aparece quando uma secção não tem badges
   Widget _buildEstadoVazio() {
     return Container(
       width: double.infinity,
@@ -267,21 +295,20 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
     );
   }
 
-  // Card de badge — reutilizado para regulares, especiais e expirados
-  // Ao clicar navega para o detalhe correto conforme o tipo de badge
+  // ─── Card de badge ────────────────────────────────────────────────────────
+
   Widget _buildBadgeCard(BadgeUtilizador badge) {
     final bool eEspecial = badge.idBadgeEspecial != null;
     final bool eExpirado = badge.jaExpirou;
 
     return GestureDetector(
       onTap: () {
-        // Navega para o ecrã de detalhe correto conforme o tipo
         if (eEspecial) {
-          context.push('/detalhe-badge-premium', extra: badge);
+          context.push(AppConstants.routeDetalheBadgePremium, extra: badge);
         } else if (eExpirado) {
-          context.push('/detalhe-badge-expirado', extra: badge);
+          context.push(AppConstants.routeDetalheBadgeExpirado, extra: badge);
         } else {
-          context.push('/detalhe-badge-regular', extra: badge);
+          context.push(AppConstants.routeDetalheBadge, extra: badge);
         }
       },
       child: Container(
@@ -317,25 +344,22 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
                   ),
                   if (badge.nomeNivel != null) ...[
                     const SizedBox(height: 2),
-                    Text(
-                      badge.nomeNivel!,
-                      style: TextStyle(
-                          fontSize: 12, color: Colors.grey.shade500),
-                    ),
+                    Text(badge.nomeNivel!,
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.grey.shade500)),
                   ],
                   const SizedBox(height: 4),
                   Text(
-                    'Conquistado: ${_formatarData(badge.dataAtribuicao)}',
-                    style: TextStyle(
-                        fontSize: 11, color: Colors.grey.shade500),
+                    'Conquistado: ${BadgeUtils.formatarData(badge.dataAtribuicao)}',
+                    style:
+                        TextStyle(fontSize: 11, color: Colors.grey.shade500),
                   ),
                   Text(
                     eExpirado
-                        ? 'Expirou: ${_formatarData(badge.dataExpiracao)}'
-                        : 'Válido até: ${_formatarData(badge.dataExpiracao)}',
+                        ? 'Expirou: ${BadgeUtils.formatarData(badge.dataExpiracao)}'
+                        : 'Válido até: ${BadgeUtils.formatarData(badge.dataExpiracao)}',
                     style: TextStyle(
                       fontSize: 11,
-                      // data a vermelho se expirou, laranja se está próximo de expirar
                       color: eExpirado
                           ? Colors.red.shade300
                           : badge.estaProximoDeExpirar
@@ -353,19 +377,15 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
     );
   }
 
-  // Ícone circular do badge com cor e letra baseadas no tipo/nível
-  // Especiais → estrela dourada ★
-  // Expirados → cinzento (independentemente do nível original)
-  // Regulares → cor e letra do nível (A=laranja, B=cinza, C=verde, D=azul, E=roxo)
-  Widget _buildIconeBadge(
-      BadgeUtilizador badge, bool eEspecial, bool eExpirado) {
-    Color cor;
+  Widget _buildIconeBadge(BadgeUtilizador badge, bool eEspecial, bool eExpirado) {
+    // Cores e letra: usa BadgeUtils (partilhado com todos_badges_screen)
+    final Color cor;
     if (eExpirado) {
       cor = Colors.grey.shade400;
     } else if (eEspecial) {
-      cor = const Color(0xFFF5A623); // dourado para especiais
+      cor = const Color(0xFFF5A623);
     } else {
-      cor = _corDoNivel(badge.tipoNivel);
+      cor = BadgeUtils.corDoNivel(badge.tipoNivel);
     }
 
     final letra = eEspecial
@@ -374,7 +394,6 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
             ? badge.tipoNivel![0].toUpperCase()
             : '?');
 
-    // Se tiver imagem, mostra a imagem com fallback para a letra
     if (badge.urlImagem != null) {
       return Container(
         width: 44,
@@ -384,15 +403,18 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
           border: Border.all(color: cor, width: 2),
         ),
         child: ClipOval(
-          child: Image.network(badge.urlImagem!, fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => _buildIconeLetra(letra, cor)),
+          child: Image.network(
+            badge.urlImagem!,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) =>
+                _buildIconeLetra(letra, cor),
+          ),
         ),
       );
     }
     return _buildIconeLetra(letra, cor);
   }
 
-  // Círculo com a letra do nível ou ★ para especiais
   Widget _buildIconeLetra(String letra, Color cor) {
     return Container(
       width: 44,
@@ -413,31 +435,5 @@ class _OsMeusBadgesState extends State<OsMeusBadges> {
         ),
       ),
     );
-  }
-
-  // Cor do círculo com base no tipo de nível (campo TIPO da tabela NIVEL)
-  // JN=Júnior=laranja, IN=Intermédio=cinza, SN=Sénior=verde,
-  // EP=Especialista=azul, LD=Líder=roxo
-  Color _corDoNivel(String? tipoNivel) {
-    switch (tipoNivel?.toUpperCase()) {
-      case 'A':
-      case 'JN': return const Color(0xFFF5A623); // laranja — Júnior
-      case 'B':
-      case 'IN': return Colors.grey;              // cinza — Intermédio
-      case 'C':
-      case 'SN': return const Color(0xFF4CAF50);  // verde — Sénior
-      case 'D':
-      case 'EP': return const Color(0xFF0066CC);  // azul — Especialista
-      case 'E':
-      case 'LD': return const Color(0xFF9C27B0);  // roxo — Líder de Conhecimento
-      default:   return const Color(0xFF0066CC);
-    }
-  }
-
-  // Formata uma data DateTime para o formato DD-MM-AAAA
-  String _formatarData(DateTime data) {
-    return '${data.day.toString().padLeft(2, '0')}-'
-        '${data.month.toString().padLeft(2, '0')}-'
-        '${data.year}';
   }
 }

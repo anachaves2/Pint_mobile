@@ -1,122 +1,94 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/models/consultor.dart';
-import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/services/api_service.dart';
+import 'package:pint_mobile/providers/utilizador_provider.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
 
-//Ecrã do Perfil
-//Mostra os dados pessoais do consultor que está autenticado
-//Os dados são lidos do SQLite local
+// Ecrã do Perfil — Screen 09 da PAF
+// Mostra os dados pessoais do consultor autenticado.
+//
+// MIGRAÇÃO SQLITE → RIVERPOD:
+//   Antes: initState() chamava DatabaseService.instance.getUser()
+//   Agora:  ref.watch(utilizadorProvider) devolve o AsyncValue<Consultor?>
+//   O widget é ConsumerWidget para ter acesso ao WidgetRef (ref).
 
-class Perfil extends StatefulWidget {
+class Perfil extends ConsumerWidget {
   const Perfil({super.key});
 
-  @override
-  State<Perfil> createState() => _PerfilState();
-}
-
-class _PerfilState extends State<Perfil> {
-  Consultor? _consultor;
-  bool _isLoading = true;
-
-//Cores do ecrã (usam sempre a cor primária definida nas constantes globais)
   static const Color _azulPrimario = AppConstants.corPrimaria;
   static const Color _azulClaro = Color(0xFFE8F0FB);
   static const Color _cinzaTexto = Color(0xFF555555);
   static const Color _cinzaClaro = Color(0xFFF5F5F5);
 
-//carrega os dados assim que o ecrã é criado
   @override
-  void initState() {
-    super.initState();
-    _carregarDados();
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    // ref.watch reage automaticamente a qualquer mudança no provider.
+    // AsyncValue tem 3 estados: loading / data / error — tratamos os 3 abaixo.
+    final consultorAsync = ref.watch(utilizadorProvider);
 
-  Future<void> _carregarDados() async {
-    // Lê os dados do consultor do SQLite local
-    // Estes foram guardados no login pelo APIService
-    final consultor = await DatabaseService.instance.getUser();
-    if (mounted) {
-      setState(() {
-        _consultor = consultor;
-        _isLoading = false;
-      });
-    }
-  }
-
-  //Envia as alterações do perfil à API e atualiza o SQLite local
-  Future<void> _atualizarPerfil(Consultor atualizado) async {
-    setState(() => _isLoading = true);
-    final resultado = await APIService.instance.atualizarPerfil(atualizado);
-    if (mounted) {
-      if (resultado.sucesso) {
-        await _carregarDados();
-      } else {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(resultado.erro ?? 'Erro ao atualizar perfil'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       drawer: const CustomDrawer(),
-      appBar: _buildAppBar(),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: _azulPrimario))
-          : _consultor == null
-              ? _buildErro()
-              : RefreshIndicator(
-                  color: _azulPrimario,
-                  // Pull to refresh sincroniza com a API e relê do SQLite
-                  onRefresh: () async {
-                    await APIService.instance.sincronizarTodos();
-                    await _carregarDados();
-                  },
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        _buildFotoPerfil(),
-                        const SizedBox(height: 12),
-                        _buildNomeECargo(),
-                        const SizedBox(height: 12),
-                        _buildRankingEPontos(),
-                        const SizedBox(height: 28),
-                        _buildSecaoInformacoes(),
-                        const SizedBox(height: 12),
-                        _buildMembroDesde(),
-                        const SizedBox(height: 32),
-                        _buildBotaoDefinicoes(),
-                        const SizedBox(height: 20),
-                      ],
-                    ),
-                  ),
-                ),
+      appBar: _buildAppBar(context),
+      body: consultorAsync.when(
+        // Estado de carregamento — mostra o spinner
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: _azulPrimario),
+        ),
+        // Estado de erro — mostra mensagem e botão para tentar novamente
+        error: (err, _) => _buildErro(context, ref),
+        // Estado com dados — mostra o perfil (ou erro se o consultor for null)
+        data: (consultor) {
+          if (consultor == null) return _buildErro(context, ref);
+          return RefreshIndicator(
+            color: _azulPrimario,
+            // Pull to refresh: sincroniza com a API e atualiza o provider
+            onRefresh: () async {
+              await APIService.instance.sincronizarTodos();
+              // Invalida o cache do provider → chama build() novamente → relê do SQLite
+              ref.invalidate(utilizadorProvider);
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _buildFotoPerfil(consultor),
+                  const SizedBox(height: 12),
+                  _buildNomeECargo(consultor),
+                  const SizedBox(height: 12),
+                  _buildRankingEPontos(consultor),
+                  const SizedBox(height: 28),
+                  _buildSecaoInformacoes(consultor),
+                  const SizedBox(height: 12),
+                  _buildMembroDesde(consultor),
+                  const SizedBox(height: 32),
+                  _buildBotaoDefinicoes(context),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
-//Appbar com icones SVG na cor primária
-  AppBar _buildAppBar() {
+
+
+  // ─── AppBar ───────────────────────────────────────────────────────────────
+
+  AppBar _buildAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
       leading: Builder(
-        builder: (context) => IconButton(
+        builder: (ctx) => IconButton(
           icon: SvgPicture.asset(
             'assets/icons/drawerprimario.svg',
             width: 24,
@@ -126,7 +98,7 @@ class _PerfilState extends State<Perfil> {
               BlendMode.srcIn,
             ),
           ),
-          onPressed: () => Scaffold.of(context).openDrawer(),
+          onPressed: () => Scaffold.of(ctx).openDrawer(),
         ),
       ),
       title: const Text(
@@ -150,7 +122,7 @@ class _PerfilState extends State<Perfil> {
               BlendMode.srcIn,
             ),
           ),
-          onPressed: () => context.push('/notificacoes'),
+          onPressed: () => context.push(AppConstants.routeNotificacoes),
         ),
       ],
       bottom: PreferredSize(
@@ -160,9 +132,9 @@ class _PerfilState extends State<Perfil> {
     );
   }
 
-//Ecrã de erro quando o SQlite não tem os dados do utilizador
-//Acontece se o utilizador ainda não fez o login ou se o login falhou
-  Widget _buildErro() {
+  // ─── Ecrã de erro ─────────────────────────────────────────────────────────
+
+  Widget _buildErro(BuildContext context, WidgetRef ref) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -175,7 +147,8 @@ class _PerfilState extends State<Perfil> {
           ),
           const SizedBox(height: 16),
           OutlinedButton(
-            onPressed: _carregarDados,
+            // ref.invalidate força o provider a reconstruir-se
+            onPressed: () => ref.invalidate(utilizadorProvider),
             child: const Text('Tentar novamente'),
           ),
         ],
@@ -183,27 +156,25 @@ class _PerfilState extends State<Perfil> {
     );
   }
 
-//Foto de perfil circular
-//Se o consultor não tiver foto (urlFoto == null), mostra o ícone genérico de utilizador
-  Widget _buildFotoPerfil() {
+  // ─── Widgets de conteúdo ──────────────────────────────────────────────────
+
+  Widget _buildFotoPerfil(Consultor consultor) {
     return CircleAvatar(
       radius: 48,
       backgroundColor: Colors.grey.shade300,
-      backgroundImage: _consultor!.urlFoto != null
-          ? NetworkImage(_consultor!.urlFoto!)
-          : null,
-      child: _consultor!.urlFoto == null
+      backgroundImage:
+          consultor.urlFoto != null ? NetworkImage(consultor.urlFoto!) : null,
+      child: consultor.urlFoto == null
           ? const Icon(Icons.person, size: 48, color: Colors.grey)
           : null,
     );
   }
 
-//Nome do utilizador juntamente com o "Consultor"
-  Widget _buildNomeECargo() {
+  Widget _buildNomeECargo(Consultor consultor) {
     return Column(
       children: [
         Text(
-          _consultor!.nome,
+          consultor.nome,
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -232,24 +203,21 @@ class _PerfilState extends State<Perfil> {
     );
   }
 
-//Posição no ranking e total de pontos
-//Os valores vêm do campo totalPontos e posicao Ranking do modelo consultor
-//São calculados pela API com base na tabela Pontuacao
-//Se não houver dados, mostra posição a "---" e 0 pontos
-  Widget _buildRankingEPontos() {
+  Widget _buildRankingEPontos(Consultor consultor) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _buildChip(
           icon: Icons.emoji_events_outlined,
-          label:
-              '${_consultor!.posicaoRanking != null ? '${_consultor!.posicaoRanking}ª' : '--'} Posição',
+          label: consultor.posicaoRanking != null
+              ? '${consultor.posicaoRanking}ª Posição'
+              : '-- Posição',
           cor: _azulPrimario,
         ),
         const SizedBox(width: 12),
         _buildChip(
           icon: Icons.star_outline,
-          label: '${_consultor!.totalPontos ?? 0} Pontos',
+          label: '${consultor.totalPontos ?? 0} Pontos',
           cor: const Color(0xFFF5A623),
         ),
       ],
@@ -286,9 +254,7 @@ class _PerfilState extends State<Perfil> {
     );
   }
 
-//Secção de informações pessoais do consultor
-//Email, telefone, linkedIn, URL pública e área
-  Widget _buildSecaoInformacoes() {
+  Widget _buildSecaoInformacoes(Consultor consultor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -309,34 +275,31 @@ class _PerfilState extends State<Perfil> {
           ),
           child: Column(
             children: [
-              _buildLinhaInfo(
-                icon: Icons.email_outlined,
-                texto: _consultor!.email,
-              ),
+              _buildLinhaInfo(icon: Icons.email_outlined, texto: consultor.email),
               _buildDivisor(),
               _buildLinhaInfo(
                 icon: Icons.phone_outlined,
-                texto: _consultor!.telefone ?? 'Sem telefone',
-                vazio: _consultor!.telefone == null,
+                texto: consultor.telefone ?? 'Sem telefone',
+                vazio: consultor.telefone == null,
               ),
               _buildDivisor(),
               _buildLinhaInfo(
                 icon: Icons.link,
-                texto: _consultor!.urlLinkedin ?? 'Sem LinkedIn',
-                vazio: _consultor!.urlLinkedin == null,
-                isLink: _consultor!.urlLinkedin != null,
+                texto: consultor.urlLinkedin ?? 'Sem LinkedIn',
+                vazio: consultor.urlLinkedin == null,
+                isLink: consultor.urlLinkedin != null,
               ),
               _buildDivisor(),
               _buildLinhaInfo(
                 icon: Icons.language,
                 texto:
-                    'www.softinsa.pt/galeria-publico/${_consultor!.nome.toLowerCase().replaceAll(' ', '-')}',
+                    'www.softinsa.pt/galeria-publico/${consultor.nome.toLowerCase().replaceAll(' ', '-')}',
                 isLink: true,
               ),
               _buildDivisor(),
               _buildLinhaInfo(
                 icon: Icons.work_outline,
-                texto: 'Área: ${_consultor!.nomeArea}',
+                texto: 'Área: ${consultor.nomeArea}',
               ),
             ],
           ),
@@ -345,7 +308,6 @@ class _PerfilState extends State<Perfil> {
     );
   }
 
-//Linha individual de informação com icone e texto
   Widget _buildLinhaInfo({
     required IconData icon,
     required String texto,
@@ -382,7 +344,6 @@ class _PerfilState extends State<Perfil> {
     );
   }
 
-//linha divisória entre as linhas de informação
   Widget _buildDivisor() {
     return Divider(
       height: 1,
@@ -393,17 +354,14 @@ class _PerfilState extends State<Perfil> {
     );
   }
 
-//Data em que o consultor se registou na plataforma
-// DD-MM-AAAA
-  Widget _buildMembroDesde() {
-    final data = _consultor!.dataMembro;
+  Widget _buildMembroDesde(Consultor consultor) {
+    final data = consultor.dataMembro;
     final dataFormatada =
         '${data.day.toString().padLeft(2, '0')}-${data.month.toString().padLeft(2, '0')}-${data.year}';
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.calendar_today_outlined,
-            size: 14, color: Colors.grey),
+        const Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey),
         const SizedBox(width: 6),
         Text(
           'Membro desde: $dataFormatada',
@@ -413,17 +371,14 @@ class _PerfilState extends State<Perfil> {
     );
   }
 
-//Botão que navega para o ecrã de Definições
-  Widget _buildBotaoDefinicoes() {
+  Widget _buildBotaoDefinicoes(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
-        onPressed: () => context.push('/definicoes'),
+        onPressed: () => context.push(AppConstants.routeDefinicoes),
         style: OutlinedButton.styleFrom(
           side: const BorderSide(color: _azulPrimario),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           padding: const EdgeInsets.symmetric(vertical: 14),
         ),
         child: const Text(
