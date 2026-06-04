@@ -29,6 +29,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    APIService.instance.sincronizarTodos();
     _carregarExtras();
     _subDados = atualizadorDados.stream.listen((_) {
       ref.invalidate(utilizadorProvider);
@@ -46,7 +47,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   // Carrega dados que ainda não têm provider próprio (catálogo e notificações)
   Future<void> _carregarExtras() async {
-    APIService.instance.sincronizarTodos();
     final catalogo = await DatabaseService.instance.getCatalogoBadges();
     final notificacoes = await DatabaseService.instance.getNotificacoes();
     if (mounted) {
@@ -147,6 +147,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ? const Center(child: CircularProgressIndicator(color: AppConstants.corPrimaria))
           : RefreshIndicator(
               onRefresh: () async {
+                await APIService.instance.sincronizarTodos();
                 ref.invalidate(utilizadorProvider);
                 ref.invalidate(badgesProvider);
                 ref.invalidate(candidaturasProvider);

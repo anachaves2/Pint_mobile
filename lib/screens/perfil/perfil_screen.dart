@@ -8,7 +8,7 @@ import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
 
-// Ecrã do Perfil — Screen 09 da PAF
+// Ecrã do Perfil
 // Mostra os dados pessoais do consultor autenticado.
 //
 // MIGRAÇÃO SQLITE → RIVERPOD:

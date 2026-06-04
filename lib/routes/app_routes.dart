@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/models/notificacao.dart';
+import 'package:pint_mobile/models/badge_utilizador.dart';
 
 import 'package:pint_mobile/screens/auth/landing_page_screen.dart';
 import 'package:pint_mobile/screens/auth/login_screen.dart';
@@ -12,6 +13,11 @@ import 'package:pint_mobile/screens/auth/configuracao_inicial_screen.dart';
 import 'package:pint_mobile/screens/dashboard/dashboard_screen.dart';
 import 'package:pint_mobile/screens/badges/meus_badges_screen.dart';
 import 'package:pint_mobile/screens/badges/todos_badges_screen.dart';
+import 'package:pint_mobile/screens/badges/badges_especiais_screen.dart';
+import 'package:pint_mobile/screens/badges/badges_expirados_screen.dart';
+import 'package:pint_mobile/screens/badges/detalhe_badge_regular_screen.dart';
+import 'package:pint_mobile/screens/badges/detalhe_badge_premium_screen.dart';
+import 'package:pint_mobile/screens/badges/detalhe_badge_expirado_screen.dart';
 import 'package:pint_mobile/screens/notificacoes/notificacoes_screen.dart';
 import 'package:pint_mobile/screens/notificacoes/detalhe_notificacao_screen.dart';
 import 'package:pint_mobile/screens/perfil/perfil_screen.dart';
@@ -36,9 +42,11 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: AppConstants.routeDashboard, builder: (ctx, state) => const DashboardScreen()),
     GoRoute(path: AppConstants.routeMeusBadges, builder: (ctx, state) => const OsMeusBadges()),
     GoRoute(path: AppConstants.routeTodosBadges, builder: (ctx, state) => const TodosOsBadges()),
-    GoRoute(path: AppConstants.routeBadgesEspeciais, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Badges Especiais')),
-    GoRoute(path: AppConstants.routeBadgesExpirados, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Badges Expirados')),
-    GoRoute(path: AppConstants.routeDetalheBadge, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Detalhe do Badge')),
+    GoRoute(path: AppConstants.routeBadgesEspeciais, builder: (ctx, state) => const BadgesEspeciais()),
+    GoRoute(path: AppConstants.routeBadgesExpirados, builder: (ctx, state) => const BadgesExpirados()),
+    GoRoute(path: AppConstants.routeDetalheBadge, builder: (ctx, state) => DetalheBadgeRegular(badge: state.extra as BadgeUtilizador)),
+    GoRoute(path: AppConstants.routeDetalheBadgePremium, builder: (ctx, state) => DetalheBadgePremium(badge: state.extra as BadgeUtilizador)),
+    GoRoute(path: AppConstants.routeDetalheBadgeExpirado, builder: (ctx, state) => DetalheBadgeExpirado(badge: state.extra as BadgeUtilizador)),
     GoRoute(path: AppConstants.routeCatalogo, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Catálogo')),
     GoRoute(path: AppConstants.routeDetalheCatalogo, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Detalhe do Badge')),
     GoRoute(path: AppConstants.routeObjetivos, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Objetivos')),

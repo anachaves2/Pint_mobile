@@ -8,16 +8,9 @@ import 'package:pint_mobile/utils/badge_utils.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
 
-// ECRÃ OS MEUS BADGES — Screen 10 da PAF
+// ECRÃ OS MEUS BADGES
 // Dividida em 3 secções: Recentes, Especiais e Expirados.
 // Cada secção mostra até 3 badges com botão "VER TODOS".
-//
-// MIGRAÇÃO SQLITE → RIVERPOD:
-//   Antes: initState() → DatabaseService.instance.getBadges()
-//   Agora:  ref.watch(badgesProvider) devolve AsyncValue<List<BadgeUtilizador>>
-//
-// ConsumerStatefulWidget porque precisamos de um TextEditingController
-// para a barra de pesquisa (que agora é funcional).
 
 class OsMeusBadges extends ConsumerStatefulWidget {
   const OsMeusBadges({super.key});

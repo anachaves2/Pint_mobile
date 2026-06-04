@@ -6,11 +6,6 @@ import 'package:pint_mobile/services/database_service.dart';
 // BadgesNotifier gere a lista completa de badges do utilizador autenticado.
 // Os ecrãs (OsMeusBadges, TodosOsBadges, BadgesEspeciais, BadgesExpirados)
 // leem daqui em vez de chamarem o DatabaseService diretamente.
-//
-// Fluxo:
-//   build()  → lê do SQLite (rápido, offline-first)
-//   atualizar() → sincroniza com a API + relê do SQLite
-//   limpar() → apaga a lista (usado no logout)
 
 class BadgesNotifier extends AsyncNotifier<List<BadgeUtilizador>> {
   @override

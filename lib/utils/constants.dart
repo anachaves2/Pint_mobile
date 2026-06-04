@@ -72,6 +72,7 @@ class AppConstants {
   static const String routeDetalheBadge = '/badges/detalhe';
   static const String routeDetalheBadgePremium = '/badges/detalhe-premium';
   static const String routeDetalheBadgeExpirado = '/badges/detalhe-expirado';
+  static const String routeDetalheBadgeRequisitos = '/badges/requisitos';
 
   // CANDIDATURAS
   static const String routeCandidaturas = '/candidaturas';
