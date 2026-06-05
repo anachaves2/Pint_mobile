@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pint_mobile/models/candidatura_badge.dart';
 import 'package:pint_mobile/screens/candidaturas/candidaturas_screen.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/providers/candidatura_provider.dart';

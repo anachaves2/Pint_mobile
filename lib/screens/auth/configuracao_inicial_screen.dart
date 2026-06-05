@@ -92,8 +92,7 @@ class _ConfiguracaoInicialScreenState
                                   activeColor: AppConstants.corPrimaria,
                                   onChanged: (val) => setState(() {
                                     _areaSelecionada = val;
-                                    _nomeAreaSelecionada =
-                                        area['nome'] as String;
+                                    _nomeAreaSelecionada = area['nome'] as String;
                                   }),
                                 ))
                             .toList(),

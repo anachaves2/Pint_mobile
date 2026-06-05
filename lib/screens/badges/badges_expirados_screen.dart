@@ -201,7 +201,6 @@ class _BadgesExpiradosState extends ConsumerState<BadgesExpirados> {
   }
 
   Widget _buildBadgeCard(BadgeUtilizador badge) {
-    final cor = Colors.grey.shade400;
     return GestureDetector(
       onTap: () =>
           context.push(AppConstants.routeDetalheBadgeExpirado, extra: badge),

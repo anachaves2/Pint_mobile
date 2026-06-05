@@ -12,10 +12,7 @@ import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
 
-// Riverpod — Aula 10
-// Este ecrã usa ConsumerStatefulWidget para:
-//   1. Invalidar o candidaturasProvider quando sai (actualiza a lista)
-//   2. Manter estado local (detalhes, histórico, requisitos) com setState
+
 class DetalhesCandidatura extends ConsumerStatefulWidget {
   final int numCandidatura;
   const DetalhesCandidatura({super.key, required this.numCandidatura});

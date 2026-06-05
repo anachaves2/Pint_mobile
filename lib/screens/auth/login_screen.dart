@@ -49,6 +49,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final resultado = await APIService.instance.login(
       _emailController.text.trim(),
       _passwordController.text,
+      manterSessao: _manterSessao,
     );
 
     if (mounted) setState(() => _isLoading = false);
@@ -74,9 +75,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     }
   }
-
 void _mostrarPoliticaPrivacidade(BuildContext context) async {
-  // Mostra loading enquanto busca
+  final nav = Navigator.of(context);
+
   showDialog(
     context: context,
     barrierDismissible: false,
@@ -85,8 +86,12 @@ void _mostrarPoliticaPrivacidade(BuildContext context) async {
 
   final texto = await APIService.instance.getPoliticaPrivacidade();
   if (!mounted) return;
-  Navigator.pop(context); // fecha o loading
+  nav.pop();
 
+  _mostrarDialogoPolitica(texto);
+}
+
+void _mostrarDialogoPolitica(String? texto) {
   showDialog(
     context: context,
     builder: (ctx) => AlertDialog(

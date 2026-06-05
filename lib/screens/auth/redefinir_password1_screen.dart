@@ -71,7 +71,7 @@ class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
               const Spacer(flex: 1),
               const Text('Introduza o código:', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppConstants.corPrimaria)),
               const SizedBox(height: 16),
-              Text('Insira o código de 6 dígitos enviado para o seu email.', style: TextStyle(color: Colors.grey.shade700, fontSize: 14)),
+              Text('Insira o código de 5 dígitos enviado para o seu email.', style: TextStyle(color: Colors.grey.shade700, fontSize: 14)),
               const SizedBox(height: 32),
               
               // Alterado para 6 quadradinhos mais estreitos para caberem no ecrã

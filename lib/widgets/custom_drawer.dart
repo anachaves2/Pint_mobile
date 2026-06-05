@@ -103,7 +103,7 @@ class CustomDrawer extends ConsumerWidget {
               data: (consultor) => consultor == null
                   ? const SizedBox.shrink()
                   : Container(
-                      color: AppConstants.corPrimaria.withOpacity(0.05),
+                      color: AppConstants.corPrimaria.withValues(alpha: 0.05),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       child: Row(
                         children: [

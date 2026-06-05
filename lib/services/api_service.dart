@@ -72,8 +72,9 @@ class APIService {
 
   Future<({bool sucesso, bool configuracaoCompleta, String? erro})> login(
     String email,
-    String password,
-  ) async {
+    String password, {
+    bool manterSessao = false,
+  }) async {
     try {
       final response = await http.post(
         Uri.parse('${AppConstants.baseUrl}/auth/login'),
@@ -92,9 +93,11 @@ class APIService {
         await DatabaseService.instance.saveUser(consultor, token);
 
         // Guarda o token e email também nas preferências para acesso fácil e rápido
-        final prefs = PreferenciasService();
-        await prefs.guardarSessao(token, consultor.email);
-        await prefs.guardarUltimaSync();
+        if (manterSessao) {
+          final prefs = PreferenciasService();
+          await prefs.guardarSessao(token, consultor.email);
+          await prefs.guardarUltimaSync();
+        }
 
         return (
           sucesso: true,
