@@ -1,70 +1,83 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/models/candidatura_badge.dart';
 import 'package:pint_mobile/models/historico_candidatura.dart';
+import 'package:pint_mobile/models/requisitos.dart';
+import 'package:pint_mobile/models/evidencia.dart';
+import 'package:pint_mobile/providers/candidatura_provider.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pint_mobile/models/requisitos.dart';
-import 'package:pint_mobile/models/evidencia.dart';
 
-class DetalhesCandidatura extends StatefulWidget {
+// Riverpod — Aula 10
+// Este ecrã usa ConsumerStatefulWidget para:
+//   1. Invalidar o candidaturasProvider quando sai (actualiza a lista)
+//   2. Manter estado local (detalhes, histórico, requisitos) com setState
+class DetalhesCandidatura extends ConsumerStatefulWidget {
   final int numCandidatura;
   const DetalhesCandidatura({super.key, required this.numCandidatura});
 
   @override
-  State<DetalhesCandidatura> createState() => _DetalhesCandidaturaState();
+  ConsumerState<DetalhesCandidatura> createState() => _DetalhesCandidaturaState();
 }
 
-class _DetalhesCandidaturaState extends State<DetalhesCandidatura> {
+class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
   CandidaturaBadge? _candidatura;
   List<HistoricoCandidatura> _historico = [];
   bool _isLoading = true;
-  int? _numCandidatura;
   List<Requisito> _requisitos = [];
   Map<int, Evidencia> _evidencias = {};
-
 
   @override
   void initState() {
     super.initState();
-    _numCandidatura = widget.numCandidatura;
     _carregar();
   }
 
   Future<void> _carregar() async {
-    if (_numCandidatura == null) return;
-    // Mostra cache primeiro
+    final numCandidatura = widget.numCandidatura;
+
+    // Mostra cache primeiro (offline-first)
     final todasCandidaturas = await DatabaseService.instance.getCandidaturas();
-    final candidatura = todasCandidaturas.where((c) => c.numCandidatura == _numCandidatura).firstOrNull;
-    final historico = await DatabaseService.instance.getHistorico(_numCandidatura!);
-    final requisitos = candidatura != null ? await DatabaseService.instance.getRequisitos(candidatura.idBadgeRegular) : <Requisito>[];
-    final listaEvidencias = await DatabaseService.instance.getEvidencias(_numCandidatura!);
+    final candidatura = todasCandidaturas.where((c) => c.numCandidatura == numCandidatura).firstOrNull;
+    final historico = await DatabaseService.instance.getHistorico(numCandidatura);
+    final requisitos = candidatura != null
+        ? await DatabaseService.instance.getRequisitos(candidatura.idBadgeRegular)
+        : <Requisito>[];
+    final listaEvidencias = await DatabaseService.instance.getEvidencias(numCandidatura);
+
     if (mounted) {
       setState(() {
         _candidatura = candidatura;
         _historico = historico;
-        _isLoading = false;
         _requisitos = requisitos;
-        _evidencias = { for (final e in listaEvidencias) e.idRequisito: e };
+        _evidencias = {for (final e in listaEvidencias) e.idRequisito: e};
+        _isLoading = false;
       });
     }
-    // Sincroniza em background
-    await APIService.instance.sincronizarDetalhesCandidatura(_numCandidatura!);
+
+    // Sincroniza em background e atualiza
+    await APIService.instance.sincronizarDetalhesCandidatura(numCandidatura);
     final todasAtual = await DatabaseService.instance.getCandidaturas();
-    final candidaturaAtual = todasAtual.where((c) => c.numCandidatura == _numCandidatura).firstOrNull;
-    final historicoAtual = await DatabaseService.instance.getHistorico(_numCandidatura!);
-    final requisitosAtual = candidaturaAtual != null ? await DatabaseService.instance.getRequisitos(candidaturaAtual.idBadgeRegular) : <Requisito>[];
-    final evidenciasAtual = await DatabaseService.instance.getEvidencias(_numCandidatura!);
+    final candidaturaAtual = todasAtual.where((c) => c.numCandidatura == numCandidatura).firstOrNull;
+    final historicoAtual = await DatabaseService.instance.getHistorico(numCandidatura);
+    final requisitosAtual = candidaturaAtual != null
+        ? await DatabaseService.instance.getRequisitos(candidaturaAtual.idBadgeRegular)
+        : <Requisito>[];
+    final evidenciasAtual = await DatabaseService.instance.getEvidencias(numCandidatura);
+
     if (mounted) {
       setState(() {
         _candidatura = candidaturaAtual;
         _historico = historicoAtual;
         _requisitos = requisitosAtual;
-        _evidencias = { for (final e in evidenciasAtual) e.idRequisito: e };
+        _evidencias = {for (final e in evidenciasAtual) e.idRequisito: e};
       });
+      // Invalida o provider para que a lista de candidaturas seja actualizada
+      ref.invalidate(candidaturasProvider);
     }
   }
 
@@ -112,7 +125,6 @@ class _DetalhesCandidaturaState extends State<DetalhesCandidatura> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Sub-título
                         Row(
                           children: [
                             GestureDetector(
@@ -133,7 +145,8 @@ class _DetalhesCandidaturaState extends State<DetalhesCandidatura> {
                           ..._requisitos.map((req) => _buildCardRequisito(req)),
                         ],
                         const SizedBox(height: 20),
-                        const Text('Timeline:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black54, letterSpacing: 0.3)),
+                        const Text('Timeline:',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black54, letterSpacing: 0.3)),
                         const SizedBox(height: 10),
                         _buildTimeline(),
                       ],
@@ -173,7 +186,8 @@ class _DetalhesCandidaturaState extends State<DetalhesCandidatura> {
                       color: corDecisao.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(textoDecisao, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: corDecisao)),
+                    child: Text(textoDecisao,
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: corDecisao)),
                   ),
                 ],
               ),
@@ -205,90 +219,92 @@ class _DetalhesCandidaturaState extends State<DetalhesCandidatura> {
     }
     final invertido = _historico.reversed.toList();
     return Column(
-      children: List.generate(invertido.length, (i) => _ItemTimeline(entrada: invertido[i], isLast: i == invertido.length - 1)),
+      children: List.generate(
+        invertido.length,
+        (i) => _ItemTimeline(entrada: invertido[i], isLast: i == invertido.length - 1),
+      ),
     );
   }
 
   Widget _buildCardRequisito(Requisito req) {
-  final evidencia = _evidencias[req.id];
+    final evidencia = _evidencias[req.id];
 
-  Color corEstado;
-  IconData iconEstado;
-  String textoEstado;
+    Color corEstado;
+    IconData iconEstado;
+    String textoEstado;
 
-  if (evidencia == null) {
-    corEstado = Colors.orange;
-    iconEstado = Icons.upload_file_outlined;
-    textoEstado = 'Sem evidência';
-  } else if (evidencia.aprovada) {
-    corEstado = AppConstants.corSucesso;
-    iconEstado = Icons.check_circle_outline;
-    textoEstado = 'Aprovada';
-  } else if (evidencia.rejeitada) {
-    corEstado = AppConstants.corErro;
-    iconEstado = Icons.cancel_outlined;
-    textoEstado = 'Rejeitada';
-  } else {
-    corEstado = AppConstants.corPrimaria;
-    iconEstado = Icons.hourglass_empty_outlined;
-    textoEstado = 'Pendente';
-  }
+    if (evidencia == null) {
+      corEstado = Colors.orange;
+      iconEstado = Icons.upload_file_outlined;
+      textoEstado = 'Sem evidência';
+    } else if (evidencia.aprovada) {
+      corEstado = AppConstants.corSucesso;
+      iconEstado = Icons.check_circle_outline;
+      textoEstado = 'Aprovada';
+    } else if (evidencia.rejeitada) {
+      corEstado = AppConstants.corErro;
+      iconEstado = Icons.cancel_outlined;
+      textoEstado = 'Rejeitada';
+    } else {
+      corEstado = AppConstants.corPrimaria;
+      iconEstado = Icons.hourglass_empty_outlined;
+      textoEstado = 'Pendente';
+    }
 
-  return Container(
-    margin: const EdgeInsets.only(bottom: 10),
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: corEstado.withValues(alpha: 0.3)),
-      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6)],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(iconEstado, color: corEstado, size: 18),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(req.nome,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: corEstado.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(textoEstado,
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: corEstado)),
-            ),
-          ],
-        ),
-        if (req.descricao != null && req.descricao!.isNotEmpty) ...[
-          const SizedBox(height: 6),
-          Text(req.descricao!,
-              style: const TextStyle(fontSize: 12, color: Colors.black45, height: 1.4)),
-        ],
-        if (evidencia != null) ...[
-          const SizedBox(height: 6),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: corEstado.withValues(alpha: 0.3)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Row(
             children: [
-              const Icon(Icons.attach_file, size: 12, color: Colors.black38),
-              const SizedBox(width: 4),
+              Icon(iconEstado, color: corEstado, size: 18),
+              const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  evidencia.pathFicheiro.split('/').last,
-                  style: const TextStyle(fontSize: 11, color: Colors.black38),
-                  overflow: TextOverflow.ellipsis,
+                child: Text(req.nome, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: corEstado.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                child: Text(textoEstado,
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: corEstado)),
               ),
             ],
           ),
+          if (req.descricao != null && req.descricao!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(req.descricao!,
+                style: const TextStyle(fontSize: 12, color: Colors.black45, height: 1.4)),
+          ],
+          if (evidencia != null) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.attach_file, size: 12, color: Colors.black38),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    evidencia.pathFicheiro.split('/').last,
+                    style: const TextStyle(fontSize: 11, color: Colors.black38),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
-      ],
-    ),
-  );
+      ),
+    );
   }
 }
 
@@ -381,7 +397,8 @@ class _ItemTimeline extends StatelessWidget {
                               color: _corDecisao.withValues(alpha: 0.5),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Text(_textoDecisao, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _corDecisao)),
+                            child: Text(_textoDecisao,
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _corDecisao)),
                           ),
                         ],
                       ),
@@ -406,7 +423,7 @@ class _ItemTimeline extends StatelessWidget {
   }
 
   String _mesAbrev(int mes) {
-    const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     return meses[mes - 1];
   }
 }

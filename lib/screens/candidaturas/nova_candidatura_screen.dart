@@ -9,6 +9,7 @@ import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pint_mobile/screens/camera/camera_screen.dart';
 
 enum _Fase { selecionarBadge, carregarEvidencias }
 
@@ -132,6 +133,18 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     );
     if (resultado == null || resultado.files.single.path == null) return;
     final caminho = resultado.files.single.path!;
+    setState(() => _ficheirosPendentes[req.id] = caminho);
+    await _uploadEvidencia(req, caminho);
+  }
+
+
+  // Permite tirar uma foto com a câmara como evidência
+  Future<void> _tirarFoto(Requisito req) async {
+    final caminho = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const CameraScreen()),
+    );
+    if (caminho == null) return;
     setState(() => _ficheirosPendentes[req.id] = caminho);
     await _uploadEvidencia(req, caminho);
   }
@@ -516,12 +529,12 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
                   style: TextStyle(fontSize: 11, color: nomeFicheiro != null ? Colors.black54 : Colors.black38),
                 ),
               ),
+              // Botão upload ficheiro
               GestureDetector(
                 onTap: emUpload ? null : () => _escolherFicheiro(req),
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    // Cinzento subtil em vez de preto a 50% (que parecia carregado)
                     color: temEvidencia
                         ? Colors.black.withValues(alpha: 0.05)
                         : AppConstants.corPrimaria,
@@ -531,6 +544,23 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
                     temEvidencia ? Icons.refresh : Icons.upload_outlined,
                     size: 18,
                     color: temEvidencia ? Colors.black54 : Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              // Botão câmara — image_picker (Aula 11)
+              GestureDetector(
+                onTap: emUpload ? null : () => _tirarFoto(req),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppConstants.corSecundaria.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt_outlined,
+                    size: 18,
+                    color: AppConstants.corSecundaria,
                   ),
                 ),
               ),

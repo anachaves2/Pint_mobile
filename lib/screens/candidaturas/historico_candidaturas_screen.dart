@@ -1,38 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/models/candidatura_badge.dart';
 import 'package:pint_mobile/services/api_service.dart';
-import 'package:pint_mobile/services/database_service.dart';
+import 'package:pint_mobile/providers/candidatura_provider.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
 
-class HistoricoCandidaturas extends StatefulWidget {
+class HistoricoCandidaturas extends ConsumerStatefulWidget {
   const HistoricoCandidaturas({super.key});
 
   @override
-  State<HistoricoCandidaturas> createState() => _HistoricoCandidaturasState();
+  ConsumerState<HistoricoCandidaturas> createState() => _HistoricoCandidaturasState();
 }
 
-class _HistoricoCandidaturasState extends State<HistoricoCandidaturas> {
-  List<CandidaturaBadge> _candidaturas = [];
-  bool _isLoading = true;
+class _HistoricoCandidaturasState extends ConsumerState<HistoricoCandidaturas> {
 
   @override
   void initState() {
     super.initState();
-    _carregar();
-    atualizadorDados.stream.listen((_) => _carregar());
-  }
-
-  Future<void> _carregar() async {
-    final todas = await DatabaseService.instance.getCandidaturas();
-    if (mounted) setState(() { _candidaturas = todas.where((c) => c.estaConcluida).toList(); _isLoading = false; });
-  }
-
-  Future<void> _refresh() async {
-    await APIService.instance.sincronizarCandidaturas();
-    await _carregar();
+    atualizadorDados.stream.listen((_) {
+      ref.invalidate(candidaturasProvider);
+    });
   }
 
   @override
@@ -61,50 +51,63 @@ class _HistoricoCandidaturasState extends State<HistoricoCandidaturas> {
           ),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.chevron_left, color: AppConstants.corPrimaria),
+      // Riverpod — Aula 10
+      body: ref.watch(candidaturasProvider).when(
+        loading: () => const Center(child: CircularProgressIndicator(color: AppConstants.corPrimaria)),
+        error: (err, _) => Center(child: Text('Erro: $err')),
+        data: (todas) {
+          final historico = todas.where((c) => c.estaConcluida).toList();
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: const Icon(Icons.chevron_left, color: AppConstants.corPrimaria),
+                    ),
+                    const Text('Histórico de Candidaturas',
+                        style: TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.w600, fontSize: 14)),
+                  ],
                 ),
-                const Text('Histórico de Candidaturas',
-                    style: TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.w600, fontSize: 14)),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: Colors.black12),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: AppConstants.corPrimaria))
-                : RefreshIndicator(
-                    color: AppConstants.corPrimaria,
-                    onRefresh: _refresh,
-                    child: _candidaturas.isEmpty
-                        ? ListView(children: const [
-                            SizedBox(height: 80),
-                            Center(child: Column(children: [
-                              Icon(Icons.history, size: 56, color: Colors.grey),
-                              SizedBox(height: 10),
-                              Text('Ainda não tens candidaturas concluídas.', style: TextStyle(color: Colors.grey, fontSize: 14)),
-                            ])),
-                          ])
-                        : ListView.separated(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            itemCount: _candidaturas.length,
-                            separatorBuilder: (_, _) => const SizedBox(height: 8),
-                            itemBuilder: (context, i) => _CardHistorico(
-                              candidatura: _candidaturas[i],
-                              onTap: () => context.push(AppConstants.routeDetalheCandidatura, extra: _candidaturas[i].numCandidatura).then((_) => _refresh()),
-                            ),
+              ),
+              const Divider(height: 1, color: Colors.black12),
+              Expanded(
+                child: RefreshIndicator(
+                  color: AppConstants.corPrimaria,
+                  onRefresh: () async {
+                    await APIService.instance.sincronizarCandidaturas();
+                    ref.invalidate(candidaturasProvider);
+                  },
+                  child: historico.isEmpty
+                      ? ListView(children: const [
+                          SizedBox(height: 80),
+                          Center(child: Column(children: [
+                            Icon(Icons.history, size: 56, color: Colors.grey),
+                            SizedBox(height: 10),
+                            Text('Ainda não tens candidaturas concluídas.',
+                                style: TextStyle(color: Colors.grey, fontSize: 14)),
+                          ])),
+                        ])
+                      : ListView.separated(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          itemCount: historico.length,
+                          separatorBuilder: (_, _) => const SizedBox(height: 8),
+                          itemBuilder: (context, i) => _CardHistorico(
+                            candidatura: historico[i],
+                            onTap: () => context.push(
+                              AppConstants.routeDetalheCandidatura,
+                              extra: historico[i].numCandidatura,
+                            ).then((_) => ref.invalidate(candidaturasProvider)),
                           ),
-                  ),
-          ),
-        ],
+                        ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

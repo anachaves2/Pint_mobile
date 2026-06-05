@@ -1,5 +1,4 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // ADICIONADO
 import 'package:pint_mobile/routes/app_routes.dart';
@@ -7,7 +6,9 @@ import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/services/notificacoes_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pint_mobile/widgets/banner_sem_rede.dart';
+import 'package:pint_mobile/services/preferencias_service.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +22,11 @@ void main() async {
 
   await DatabaseService.instance.database;
 
-  final token = await DatabaseService.instance.getToken();
+
+  final prefs = PreferenciasService();
+  final tokenPrefs = await prefs.lerToken();
+  final token = tokenPrefs ?? await DatabaseService.instance.getToken();
+
   if (token != null) {
     APIService.instance.sincronizarTodos();
     APIService.instance.iniciarSincronizacaoPeriodica(
@@ -45,6 +50,8 @@ class MyApp extends StatelessWidget {
       title: 'BadgeBoost',
       debugShowCheckedModeBanner: false,
       routerConfig: appRouter,
+      //BannerSemRede envolve toda a app
+      builder:(context, child) => BannerSemRede(child: child!),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppConstants.corPrimaria,

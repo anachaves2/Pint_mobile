@@ -73,6 +73,14 @@ dependencies:
   # Para encriptar o token JWT antes de guardar na base de dados local
   crypto: ^3.0.3
 
+  #--- Conectividade ---
+  #Deteta se o telemóvel tem ligação à internet
+  connectivity_plus: ^6.0.3
+
+  #-- Câmara / Galeria ---
+  #Permite tirar fotos
+  camera: ^0.10.5+9
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

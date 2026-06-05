@@ -7,6 +7,7 @@ import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pint_mobile/screens/camera/camera_screen.dart';
 
 // ============================================================================
 // DefinicoesScreen — Ecrã 54
@@ -278,6 +279,24 @@ class _DefinicoesScreenState extends State<DefinicoesScreen> {
     );
   }
 
+  // image_picker 
+  // Permite ao consultor tirar uma foto ou escolher da galeria para o perfil
+  Future<void> _alterarFotoPerfil() async {
+    final caminho = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const CameraScreen()),
+    );
+    if (caminho == null) return;
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Foto tirada com sucesso!'),
+          backgroundColor: AppConstants.corSucesso,
+        ),
+      );
+    }
+  }
+
   // ── Avatar circular com nome e cargo ──
   Widget _buildAvatar() {
     final nomeInicial = _consultor!.nome.isNotEmpty
@@ -326,6 +345,26 @@ class _DefinicoesScreenState extends State<DefinicoesScreen> {
                     ),
                   ),
                 ),
+        ),
+        const SizedBox(height: 8),
+        // Botão para alterar foto — image_picker (Aula 11)
+        GestureDetector(
+          onTap: _alterarFotoPerfil,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppConstants.corPrimaria.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.camera_alt_outlined, size: 14, color: AppConstants.corPrimaria),
+                SizedBox(width: 4),
+                Text('Alterar foto', style: TextStyle(fontSize: 12, color: AppConstants.corPrimaria)),
+              ],
+            ),
+          ),
         ),
         const SizedBox(height: 12),
 
