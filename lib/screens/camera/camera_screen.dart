@@ -26,6 +26,11 @@ class _CameraScreenState extends State<CameraScreen> {
   // Obter lista de câmaras disponíveis e inicializar a primeira
   Future<void> _inicializarCamera() async {
     final cameras = await availableCameras();
+    if (cameras.isEmpty){
+      if(mounted) {
+        return;
+      }
+    }
     final firstCamera = cameras.first;
 
     // Criar e inicializar CameraController

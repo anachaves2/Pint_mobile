@@ -55,29 +55,29 @@ class _BannerSemRedeState extends State<BannerSemRede> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Mostra o banner vermelho apenas quando não há rede
-        if (_semRede)
-          Container(
-            width: double.infinity,
-            color: Colors.red[700],
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.wifi_off, color: Colors.white, size: 16),
-                SizedBox(width: 8),
-                Text(
-                  'Sem ligação à internet — a mostrar dados guardados',
-                  style: TextStyle(color: Colors.white, fontSize: 12),
+    Widget build(BuildContext context) {
+      return Column(
+        children: [
+          // O ecrã filho ocupa o espaço disponível
+          Expanded(child: widget.child),
+          // Mostra o banner vermelho no fundo apenas quando não há rede
+          if (_semRede)
+            Container(
+              width: double.infinity,
+              color: Colors.red[700],
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.wifi_off, color: Colors.white, size: 16),
+                  SizedBox(width: 8),
+                  Text(
+                    'Sem ligação à internet — a mostrar dados guardados',
+                    style: TextStyle(color: Colors.white, fontSize: 12),
                 ),
               ],
             ),
           ),
-        // O ecrã filho ocupa o resto do espaço disponível
-        Expanded(child: widget.child),
       ],
     );
   }

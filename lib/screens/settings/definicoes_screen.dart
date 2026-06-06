@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pint_mobile/models/consultor.dart';
@@ -8,6 +9,9 @@ import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pint_mobile/screens/camera/camera_screen.dart';
+import 'package:pint_mobile/providers/utilizador_provider.dart';
+import 'package:pint_mobile/providers/badges_provider.dart';
+import 'package:pint_mobile/providers/candidatura_provider.dart';
 
 // ============================================================================
 // DefinicoesScreen — Ecrã 54
@@ -20,14 +24,14 @@ import 'package:pint_mobile/screens/camera/camera_screen.dart';
 //   - Fazer logout
 // ============================================================================
 
-class DefinicoesScreen extends StatefulWidget {
+class DefinicoesScreen extends ConsumerStatefulWidget {
   const DefinicoesScreen({super.key});
 
   @override
-  State<DefinicoesScreen> createState() => _DefinicoesScreenState();
+  ConsumerState<DefinicoesScreen> createState() => _DefinicoesScreenState();
 }
 
-class _DefinicoesScreenState extends State<DefinicoesScreen> {
+class _DefinicoesScreenState extends ConsumerState<DefinicoesScreen> {
   Consultor? _consultor;
   bool _isLoading = true;
 
@@ -141,6 +145,9 @@ class _DefinicoesScreenState extends State<DefinicoesScreen> {
     );
 
     if (confirmar == true && mounted) {
+      ref.read(utilizadorProvider.notifier).limpar();
+      ref.read(badgesProvider.notifier).limpar();
+      ref.read(candidaturasProvider.notifier).limpar();
       await APIService.instance.logout();
       if (mounted) {
         context.go(AppConstants.routeLanding);
@@ -322,8 +329,8 @@ class _DefinicoesScreenState extends State<DefinicoesScreen> {
                   child: CachedNetworkImage(
                     imageUrl: _consultor!.urlFoto!,
                     fit: BoxFit.cover,
-                    placeholder: (_, _) => const CircularProgressIndicator(),
-                    errorWidget: (_, _, _) => Center(
+                    placeholder: (ctx, url) => const CircularProgressIndicator(),
+                    errorWidget: (ctx, url, err) => Center(
                       child: Text(
                         nomeInicial,
                         style: const TextStyle(

@@ -94,7 +94,7 @@ class _HistoricoCandidaturasState extends ConsumerState<HistoricoCandidaturas> {
                       : ListView.separated(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           itemCount: historico.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 8),
+                          separatorBuilder: (ctx, i) => const SizedBox(height: 8),
                           itemBuilder: (context, i) => _CardHistorico(
                             candidatura: historico[i],
                             onTap: () => context.push(

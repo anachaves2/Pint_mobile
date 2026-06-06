@@ -5,6 +5,8 @@ import 'package:pint_mobile/providers/utilizador_provider.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pint_mobile/providers/badges_provider.dart';
+import 'package:pint_mobile/providers/candidatura_provider.dart';
 
 // ConsumerWidget — padrão do Riverpod (aula 10)
 class CustomDrawer extends ConsumerWidget {
@@ -61,9 +63,11 @@ class CustomDrawer extends ConsumerWidget {
 
     if (confirmar == true && context.mounted) {
       ref.read(utilizadorProvider.notifier).limpar();
+      ref.read(candidaturasProvider.notifier).limpar();
+      ref.read(badgesProvider.notifier).limpar();
       await APIService.instance.logout();
       if (context.mounted) {
-        context.go(AppConstants.routeLogin);
+        context.go(AppConstants.routeLanding);
       }
     }
   }
@@ -98,7 +102,27 @@ class CustomDrawer extends ConsumerWidget {
             ),
             const Divider(height: 1, color: Colors.black12),
 
-            // INFO DO CONSULTOR — usa .when() do Riverpod (aula 10)
+            // LISTA DE ITENS
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _buildMenuItem(context, 'Dashboard', AppConstants.routeDashboard),
+                  _buildMenuItem(context, 'Os Meus Badges', AppConstants.routeMeusBadges),
+                  _buildMenuItem(context, 'Os Meus Objetivos', AppConstants.routeObjetivos),
+                  _buildMenuItem(context, 'Candidaturas', AppConstants.routeCandidaturas),
+                  _buildMenuItem(context, 'Catálogo de Badges', AppConstants.routeCatalogo),
+                  _buildMenuItem(context, 'Gamification', AppConstants.routeGamification),
+                  _buildMenuItem(context, 'Notificações', AppConstants.routeNotificacoes),
+                  _buildMenuItem(context, 'Definições', AppConstants.routeDefinicoes),
+                  _buildMenuItem(context, 'O Meu Perfil', AppConstants.routePerfil),
+                  _buildMenuItem(context, 'Terminar Sessão', '', onTapOverride: () => _terminarSessao(context, ref)),
+                ],
+              ),
+            ),
+
+            // INFO DO CONSULTOR NO FUNDO — usa .when() do Riverpod (aula 10)
+            const Divider(height: 1, color: Colors.black12),
             consultorAsync.when(
               data: (consultor) => consultor == null
                   ? const SizedBox.shrink()
@@ -151,32 +175,6 @@ class CustomDrawer extends ConsumerWidget {
                     ),
               loading: () => const LinearProgressIndicator(),
               error: (err, _) => const SizedBox.shrink(),
-            ),
-
-            const Divider(height: 1, color: Colors.black12),
-
-            // LISTA DE ITENS
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  _buildMenuItem(context, 'Dashboard', AppConstants.routeDashboard),
-                  _buildMenuItem(context, 'Os Meus Badges', AppConstants.routeMeusBadges),
-                  _buildMenuItem(context, 'Os Meus Objetivos', AppConstants.routeObjetivos),
-                  _buildMenuItem(context, 'Candidaturas', AppConstants.routeCandidaturas),
-                  _buildMenuItem(context, 'Catálogo de Badges', AppConstants.routeCatalogo),
-                  _buildMenuItem(context, 'Gamification', AppConstants.routeGamification),
-                  _buildMenuItem(context, 'Notificações', AppConstants.routeNotificacoes),
-                  _buildMenuItem(context, 'Definições', AppConstants.routeDefinicoes),
-                  _buildMenuItem(context, 'O Meu Perfil', AppConstants.routePerfil),
-                  _buildMenuItem(
-                    context,
-                    'Terminar Sessão',
-                    '',
-                    onTapOverride: () => _terminarSessao(context, ref),
-                  ),
-                ],
-              ),
             ),
           ],
         ),

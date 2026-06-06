@@ -256,6 +256,7 @@ class APIService {
     await DatabaseService.instance.deleteObjetivos();
     await DatabaseService.instance.deleteCatalogoBadges();
     await DatabaseService.instance.deleteCatalogoBadgesEspeciais();
+    await PreferenciasService().limpar();
   }
 
   //===========================================================

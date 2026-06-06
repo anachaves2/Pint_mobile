@@ -106,7 +106,7 @@ class _AlterarPasswordScreenState extends State<AlterarPasswordScreen> {
                     setState(() => _verNovaPassword = !_verNovaPassword),
                 validator: (v) {
                   if (v == null || v.isEmpty) return 'Campo obrigatório';
-                  if (v.length < 6) return 'Mínimo 6 caracteres';
+                  if (v.length < 8) return 'Mínimo 8 caracteres';
                   return null;
                 },
               ),

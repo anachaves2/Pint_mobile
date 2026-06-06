@@ -59,9 +59,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         if (!resultado.configuracaoCompleta) {
           ref.invalidate(utilizadorProvider);
           context.go(AppConstants.routeConfiguracaoInicial);
+          APIService.instance.sincronizarTodos();
+          APIService.instance.iniciarSincronizacaoPeriodica(
+            const Duration(minutes: AppConstants.intervalSincronizacaoMinutos),
+          );
         } else {
           ref.invalidate(utilizadorProvider);
           context.go(AppConstants.routeDashboard);
+          APIService.instance.sincronizarTodos();
+          APIService.instance.iniciarSincronizacaoPeriodica(
+            const Duration(minutes: AppConstants.intervalSincronizacaoMinutos),
+          );
         }
       }
     } else {

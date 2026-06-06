@@ -8,6 +8,10 @@ class CandidaturasNotifier extends AsyncNotifier<List<CandidaturaBadge>> {
     return await DatabaseService.instance.getCandidaturas();
   }
 
+  void limpar() {
+    state = const AsyncValue.data([]);
+  }
+
   Future<void> atualizar() async {
     state = const AsyncValue.loading();
     try {

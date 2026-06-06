@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/models/notificacao.dart';
 import 'package:pint_mobile/models/badge_utilizador.dart';
+import 'package:pint_mobile/services/database_service.dart';
 
 import 'package:pint_mobile/screens/auth/landing_page_screen.dart';
 import 'package:pint_mobile/screens/auth/login_screen.dart';
@@ -32,6 +33,18 @@ import 'package:pint_mobile/screens/candidaturas/nova_candidatura_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: AppConstants.routeLanding,
+  redirect: (context, state) async {
+    //Só verifica nas rotas de auth (landing e login)
+    final naAuth = state.matchedLocation == AppConstants.routeLanding ||
+        state.matchedLocation == AppConstants.routeLogin;
+    if (!naAuth) return null;    //noutras rotas não faz nada
+    final token = await DatabaseService.instance.getToken();
+    if (token != null) {
+      return AppConstants.routeDashboard;  //se já tiver token, vai para dashboard
+    } else {
+      return null;  //senão, deixa ir para landing/login
+    }
+  },
   routes: [
     GoRoute(path: AppConstants.routeLanding, builder: (ctx, state) => const LandingPageScreen()),
     GoRoute(path: AppConstants.routeLogin, builder: (ctx, state) => const LoginScreen()),
@@ -66,8 +79,6 @@ final GoRouter appRouter = GoRouter(
   ],
 );
 
-
-
 // ECRAS PRIVISÓRIOS
 
 
@@ -78,7 +89,15 @@ class PlaceholderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(titulo)),
+      appBar: AppBar(
+        title: Text(titulo),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

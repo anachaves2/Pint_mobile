@@ -94,7 +94,7 @@ class _CandidaturasADecorrerState extends ConsumerState<CandidaturasADecorrer> {
                       : ListView.separated(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           itemCount: emProgresso.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 8),
+                          separatorBuilder: (ctx, i) => const SizedBox(height: 8),
                           itemBuilder: (context, i) => CardCandidatura(
                             candidatura: emProgresso[i],
                             onTap: () => context.push(

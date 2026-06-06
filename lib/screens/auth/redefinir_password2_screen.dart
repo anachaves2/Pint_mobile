@@ -63,7 +63,7 @@ class _RedefinirPassword2ScreenState extends State<RedefinirPassword2Screen> {
                 child: ElevatedButton(
                   onPressed: () {
                     // vai para o Login
-                    context.go(AppConstants.routeLogin);
+                    context.go(AppConstants.routeLanding);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppConstants.corPrimaria,

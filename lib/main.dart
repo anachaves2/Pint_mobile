@@ -1,13 +1,13 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // ADICIONADO
-import 'package:pint_mobile/routes/app_routes.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/services/notificacoes_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/banner_sem_rede.dart';
 import 'package:pint_mobile/services/preferencias_service.dart';
+import 'package:pint_mobile/routes/app_routes.dart';
 
 
 void main() async {
@@ -35,14 +35,16 @@ void main() async {
   }
 
   runApp(
-    const ProviderScope(
-      child: MyApp(),
+    ProviderScope(
+      child: MyApp(rotaInicial: token != null ? AppConstants.routeDashboard : AppConstants.routeLanding),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, required this.rotaInicial});
+
+  final String rotaInicial;
 
   @override
   Widget build(BuildContext context) {

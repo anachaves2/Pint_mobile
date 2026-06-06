@@ -321,7 +321,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
               : ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   itemCount: _badges.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  separatorBuilder: (ctx, i) => const SizedBox(height: 8),
                   itemBuilder: (context, i) {
                     final b = _badges[i];
                     final selecionado = _badgeSelecionado?.id == b.id;
@@ -425,7 +425,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
               : ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   itemCount: _requisitos.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  separatorBuilder: (ctx, i) => const SizedBox(height: 10),
                   itemBuilder: (context, i) => _buildCardRequisito(_requisitos[i]),
                 ),
         ),
