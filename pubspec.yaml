@@ -23,6 +23,10 @@ dependencies:
   # Para fazer chamadas à API REST (GET, POST, PUT, DELETE)
   http: ^1.2.1
 
+  # --- HTTP Multipart (upload de evidências) ---
+  # Para enviar ficheiros (imagens, PDFs) para a API REST
+  http_parser: ^4.0.2
+
   # --- Base de dados local (sqflite) ---
   # Requisito obrigatório do trabalho: base de dados local para modo offline
   sqflite: ^2.3.3

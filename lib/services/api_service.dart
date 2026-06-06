@@ -513,6 +513,7 @@ class APIService {
   //corre continuamente em backgroug no intervalo de tempo definido nas constantes
 
   void iniciarSincronizacaoPeriodica(Duration intervalo) async {
+    if(_sincronizacaoAtiva) return; // Impede múltiplas sincronizações simultâneas
     _sincronizacaoAtiva = true;
     while (_sincronizacaoAtiva) {
       await sincronizarTodos();

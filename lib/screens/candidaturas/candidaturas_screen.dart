@@ -128,7 +128,7 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
           ),
         ],
       ),
-      // ─── Riverpod — Aula 10 ───────────────────────────────────────────
+      // ─── Riverpod ───────────────────────────────────────────
       body: ref.watch(candidaturasProvider).when(
         data: (candidaturas) {
           final emProgresso = candidaturas.where((c) => !c.estaConcluida).toList();

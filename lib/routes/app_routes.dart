@@ -97,7 +97,7 @@ class PlaceholderScreen extends StatelessWidget {
         leading: Builder(
           builder: (ctx) => IconButton(
             icon: SvgPicture.asset('assets/icons/drawerprimario.svg', height: 20,
-                colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
+                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn)),
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
