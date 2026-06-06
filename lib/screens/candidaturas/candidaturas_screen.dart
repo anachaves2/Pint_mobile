@@ -153,8 +153,6 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Row(
                         children: [
-                          const Icon(Icons.chevron_left,
-                              size: 18, color: AppConstants.corPrimaria),
                           Text(
                             '${emProgresso.length} candidatura${emProgresso.length == 1 ? '' : 's'} a decorrer',
                             style: const TextStyle(
