@@ -6,6 +6,7 @@ import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:pint_mobile/services/preferencias_service.dart';
+import 'package:http_parser/http_parser.dart'; //para enviar evidências (imagens) para a API
 
 // Modelos
 import 'package:pint_mobile/models/consultor.dart';
@@ -599,8 +600,20 @@ class APIService {
       // Adiciona o campo idRequisito como campo de texto
       request.fields['idRequisito'] = idRequisito.toString();
       // Adiciona o ficheiro como campo 'ficheiro' (nome esperado pelo multer no backend)
+      // Deteta o contentType pela extensão para o backend aceitar o ficheiro
+      final ext = ficheiro.path.toLowerCase();
+      MediaType? tipo;
+      if (ext.endsWith('.pdf')) {
+        tipo = MediaType('application', 'pdf');
+      } else if (ext.endsWith('.zip')) {
+        tipo = MediaType('application', 'zip');
+      } else if (ext.endsWith('.png')) {
+        tipo = MediaType('image', 'png');
+      } else if (ext.endsWith('.jpg') || ext.endsWith('.jpeg')) {
+        tipo = MediaType('image', 'jpeg');
+      }
       request.files.add(
-        await http.MultipartFile.fromPath('ficheiro', ficheiro.path),
+        await http.MultipartFile.fromPath('ficheiro', ficheiro.path, contentType: tipo),
       );
 
       final streamedResponse = await request.send();

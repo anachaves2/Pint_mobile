@@ -4,6 +4,8 @@ import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/models/notificacao.dart';
 import 'package:pint_mobile/models/badge_utilizador.dart';
 import 'package:pint_mobile/services/database_service.dart';
+import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:pint_mobile/screens/auth/landing_page_screen.dart';
 import 'package:pint_mobile/screens/auth/login_screen.dart';
@@ -89,12 +91,14 @@ class PlaceholderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const CustomDrawer(),
       appBar: AppBar(
         title: Text(titulo),
         leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Scaffold.of(context).openDrawer(),
+          builder: (ctx) => IconButton(
+            icon: SvgPicture.asset('assets/icons/drawerprimario.svg', height: 20,
+                colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
       ),

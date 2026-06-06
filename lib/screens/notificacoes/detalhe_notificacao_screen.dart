@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pint_mobile/models/notificacao.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/providers/badges_provider.dart';
 import 'package:go_router/go_router.dart';
 
  
@@ -14,7 +16,7 @@ import 'package:go_router/go_router.dart';
 // Tem botão Eliminar que remove a notificação e volta atrás.
 // ============================================================================
  
-class DetalheNotificacaoScreen extends StatelessWidget {
+class DetalheNotificacaoScreen extends ConsumerWidget {
   final Notificacao notificacao;
   const DetalheNotificacaoScreen({super.key, required this.notificacao});
  
@@ -108,7 +110,7 @@ class DetalheNotificacaoScreen extends StatelessWidget {
   }
  
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Recebe o objeto Notificacao via arguments
     final config = _configPara(notificacao.tipoNotificacao);
     final dataFmt =
@@ -206,7 +208,18 @@ class DetalheNotificacaoScreen extends StatelessWidget {
                 context: context,
                 label: 'Ver badge',
                 icone: Icons.workspace_premium_outlined,
-                onTap: () => context.push(AppConstants.routeDetalheBadge, extra: notificacao.idBadgeUtilizador),
+                onTap: () {
+                  // Procura o badge completo na lista do provider pelo id
+                  final badges = ref.read(badgesProvider).valueOrNull ?? [];
+                  final badge = badges.where((b) => b.id == notificacao.idBadgeUtilizador).firstOrNull;
+                  if (badge != null) {
+                    context.push(AppConstants.routeDetalheBadge, extra: badge);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Badge não encontrado.')),
+                    );
+                  }
+                },
               ),
  
             if (notificacao.idObjetivo != null)
