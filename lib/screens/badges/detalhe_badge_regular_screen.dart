@@ -8,7 +8,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 // ECRÃ DETALHE BADGE REGULAR
 // Mostra os detalhes completos de um badge regular válido.
-// Permite partilhar no LinkedIn e aceder à página pública do badge.
 
 class DetalheBadgeRegular extends StatelessWidget {
   final BadgeUtilizador badge;

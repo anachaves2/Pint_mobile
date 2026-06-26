@@ -7,8 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // ECRÃ DETALHE BADGE PREMIUM
-// Mostra os detalhes de um badge especial (Premium).
-// Semelhante ao detalhe regular mas com visual dourado e sem secção de nível.
+// Mostra os detalhes de um badge especial
 
 class DetalheBadgePremium extends StatelessWidget {
   final BadgeUtilizador badge;

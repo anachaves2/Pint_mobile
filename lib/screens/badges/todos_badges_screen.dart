@@ -10,7 +10,6 @@ import 'package:go_router/go_router.dart';
 
 // ECRÃ TODOS OS BADGES
 // Lista completa de badges regulares válidos do consultor.
-// Acessível pelo botão "VER TODOS" da secção Recentes.
 
 class TodosOsBadges extends ConsumerStatefulWidget {
   const TodosOsBadges({super.key});
@@ -275,7 +274,6 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
   }
 
   Widget _buildIconeBadge(BadgeUtilizador badge) {
-    // BadgeUtils.corDoNivel evita duplicação com meus_badges_screen
     final cor = BadgeUtils.corDoNivel(badge.tipoNivel);
     final letra = badge.tipoNivel?.isNotEmpty == true
         ? badge.tipoNivel![0].toUpperCase()
@@ -293,8 +291,6 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
           child: Image.network(
             badge.urlImagem!,
             fit: BoxFit.cover,
-            // CORRIGIDO: (_, _, _) → (context, error, stackTrace)
-            // Em Dart os 3 parâmetros de errorBuilder não podem ser todos '_'
             errorBuilder: (context, error, stackTrace) =>
                 _buildIconeLetra(letra, cor),
           ),

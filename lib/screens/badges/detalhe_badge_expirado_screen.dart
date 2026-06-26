@@ -7,8 +7,6 @@ import 'package:go_router/go_router.dart';
 
 // ECRÃ DETALHE BADGE EXPIRADO
 // Mostra os detalhes de um badge expirado.
-// Visual acinzentado para indicar o estado inativo.
-// Tem botão "Renovar" que navega para nova candidatura pré-preenchida.
 
 class DetalheBadgeExpirado extends StatelessWidget {
   final BadgeUtilizador badge;
@@ -284,7 +282,6 @@ class DetalheBadgeExpirado extends StatelessWidget {
     );
   }
 
-  // Botão Renovar — navega para nova candidatura pré-preenchida com este badge
   Widget _buildBotaoRenovar(BuildContext context) {
     return SizedBox(
       width: double.infinity,
