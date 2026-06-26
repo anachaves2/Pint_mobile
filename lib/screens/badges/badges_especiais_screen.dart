@@ -9,8 +9,7 @@ import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
 
 // ECRÃ BADGES ESPECIAIS
-// Lista completa de badges especiais (Premium) válidos do consultor.
-// Acessível pelo botão "VER TODOS" da secção Especiais do ecrã Os Meus Badges.
+// Lista completa de badges especiais válidos do consultor.
 
 class BadgesEspeciais extends ConsumerStatefulWidget {
   const BadgesEspeciais({super.key});
@@ -34,7 +33,6 @@ class _BadgesEspeciaisState extends ConsumerState<BadgesEspeciais> {
   }
 
   List<BadgeUtilizador> _aplicarFiltro(List<BadgeUtilizador> todos) {
-    // Só badges especiais válidos, ordenados do mais recente para o mais antigo
     final especiais = todos
         .where((b) => b.idBadgeEspecial != null && b.valido)
         .toList()
@@ -239,7 +237,6 @@ class _BadgesEspeciaisState extends ConsumerState<BadgesEspeciais> {
                           ),
                         ),
                       ),
-                      // Etiqueta "Premium"
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),
@@ -295,7 +292,6 @@ class _BadgesEspeciaisState extends ConsumerState<BadgesEspeciais> {
     );
   }
 
-  // Ícone dourado com estrela — identifica visualmente os badges especiais
   Widget _buildIconeEspecial(BadgeUtilizador badge) {
     if (badge.urlImagem != null) {
       return Container(

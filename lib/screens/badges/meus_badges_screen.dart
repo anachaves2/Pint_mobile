@@ -9,8 +9,6 @@ import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
 
 // ECRÃ OS MEUS BADGES
-// Dividida em 3 secções: Recentes, Especiais e Expirados.
-// Cada secção mostra até 3 badges com botão "VER TODOS".
 
 class OsMeusBadges extends ConsumerStatefulWidget {
   const OsMeusBadges({super.key});
@@ -33,7 +31,6 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
   }
 
   // Filtra todos os badges com base no texto de pesquisa.
-  // Usado nas 3 secções para que a barra funcione globalmente.
   List<BadgeUtilizador> _filtrar(List<BadgeUtilizador> lista) {
     if (_queryPesquisa.isEmpty) return lista;
     final q = _queryPesquisa.toLowerCase();
@@ -70,8 +67,6 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
 
   @override
   Widget build(BuildContext context) {
-    // ref.watch(badgesProvider) subscreve o provider —
-    // o widget reconstrói-se automaticamente quando os dados mudam.
     final badgesAsync = ref.watch(badgesProvider);
 
     return Scaffold(
@@ -100,7 +95,6 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
         ),
         data: (todos) => RefreshIndicator(
           color: _azulPrimario,
-          // Pull to refresh chama atualizar() no notifier → sincroniza API + SQLite
           onRefresh: () => ref.read(badgesProvider.notifier).atualizar(),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -184,8 +178,6 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
   }
 
   // ─── Barra de pesquisa ────────────────────────────────────────────────────
-  // Agora é funcional: atualiza _queryPesquisa → setState → _filtrar() corre
-  // em todos os getters das secções → os cards filtram em tempo real.
 
   Widget _buildBarraPesquisa() {
     return Container(
@@ -371,7 +363,6 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
   }
 
   Widget _buildIconeBadge(BadgeUtilizador badge, bool eEspecial, bool eExpirado) {
-    // Cores e letra: usa BadgeUtils (partilhado com todos_badges_screen)
     final Color cor;
     if (eExpirado) {
       cor = Colors.grey.shade400;

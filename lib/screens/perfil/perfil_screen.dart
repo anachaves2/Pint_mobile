@@ -10,11 +10,6 @@ import 'package:go_router/go_router.dart';
 
 // Ecrã do Perfil
 // Mostra os dados pessoais do consultor autenticado.
-//
-// MIGRAÇÃO SQLITE → RIVERPOD:
-//   Antes: initState() chamava DatabaseService.instance.getUser()
-//   Agora:  ref.watch(utilizadorProvider) devolve o AsyncValue<Consultor?>
-//   O widget é ConsumerWidget para ter acesso ao WidgetRef (ref).
 
 class Perfil extends ConsumerWidget {
   const Perfil({super.key});
@@ -26,8 +21,6 @@ class Perfil extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // ref.watch reage automaticamente a qualquer mudança no provider.
-    // AsyncValue tem 3 estados: loading / data / error — tratamos os 3 abaixo.
     final consultorAsync = ref.watch(utilizadorProvider);
 
     return Scaffold(
@@ -35,7 +28,6 @@ class Perfil extends ConsumerWidget {
       drawer: const CustomDrawer(),
       appBar: _buildAppBar(context),
       body: consultorAsync.when(
-        // Estado de carregamento — mostra o spinner
         loading: () => const Center(
           child: CircularProgressIndicator(color: _azulPrimario),
         ),
@@ -49,7 +41,6 @@ class Perfil extends ConsumerWidget {
             // Pull to refresh: sincroniza com a API e atualiza o provider
             onRefresh: () async {
               await APIService.instance.sincronizarTodos();
-              // Invalida o cache do provider → chama build() novamente → relê do SQLite
               ref.invalidate(utilizadorProvider);
             },
             child: SingleChildScrollView(
@@ -147,7 +138,6 @@ class Perfil extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           OutlinedButton(
-            // ref.invalidate força o provider a reconstruir-se
             onPressed: () => ref.invalidate(utilizadorProvider),
             child: const Text('Tentar novamente'),
           ),

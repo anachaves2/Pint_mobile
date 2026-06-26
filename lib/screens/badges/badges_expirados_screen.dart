@@ -10,7 +10,6 @@ import 'package:go_router/go_router.dart';
 
 // ECRÃ BADGES EXPIRADOS
 // Lista completa de badges expirados do consultor.
-// Acessível pelo botão "VER TODOS" da secção Expirados do ecrã Os Meus Badges.
 
 class BadgesExpirados extends ConsumerStatefulWidget {
   const BadgesExpirados({super.key});
@@ -33,7 +32,7 @@ class _BadgesExpiradosState extends ConsumerState<BadgesExpirados> {
   }
 
   List<BadgeUtilizador> _aplicarFiltro(List<BadgeUtilizador> todos) {
-    // Só badges expirados, ordenados pelo mais recentemente expirado primeiro
+    // Só badges expirados, ordenados pelo mais recentemente expirados primeiro
     final expirados = todos.where((b) => b.jaExpirou).toList()
       ..sort((a, b) => b.dataExpiracao.compareTo(a.dataExpiracao));
 
@@ -267,7 +266,6 @@ class _BadgesExpiradosState extends ConsumerState<BadgesExpirados> {
   }
 
   // Ícone cinzento — todos os badges expirados ficam cinzentos
-  // independentemente do nível original
   Widget _buildIconeExpirado(BadgeUtilizador badge) {
     final cor = Colors.grey.shade400;
     final letra = badge.idBadgeEspecial != null
