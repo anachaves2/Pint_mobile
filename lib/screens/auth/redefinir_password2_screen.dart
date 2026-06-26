@@ -26,6 +26,7 @@ class _RedefinirPassword2ScreenState extends State<RedefinirPassword2Screen> {
   }
 
   // MÉTODO DO POPUP
+  // Mostra popup de sucesso em vez de navegar directamente
   void _mostrarPopupSucesso() {
     showDialog(
       context: context,
@@ -79,6 +80,7 @@ class _RedefinirPassword2ScreenState extends State<RedefinirPassword2Screen> {
     );
   }
 
+  //Valida as password, chama a API com o token de reset e mostra popup de sucesso
   Future<void> _redefinir(String tokenReset) async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -99,6 +101,7 @@ class _RedefinirPassword2ScreenState extends State<RedefinirPassword2Screen> {
 
   @override
   Widget build(BuildContext context) {
+    // Recebe o token de reset passado pelo ecrã anterior via go_router
     final token = GoRouterState.of(context).extra as String? ?? '';
 
     return Scaffold(

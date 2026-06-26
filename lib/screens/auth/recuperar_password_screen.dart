@@ -21,6 +21,7 @@ class _RecuperarPasswordScreenState extends State<RecuperarPasswordScreen> {
     super.dispose();
   }
 
+  //Envia o email à API, se existir, a PI envia um PIN para o email
   Future<void> _enviarPin() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -34,7 +35,7 @@ class _RecuperarPasswordScreenState extends State<RecuperarPasswordScreen> {
     setState(() => _isLoading = false);
 
     if (resultado.sucesso) {
-      // Passa o email como argumento para o ecrã seguinte (04 - RedefinirPassword1)
+      // Passa o email como argumento para o ecrã seguinte via go_router
       context.push(
         AppConstants.routeRedefinirPassword1,
         extra: email, 

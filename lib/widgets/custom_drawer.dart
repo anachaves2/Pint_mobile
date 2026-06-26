@@ -8,10 +8,11 @@ import 'package:go_router/go_router.dart';
 import 'package:pint_mobile/providers/badges_provider.dart';
 import 'package:pint_mobile/providers/candidatura_provider.dart';
 
-// ConsumerWidget — padrão do Riverpod (aula 10)
+// ConsumerWidget: padrão do Riverpod 
 class CustomDrawer extends ConsumerWidget {
   const CustomDrawer({super.key});
 
+  // Item de menu reutilizável — navega para a rota ou executa uma acção personalizada
   Widget _buildMenuItem(BuildContext context, String title, String routeName, {VoidCallback? onTapOverride}) {
     return Column(
       children: [
@@ -39,6 +40,7 @@ class CustomDrawer extends ConsumerWidget {
     );
   }
 
+  // Pede confirmação, limpa os 3 providers e faz logout
   Future<void> _terminarSessao(BuildContext context, WidgetRef ref) async {
     final confirmar = await showDialog<bool>(
       context: context,
@@ -62,6 +64,7 @@ class CustomDrawer extends ConsumerWidget {
     );
 
     if (confirmar == true && context.mounted) {
+      // Limpa o estado de todos os providers antes de navegar para o login
       ref.read(utilizadorProvider.notifier).limpar();
       ref.read(candidaturasProvider.notifier).limpar();
       ref.read(badgesProvider.notifier).limpar();
@@ -74,7 +77,7 @@ class CustomDrawer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // ref.watch — o drawer atualiza automaticamente quando o consultor muda
+    // ref.watch: o drawer atualiza automaticamente quando o consultor muda
     final consultorAsync = ref.watch(utilizadorProvider);
 
     return Drawer(
@@ -120,8 +123,9 @@ class CustomDrawer extends ConsumerWidget {
                 ],
               ),
             ),
-
-            // INFO DO CONSULTOR NO FUNDO — usa .when() do Riverpod (aula 10)
+            
+            // Mostra nome e email do consultor no fundo do drawer usando .when(data/loading/error)
+            // INFO DO CONSULTOR NO FUNDO: usa .when() do Riverpod 
             const Divider(height: 1, color: Colors.black12),
             consultorAsync.when(
               data: (consultor) => consultor == null
@@ -131,6 +135,7 @@ class CustomDrawer extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       child: Row(
                         children: [
+                          // Avatar com a inicial do nome do consultor
                           CircleAvatar(
                             backgroundColor: AppConstants.corPrimaria,
                             radius: 22,

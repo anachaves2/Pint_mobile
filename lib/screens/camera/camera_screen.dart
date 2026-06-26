@@ -2,9 +2,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:pint_mobile/utils/constants.dart';
 
-// Utilização da câmara — Aula 11
-// Padrão do professor Paulo Tomé (ESTGV)
-// Fases: obter câmaras → inicializar CameraController → CameraPreview → tirar foto
+// Fases: obter câmaras -> inicializar CameraController -> CameraPreview -> tirar foto
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
 
@@ -13,7 +11,9 @@ class CameraScreen extends StatefulWidget {
 }
 
 class _CameraScreenState extends State<CameraScreen> {
+  //gere a câmera, só é incializado dentro do _inicializarCemra()
   late CameraController _controller;
+  //Future que representa a inicialização da câmera, usado pelo FutureBuilder
   late Future<void> _initializeControllerFuture;
   bool _aTirarFoto = false;
 
@@ -26,6 +26,7 @@ class _CameraScreenState extends State<CameraScreen> {
   // Obter lista de câmaras disponíveis e inicializar a primeira
   Future<void> _inicializarCamera() async {
     final cameras = await availableCameras();
+    //Verificar se existe câmera disponível no dispositivo
     if (cameras.isEmpty){
       if(mounted) {
         return;
@@ -38,7 +39,7 @@ class _CameraScreenState extends State<CameraScreen> {
       firstCamera,
       ResolutionPreset.medium,
     );
-
+    // Inicializa a camera de forma assíncrona, o FutureBuilder aguarda este Future
     _initializeControllerFuture = _controller.initialize();
     if (mounted) setState(() {});
   }
@@ -95,9 +96,11 @@ class _CameraScreenState extends State<CameraScreen> {
             // Mostrar pré-visualização da câmara (CameraPreview)
             return Column(
               children: [
+                // CameraPreview: mostra a imagem em tempo real da câmara
                 Expanded(child: CameraPreview(_controller)),
                 Padding(
                   padding: const EdgeInsets.all(24),
+                  // Botão circular para tirar a foto: desativado enquanto está a processar
                   child: GestureDetector(
                     onTap: _aTirarFoto ? null : _tirarFoto,
                     child: Container(

@@ -11,6 +11,7 @@ import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pint_mobile/screens/camera/camera_screen.dart';
 
+// O ecrã tem 2 fases: seleccionar o badge e depois carregar as evidências
 enum _Fase { selecionarBadge, carregarEvidencias }
 
 class NovaCandidatura extends StatefulWidget {
@@ -55,7 +56,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     if (mounted) setState(() { _badges = badges; _isLoadingBadges = false; });
   }
 
-  // Carrega um rascunho existente — encontra o badge no catálogo local pelo
+  // Carrega um rascunho existente, encontra o badge no catálogo local pelo
   // idBadgeRegular, lê os requisitos e as evidências já guardadas, e salta
   // diretamente para a fase de carregamento de evidências.
   Future<void> _carregarRascunho(Map<String, dynamic> rascunho) async {
@@ -105,6 +106,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     });
   }
 
+  // Cria a candidatura na API e avança para a fase de evidências
   Future<void> _criarCandidatura() async {
     if (_badgeSelecionado == null) return;
     setState(() => _isLoadingBadges = true);
@@ -126,6 +128,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     }
   }
 
+  // Abre o explorador de ficheiros para seleccionar uma evidência (PDF, imagem, ZIP)
   Future<void> _escolherFicheiro(Requisito req) async {
     final resultado = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -149,6 +152,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     await _uploadEvidencia(req, caminho);
   }
 
+  // Faz upload da evidência para a API e actualiza o estado local
   Future<void> _uploadEvidencia(Requisito req, String caminho) async {
     if (_numCandidatura == null) return;
     setState(() => _uploading[req.id] = true);
@@ -168,6 +172,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     }
   }
 
+  // Submete a candidatura — só disponível quando todos os requisitos têm evidência
   Future<void> _submeter() async {
     if (_numCandidatura == null) return;
     setState(() => _isSubmitting = true);
@@ -181,6 +186,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     }
   }
 
+  // Pede confirmação antes de cancelar, apaga a candidatura e as evidências
   Future<void> _cancelarCandidatura() async {
     if (_numCandidatura == null) return;
 
@@ -237,7 +243,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
   void _mostrarErro(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: AppConstants.corErro));
   }
-
+  // Só permite submeter se todos os requisitos tiverem evidência carregada
   bool get _podeSubmeter {
     if (_requisitos.isEmpty) return true;
     return _requisitos.every((r) => _evidenciasGuardadas.containsKey(r.id));
@@ -294,6 +300,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     );
   }
 
+  // Fase 1: lista de badges disponíveis para o utilizador escolher
   Widget _buildFaseSelecionarBadge() {
     if (_isLoadingBadges) return const Center(child: CircularProgressIndicator(color: AppConstants.corPrimaria));
     return Column(
@@ -392,6 +399,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     );
   }
 
+  // Fase 2: lista de requisitos com botões para carregar evidências
   Widget _buildFaseEvidencias() {
     return Column(
       children: [
@@ -474,6 +482,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     );
   }
 
+  // Card de cada requisito: mostra o estado da evidência e os botões de upload/câmara
   Widget _buildCardRequisito(Requisito req) {
     final temEvidencia = _evidenciasGuardadas.containsKey(req.id);
     final emUpload = _uploading[req.id] == true;

@@ -7,6 +7,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/providers/utilizador_provider.dart';
 
+//Utiliza Riverpod - ConsumerStatefulWidget
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -31,6 +32,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
+  //Valida o formulário, chama a API e navega para o Dashboard ou Configuração Inicial
   Future<void> _fazerLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -57,6 +59,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (resultado.sucesso) {
       if (mounted) {
         if (!resultado.configuracaoCompleta) {
+          //Força o provider a recarregar os dados do novo utilizador autenticado
           ref.invalidate(utilizadorProvider);
           context.go(AppConstants.routeConfiguracaoInicial);
           APIService.instance.sincronizarTodos();
@@ -83,6 +86,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     }
   }
+  //Mostra um loading enquanto carrega a política da API, depois abre o diálogo
 void _mostrarPoliticaPrivacidade(BuildContext context) async {
   final nav = Navigator.of(context);
 
@@ -99,6 +103,7 @@ void _mostrarPoliticaPrivacidade(BuildContext context) async {
   _mostrarDialogoPolitica(texto);
 }
 
+//Separado em método síncrono para evitar usar BuildContext após await
 void _mostrarDialogoPolitica(String? texto) {
   showDialog(
     context: context,
@@ -184,6 +189,7 @@ void _mostrarDialogoPolitica(String? texto) {
 
                     Row(
                       children: [
+                        //Se marcado, guarda o token nas SharedPreferences para manter a sessão
                         Checkbox(
                           value: _manterSessao,
                           onChanged: (value) => setState(() => _manterSessao = value!),

@@ -17,10 +17,12 @@ class Candidaturas extends ConsumerStatefulWidget {
 }
 
 class _CandidaturasState extends ConsumerState<Candidaturas> {
+  // Rascunhos são geridos separadamente do provider, vêm directamente da API
   List<Map<String, dynamic>> _rascunhos = [];
   StreamSubscription<void>? _subAtualizador;
 
   @override
+  // Carrega os rascunhos e subscreve o stream para actualizações automáticas
   void initState() {
     super.initState();
     _carregarRascunhos();
@@ -36,6 +38,7 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
     super.dispose();
   }
 
+  // Vai buscar os rascunhos à API: candidaturas iniciadas mas não submetidas
   Future<void> _carregarRascunhos() async {
     final resultadoRascunhos = await APIService.instance.getRascunhos();
     if (mounted) {
@@ -43,6 +46,7 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
     }
   }
 
+  // Pede confirmação antes de apagar: acção irreversível
   Future<void> _apagarRascunho(int numCandidatura) async {
     final confirmar = await showDialog<bool>(
       context: context,
@@ -129,8 +133,10 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
         ],
       ),
       // ─── Riverpod ───────────────────────────────────────────
+      // Observa as candidaturas e reconstrói o ecrã quando mudam
       body: ref.watch(candidaturasProvider).when(
         data: (candidaturas) {
+          // Separa as candidaturas em duas listas: em curso e concluídas
           final emProgresso = candidaturas.where((c) => !c.estaConcluida).toList();
           final historico = candidaturas.where((c) => c.estaConcluida).toList();
 
@@ -163,6 +169,8 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
                         ],
                       ),
                     ),
+                  // Secção genérica reutilizada para "Em progresso" e "Histórico"
+                  // Mostra no máximo 3 itens com botão "Ver Todos" se houver mais
                   _buildSecao(
                     titulo: 'Em progresso',
                     lista: emProgresso,
@@ -170,6 +178,7 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
                     vazioMsg: 'Não tens candidaturas em curso.',
                   ),
                   const SizedBox(height: 24),
+                  // Mostra os racunhos apenas se existirem, widget retorna SizedBox.shrink() se vazio
                   _buildSecaoRascunhos(),
                   if (_rascunhos.isNotEmpty) const SizedBox(height: 12),
                   Center(
@@ -332,6 +341,7 @@ class CardCandidatura extends StatelessWidget {
   const CardCandidatura(
       {super.key, required this.candidatura, required this.onTap});
 
+  // Define a cor do estado com base na situação actual da candidatura
   Color get _corEstado {
     if (candidatura.aprovada) return AppConstants.corSucesso;
     if (candidatura.rejeitada) return AppConstants.corErro;
@@ -512,6 +522,7 @@ class CardRascunho extends StatelessWidget {
               Expanded(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(4),
+                  // Barra de progresso: mostra quantas evidências já foram carregadas
                   child: LinearProgressIndicator(
                     value: progresso,
                     minHeight: 5,

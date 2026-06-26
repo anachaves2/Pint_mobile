@@ -30,6 +30,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void initState() {
     super.initState();
     APIService.instance.sincronizarTodos();
+    // Sincroniza com a API e subscreve o stream para actualizações automáticas
     _carregarExtras();
     _subDados = atualizadorDados.stream.listen((_) {
       ref.invalidate(utilizadorProvider);
@@ -41,10 +42,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   void dispose() {
+    // Cancela a subscrição quando o ecrã é destruído
     _subDados?.cancel();
     super.dispose();
   }
 
+  // Catálogo e notificações não têm provider: são carregados directamente do SQLite
   // Carrega dados que ainda não têm provider próprio (catálogo e notificações)
   Future<void> _carregarExtras() async {
     final catalogo = await DatabaseService.instance.getCatalogoBadges();
@@ -57,16 +60,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
   }
 
+  // Conta as notificações não lidas para mostrar o badge vermelho no sino
   int get _notificacoesNaoLidas => _notificacoes.where((n) => !n.lida).length;
 
   @override
   Widget build(BuildContext context) {
-    // ─── Riverpod — Aula 10 ───────────────────────────────
+    // ─── Riverpod: observa os 3 providers em simultaneo ───────────────────────────────
+    // O ecrã reconstrói automaticamente quando qualquer um deles muda
     final consultorAsync = ref.watch(utilizadorProvider);
     final badgesAsync = ref.watch(badgesProvider);
     final candidaturasAsync = ref.watch(candidaturasProvider);
 
-    // Enquanto qualquer um dos providers estiver a carregar, mostra spinner
+    // Mostra spinner enquanto qualquer provider ainda está a carregar
     final isLoading = consultorAsync.isLoading ||
         badgesAsync.isLoading ||
         candidaturasAsync.isLoading;
@@ -79,6 +84,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final totalEspeciais = badges.where((b) => b.idBadgeEspecial != null && b.valido).length;
     final totalPontos = badges.fold(0, (sum, b) => sum + (b.pontos ?? 0));
 
+    // Badges recomendados: badges do catálogo que o utilizador ainda não conquistou
     final idsConquistados = badges
         .where((b) => b.idBadgeRegular != null)
         .map((b) => b.idBadgeRegular!)
@@ -92,6 +98,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     final totalBadgesLp = _catalogoBadges.length;
     final conquistadosLp = badges.where((b) => b.valido).length;
+    // Progresso no learning path: percentagem de badges conquistados vs total
     final progressoLp = totalBadgesLp > 0 ? conquistadosLp / totalBadgesLp : 0.0;
 
     return Scaffold(
@@ -146,6 +153,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator(color: AppConstants.corPrimaria))
           : RefreshIndicator(
+              // Sincroniza tudo com a API e invalida os 3 providers para actualizar o ecrã
               onRefresh: () async {
                 await APIService.instance.sincronizarTodos();
                 ref.invalidate(utilizadorProvider);
@@ -268,6 +276,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
+  // Ícone clicável que navega para a secção correspondente
   Widget _buildAcaoRapida(BuildContext context, {required IconData icon, required String label, required String valor, required String rota}) {
     return GestureDetector(
       onTap: () => context.push(rota),
@@ -282,6 +291,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
+  // Card com barra de progresso: usado para Learning Path, Badges e Ranking
   Widget _buildProgressCard({required IconData icon, required String titulo, required String subtitulo, required double progresso, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
@@ -326,6 +336,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
+  // Item da lista de badges recomendados: badges que o utilizador ainda pode conquistar
   Widget _buildBadgeRecomendadoItem(BadgeRegular badge) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),

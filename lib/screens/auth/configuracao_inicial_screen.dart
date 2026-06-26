@@ -25,11 +25,13 @@ class _ConfiguracaoInicialScreenState
     _carregarAreas();
   }
 
+//Vai buscar as áreas disponíveis à API para preencher a lista
   Future<void> _carregarAreas() async {
     final areas = await APIService.instance.getAreas();
     if (mounted) setState(() { _areas = areas; _isLoading = false; });
   }
 
+// Guarda a área selecionada na API e navega para o Dashboard
   Future<void> _guardar() async {
     if (_areaSelecionada == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -85,6 +87,7 @@ class _ConfiguracaoInicialScreenState
                     Expanded(
                       child: ListView(
                         children: _areas
+                            //Lista de áreas, o utilizador uma ao registar pela primeira vez.
                             .map((area) => RadioListTile<int>(
                                   title: Text(area['nome'] as String),
                                   value: area['id'] as int,

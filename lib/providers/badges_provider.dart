@@ -26,7 +26,7 @@ class BadgesNotifier extends AsyncNotifier<List<BadgeUtilizador>> {
     }
   }
 
-  // Apaga a lista local — chamado no logout para não mostrar dados de outro utilizador.
+  // Apaga a lista local, chamado no logout para não mostrar dados de outro utilizador.
   void limpar() {
     state = const AsyncValue.data([]);
   }

@@ -9,6 +9,7 @@ class CandidaturaSubmetida extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Recebe o número da candidatura passado pelo ecrã anterior via go_router
     final numCandidatura = GoRouterState.of(context).extra as int?;
 
     return Scaffold(
@@ -60,6 +61,7 @@ class CandidaturaSubmetida extends StatelessWidget {
                 style: TextStyle(fontSize: 14, color: Colors.black45, height: 1.5),
                 textAlign: TextAlign.center,
               ),
+              // Só mostra o número se foi passado pelo ecrã anterior
               if (numCandidatura != null) ...[
                 const SizedBox(height: 16),
                 Container(

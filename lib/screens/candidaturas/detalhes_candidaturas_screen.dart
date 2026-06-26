@@ -34,9 +34,10 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
     _carregar();
   }
 
+  // Carrega primeiro do SQLite (offline-first) e depois sincroniza com a API em background
   Future<void> _carregar() async {
     final numCandidatura = widget.numCandidatura;
-
+    // 1ª fase: dados locais (SQLite) para mostrar imediatamente sem esperar pela rede
     // Mostra cache primeiro (offline-first)
     final todasCandidaturas = await DatabaseService.instance.getCandidaturas();
     final candidatura = todasCandidaturas.where((c) => c.numCandidatura == numCandidatura).firstOrNull;
@@ -55,7 +56,7 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
         _isLoading = false;
       });
     }
-
+    // 2ª fase: sincroniza com a API e atualiza o ecrã com dados frescos
     // Sincroniza em background e atualiza
     await APIService.instance.sincronizarDetalhesCandidatura(numCandidatura);
     final todasAtual = await DatabaseService.instance.getCandidaturas();
@@ -73,7 +74,7 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
         _requisitos = requisitosAtual;
         _evidencias = {for (final e in evidenciasAtual) e.idRequisito: e};
       });
-      // Invalida o provider para que a lista de candidaturas seja actualizada
+      // Invalida o provider para que a lista de candidaturas seja actualizada e notifica os outros ecrãs
       ref.invalidate(candidaturasProvider);
     }
   }
@@ -133,6 +134,7 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
                           ],
                         ),
                         const SizedBox(height: 12),
+                        // Mostra nome do badge, nível e decisão final (se concluída)
                         _buildCabecalho(),
                         if (_requisitos.isNotEmpty) ...[
                           const SizedBox(height: 20),
@@ -145,6 +147,7 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
                         const Text('Timeline:',
                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black54, letterSpacing: 0.3)),
                         const SizedBox(height: 10),
+                        // Mostra o histórico em ordem inversa: mais recente no topo
                         _buildTimeline(),
                       ],
                     ),
@@ -222,7 +225,7 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
       ),
     );
   }
-
+  // Mostra o estado de cada requisito: sem evidência, pendente, aprovada ou rejeitada
   Widget _buildCardRequisito(Requisito req) {
     final evidencia = _evidencias[req.id];
 
@@ -310,6 +313,8 @@ class _ItemTimeline extends StatelessWidget {
   final bool isLast;
   const _ItemTimeline({required this.entrada, required this.isLast});
 
+  // Cor do ponto da timeline consoante o estado da candidatura
+  // 5=Aprovado, 6=Rejeitado, 2/4=Incorreto, resto=Em curso
   Color get _corPonto {
     switch (entrada.idEstadoAtual) {
       case 5: return AppConstants.corSucesso;
@@ -419,6 +424,7 @@ class _ItemTimeline extends StatelessWidget {
     );
   }
 
+  // Converte o número do mês para abreviatura em português
   String _mesAbrev(int mes) {
     const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     return meses[mes - 1];

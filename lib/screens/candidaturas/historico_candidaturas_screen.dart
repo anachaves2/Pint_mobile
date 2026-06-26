@@ -20,6 +20,7 @@ class _HistoricoCandidaturasState extends ConsumerState<HistoricoCandidaturas> {
   @override
   void initState() {
     super.initState();
+    // Quando chega uma actualização, invalida o provider para recarregar a lista
     atualizadorDados.stream.listen((_) {
       ref.invalidate(candidaturasProvider);
     });
@@ -51,11 +52,12 @@ class _HistoricoCandidaturasState extends ConsumerState<HistoricoCandidaturas> {
           ),
         ],
       ),
-      // Riverpod — Aula 10
+      // Riverpod - filtra apenas as candidaturas concluídas (aprovadas ou rejeitadas)
       body: ref.watch(candidaturasProvider).when(
         loading: () => const Center(child: CircularProgressIndicator(color: AppConstants.corPrimaria)),
         error: (err, _) => Center(child: Text('Erro: $err')),
         data: (todas) {
+          // Filtra apenas as candidaturas que já estão concluídas
           final historico = todas.where((c) => c.estaConcluida).toList();
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,6 +79,7 @@ class _HistoricoCandidaturasState extends ConsumerState<HistoricoCandidaturas> {
               Expanded(
                 child: RefreshIndicator(
                   color: AppConstants.corPrimaria,
+                  // Sincroniza com a API e invalida o provider para actualizar a lista
                   onRefresh: () async {
                     await APIService.instance.sincronizarCandidaturas();
                     ref.invalidate(candidaturasProvider);
@@ -113,6 +116,7 @@ class _HistoricoCandidaturasState extends ConsumerState<HistoricoCandidaturas> {
   }
 }
 
+// Card de cada candidatura do histórico: mostra o resultado final (Aprovado/Rejeitado)
 class _CardHistorico extends StatelessWidget {
   final CandidaturaBadge candidatura;
   final VoidCallback onTap;
@@ -125,6 +129,7 @@ class _CardHistorico extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final aprovada = candidatura.aprovada;
+    // Verde se aprovada, vermelho se rejeitada
     final corDecisao = aprovada ? AppConstants.corSucesso : AppConstants.corErro;
     final textoDecisao = aprovada ? 'Aprovado' : 'Rejeitado';
 

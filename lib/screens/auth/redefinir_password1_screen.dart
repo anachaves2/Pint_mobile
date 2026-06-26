@@ -11,9 +11,9 @@ class RedefinirPassword1Screen extends StatefulWidget {
 }
 
 class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
-  // Alterado para 6 controladores
+  // Um controlador e um FocusNode por cada dígito do PIN
   final List<TextEditingController> _controllers = List.generate(5, (_) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(5, (_) => FocusNode());
+  final List<FocusNode> _focusNodes = List.generate(5, (_) => FocusNode()); // Passa para o campo seguinte sem o utilizador clicar
   bool _isLoading = false;
 
   @override
@@ -23,6 +23,7 @@ class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
     super.dispose();
   }
 
+  //Junta os 5 dígitos e  verifica o PIN na API, se válido, navega para redefinir password 2
   Future<void> _verificarPin(String email) async {
     final codigo = _controllers.map((c) => c.text).join();
     if (codigo.length < 5) {
@@ -77,6 +78,7 @@ class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
               // Alterado para 6 quadradinhos mais estreitos para caberem no ecrã
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                //// 5 campos de um dígito cada, o foco avança automaticamente ao preencher
                 children: List.generate(5, (index) {
                   return SizedBox(
                     width: 50, 
@@ -93,6 +95,7 @@ class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
                         contentPadding: EdgeInsets.zero,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                       ),
+                      //// Avança para o campo seguinte ao preencher, recua ao apagar
                       onChanged: (value) {
                         if (value.isNotEmpty && index < 4) {
                           _focusNodes[index + 1].requestFocus();

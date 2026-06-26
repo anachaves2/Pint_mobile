@@ -51,11 +51,12 @@ class _CandidaturasADecorrerState extends ConsumerState<CandidaturasADecorrer> {
           ),
         ],
       ),
-      // Riverpod — Aula 10
+      // Riverpod: observa o provider e reconstrói automaticamente quando os dados mudam
       body: ref.watch(candidaturasProvider).when(
         loading: () => const Center(child: CircularProgressIndicator(color: AppConstants.corPrimaria)),
         error: (err, _) => Center(child: Text('Erro: $err')),
         data: (todas) {
+          // Filtra apenas as candidaturas que ainda não estão concluídas
           final emProgresso = todas.where((c) => !c.estaConcluida).toList();
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,6 +78,7 @@ class _CandidaturasADecorrerState extends ConsumerState<CandidaturasADecorrer> {
               Expanded(
                 child: RefreshIndicator(
                   color: AppConstants.corPrimaria,
+                  // Sincroniza com a API e invalida o provider para actualizar a lista
                   onRefresh: () async {
                     await APIService.instance.sincronizarCandidaturas();
                     ref.invalidate(candidaturasProvider);

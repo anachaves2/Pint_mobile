@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 class LandingPageScreen extends StatelessWidget {
   const LandingPageScreen({super.key});
 
+  //Widget auxilicar para desenhar pontos decorativos
   Widget _buildDot(Color color) {
     return Container(
       width: 10,

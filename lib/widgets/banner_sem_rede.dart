@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-// connectivity_plus — Aula 11
+// connectivity_plus
 // Widget que envolve toda a app e mostra um banner vermelho
 // quando o telemóvel não tem ligação à internet.
 // Como a app é offline-first (SQLite), continua a funcionar —
