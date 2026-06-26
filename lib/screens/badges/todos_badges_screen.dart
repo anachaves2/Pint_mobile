@@ -108,21 +108,13 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
 
   // ─── AppBar ───────────────────────────────────────────────────────────────
 
-  AppBar _buildAppBar() {
+AppBar _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
-      leading: Builder(
-        builder: (ctx) => IconButton(
-          icon: SvgPicture.asset(
-            'assets/icons/drawerprimario.svg',
-            width: 24,
-            height: 24,
-            colorFilter: const ColorFilter.mode(
-                AppConstants.corPrimaria, BlendMode.srcIn),
-          ),
-          onPressed: () => Scaffold.of(ctx).openDrawer(),
-        ),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
+        onPressed: () => context.pop(),
       ),
       title: const Text(
         'BADGES',
