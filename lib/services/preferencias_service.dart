@@ -3,7 +3,7 @@ import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
-// SharedPreferences — Aula 9
+// SharedPreferences
 // Guarda preferências simples do utilizador de forma persistente
 class PreferenciasService {
   static const _chaveToken = 'token';

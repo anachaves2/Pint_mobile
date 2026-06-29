@@ -21,7 +21,7 @@ class _BannerSemRedeState extends State<BannerSemRede> {
   bool _semRede = false;
 
   // StreamSubscription — fica à escuta de mudanças de conectividade
-  // em tempo real (Aula 9 — StreamSubscription)
+  // em tempo real 
   StreamSubscription? _sub;
 
   @override

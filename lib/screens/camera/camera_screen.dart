@@ -78,7 +78,7 @@ class _CameraScreenState extends State<CameraScreen> {
         title: const Text('Câmara',
             style: TextStyle(color: Colors.white, fontSize: 16)),
       ),
-      // FutureBuilder — Aula 6
+      // FutureBuilder
       // Aguarda a inicialização do CameraController antes de mostrar o preview
       body: FutureBuilder<void>(
         future: _initializeControllerFuture,
