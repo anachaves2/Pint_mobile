@@ -287,13 +287,8 @@ class DetalheBadgeExpirado extends StatelessWidget {
       width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: () {
-          // Passa o idBadgeRegular como rascunho para pré-preencher a candidatura
-          context.push(
-            AppConstants.routeNovaCandidatura,
-            extra: badge.idBadgeRegular != null
-                ? {'idBadgeRegular': badge.idBadgeRegular}
-                : null,
-          );
+          //Navega para nova candidatura, o utilizador escolhe o badge
+          context.push(AppConstants.routeNovaCandidatura);
         },
         icon: const Icon(Icons.refresh, size: 18),
         label: const Text('Renovar'),
