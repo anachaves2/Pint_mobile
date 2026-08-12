@@ -32,6 +32,10 @@ import 'package:pint_mobile/screens/candidaturas/historico_candidaturas_screen.d
 import 'package:pint_mobile/screens/candidaturas/candidatura_submetida_screen.dart';
 import 'package:pint_mobile/screens/candidaturas/detalhes_candidaturas_screen.dart';
 import 'package:pint_mobile/screens/candidaturas/nova_candidatura_screen.dart';
+import 'package:pint_mobile/screens/objetivos/novo_objetivos_screen.dart';
+import 'package:pint_mobile/screens/objetivos/objetivos_screen.dart';
+import 'package:pint_mobile/screens/gamification/gamification_screen.dart';
+import 'package:pint_mobile/screens/gamification/ranking_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: AppConstants.routeLanding,
@@ -64,9 +68,6 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: AppConstants.routeDetalheBadgeExpirado, builder: (ctx, state) => DetalheBadgeExpirado(badge: state.extra as BadgeUtilizador)),
     GoRoute(path: AppConstants.routeCatalogo, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Catálogo')),
     GoRoute(path: AppConstants.routeDetalheCatalogo, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Detalhe do Badge')),
-    GoRoute(path: AppConstants.routeObjetivos, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Objetivos')),
-    GoRoute(path: AppConstants.routeGamification, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Gamification')),
-    GoRoute(path: AppConstants.routeRanking, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Ranking')),
     GoRoute(path: AppConstants.routeNotificacoes, builder: (ctx, state) => const NotificacoesScreen()),
     GoRoute(path: AppConstants.routeDetalheNotificacao, builder: (ctx, state) => DetalheNotificacaoScreen(notificacao: state.extra as Notificacao)),
     GoRoute(path: AppConstants.routePerfil, builder: (ctx, state) => const Perfil()),
@@ -78,6 +79,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: AppConstants.routeDetalheCandidatura, builder: (ctx, state) => DetalhesCandidatura(numCandidatura: state.extra as int)),
     GoRoute(path: AppConstants.routeCandidaturas, builder: (ctx, state) => const Candidaturas()),
     GoRoute(path: AppConstants.routeNovaCandidatura, builder: (ctx, state) => NovaCandidatura(rascunho: state.extra as Map<String, dynamic>?)),
+    GoRoute(path: AppConstants.routeObjetivos, builder: (ctx, state) => const ObjetivosScreen()),
+    GoRoute(path: '${AppConstants.routeObjetivos}/novo', builder: (ctx, state) => const NovoObjetivoScreen()),
+    GoRoute(path: AppConstants.routeGamification, builder: (ctx, state) => const GamificationScreen()),
+    GoRoute(path: AppConstants.routeRanking, builder: (ctx, state) => const RankingScreen()),
   ],
 );
 

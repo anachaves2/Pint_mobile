@@ -21,6 +21,7 @@ import 'package:pint_mobile/models/requisitos.dart';
 import 'package:pint_mobile/models/evidencia.dart';
 import 'package:pint_mobile/models/tipo_objetivo.dart';
 import 'package:pint_mobile/models/estados_candidatura.dart';
+import 'package:pint_mobile/models/ranking_entrada.dart';
 
 // APIService -> Camada de comunicação com o servidor (PintWeb/backend)
 
@@ -981,4 +982,26 @@ class APIService {
       return (rascunhos: null, erro: 'Sem ligação ao servidor.');
     }
   }
+
+  // RANKING DE GAMIFICATION — ecrãs 44, 45 e 46
+// GET /api/gamification/ranking
+  // O endpoint já existe no backend e serve qualquer utilizador autenticado.
+  // Devolve array ordenado por pontos, com a evolução face a há 7 dias.
+ 
+  Future<List<RankingEntrada>> obterRanking() async {
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('${AppConstants.baseUrl}/ranking'),
+      headers: headers,
+    );
+ 
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonList = jsonDecode(response.body);
+      return jsonList.map((j) => RankingEntrada.fromJson(j)).toList();
+    }
+ 
+    throw Exception('Não foi possível carregar o ranking.');
+  }
+
 }
+
