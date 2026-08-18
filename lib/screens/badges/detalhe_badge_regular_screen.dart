@@ -4,7 +4,6 @@ import 'package:pint_mobile/models/badge_utilizador.dart';
 import 'package:pint_mobile/utils/badge_utils.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
-import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
