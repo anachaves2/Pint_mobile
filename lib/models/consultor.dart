@@ -13,6 +13,7 @@ class Consultor {
   //Dados da tabela Consultor
   final int? idArea;
   final String? nomeArea;
+  final String? nomeServiceLine;
   final int? idLearningPath;
   final String? nomeLearningPath;
 
@@ -32,6 +33,7 @@ class Consultor {
     this.linguaPadrao,
     this.idArea,
     this.nomeArea,
+    this.nomeServiceLine,
     this.idLearningPath,
     this.nomeLearningPath,
     this.totalPontos,
@@ -54,6 +56,7 @@ class Consultor {
       linguaPadrao: json['linguaPadrao'],
       idArea: json['idArea'],
       nomeArea: json['nomeArea'],
+      nomeServiceLine: json['nomeServiceLine'],
       idLearningPath: json['idLearningPath'],
       nomeLearningPath: json['nomeLearningPath'],
       totalPontos: json['totalPontos'],
@@ -76,6 +79,7 @@ class Consultor {
       'linguaPadrao': linguaPadrao,
       'idArea': idArea,
       'nomeArea': nomeArea,
+      'nomeServiceLine': nomeServiceLine,
       'idLearningPath': idLearningPath,
       'nomeLearningPath': nomeLearningPath,
     };

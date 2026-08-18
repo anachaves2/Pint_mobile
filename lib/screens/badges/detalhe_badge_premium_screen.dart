@@ -1,47 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pint_mobile/models/badge_utilizador.dart';
-import 'package:pint_mobile/utils/badge_utils.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/utils/design.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // ECRÃ DETALHE BADGE PREMIUM
-// Mostra os detalhes de um badge especial
+// Mostra os detalhes de um badge especial. Segue os tokens D — o dourado
+// (D.aviso) é o acento próprio dos badges especiais, tal como na web.
 
 class DetalheBadgePremium extends StatelessWidget {
   final BadgeUtilizador badge;
 
   const DetalheBadgePremium({super.key, required this.badge});
 
-  static const Color _azulPrimario = AppConstants.corPrimaria;
-  static const Color _dourado = Color(0xFFF5A623);
-  static const Color _cinzaClaro = Color(0xFFF5F5F5);
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: D.fundo,
       appBar: _buildAppBar(context),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        padding: const EdgeInsets.symmetric(horizontal: D.e5, vertical: D.e5),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             _buildIconePremium(),
-            const SizedBox(height: 16),
+            const SizedBox(height: D.e4),
             _buildNomeEEtiqueta(),
-            const SizedBox(height: 24),
+            const SizedBox(height: D.e5),
             if (badge.descricao != null) ...[
               _buildDescricao(),
-              const SizedBox(height: 20),
+              const SizedBox(height: D.e4),
             ],
             _buildSecaoInfo(),
-            const SizedBox(height: 20),
+            const SizedBox(height: D.e4),
             _buildDatas(),
-            const SizedBox(height: 28),
+            const SizedBox(height: D.e6),
             _buildBotoesPartilha(context),
-            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -50,42 +46,30 @@ class DetalheBadgePremium extends StatelessWidget {
 
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       elevation: 0,
+      centerTitle: true,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios, color: _azulPrimario, size: 20),
+        icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
         onPressed: () => context.pop(),
       ),
-      title: const Text(
-        'BADGES',
-        style: TextStyle(
-          color: _azulPrimario,
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-          letterSpacing: 1.2,
-        ),
-      ),
-      centerTitle: true,
+      title: const Text('BADGES', style: D.tituloPagina),
       actions: [
         IconButton(
           icon: SvgPicture.asset(
             'assets/icons/notificacoesprimaria.svg',
             width: 24,
             height: 24,
-            colorFilter: const ColorFilter.mode(
-                AppConstants.corPrimaria, BlendMode.srcIn),
+            colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn),
           ),
           onPressed: () => context.push(AppConstants.routeNotificacoes),
         ),
       ],
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(color: Colors.grey.shade200, height: 1),
-      ),
     );
   }
 
-  // Ícone grande dourado com estrela
+  // Ícone grande dourado com estrela — brilho colorido é a exceção
+  // deliberada aqui, tal como no pódio do ranking.
   Widget _buildIconePremium() {
     if (badge.urlImagem != null) {
       return Container(
@@ -93,21 +77,14 @@ class DetalheBadgePremium extends StatelessWidget {
         height: 96,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: _dourado, width: 3),
-          boxShadow: [
-            BoxShadow(
-              color: _dourado.withValues(alpha: 0.25),
-              blurRadius: 12,
-              spreadRadius: 2,
-            ),
-          ],
+          border: Border.all(color: D.aviso, width: 3),
+          boxShadow: [BoxShadow(color: D.aviso.withValues(alpha: 0.25), blurRadius: 12, spreadRadius: 2)],
         ),
         child: ClipOval(
           child: Image.network(
-            badge.urlImagem!,
+            AppConstants.resolverUrlFicheiro(badge.urlImagem)!,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) =>
-                _buildIconeLetra('★', 96),
+            errorBuilder: (context, error, stackTrace) => _buildIconeLetra('★', 96),
           ),
         ),
       );
@@ -121,24 +98,12 @@ class DetalheBadgePremium extends StatelessWidget {
       height: tamanho,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: _dourado.withValues(alpha: 0.15),
-        border: Border.all(color: _dourado, width: 3),
-        boxShadow: [
-          BoxShadow(
-            color: _dourado.withValues(alpha: 0.2),
-            blurRadius: 12,
-            spreadRadius: 2,
-          ),
-        ],
+        color: D.aviso.withValues(alpha: 0.15),
+        border: Border.all(color: D.aviso, width: 3),
+        boxShadow: [BoxShadow(color: D.aviso.withValues(alpha: 0.2), blurRadius: 12, spreadRadius: 2)],
       ),
       child: Center(
-        child: Text(
-          letra,
-          style: TextStyle(
-              color: _dourado,
-              fontWeight: FontWeight.bold,
-              fontSize: tamanho * 0.4),
-        ),
+        child: Text(letra, style: TextStyle(color: D.aviso, fontWeight: FontWeight.bold, fontSize: tamanho * 0.4)),
       ),
     );
   }
@@ -146,32 +111,13 @@ class DetalheBadgePremium extends StatelessWidget {
   Widget _buildNomeEEtiqueta() {
     return Column(
       children: [
-        Text(
-          badge.nomeBadge,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        // Etiqueta Premium dourada
+        Text(badge.nomeBadge, style: D.tituloSeccao.copyWith(fontSize: 20), textAlign: TextAlign.center),
+        const SizedBox(height: D.e2),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-          decoration: BoxDecoration(
-            color: _dourado.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _dourado.withValues(alpha: 0.5)),
-          ),
-          child: const Text(
-            '★ Especial',
-            style: TextStyle(
-              fontSize: 12,
-              color: _dourado,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: D.e3 + 2, vertical: 5),
+          decoration: BoxDecoration(color: D.avisoBg, borderRadius: BorderRadius.circular(999)),
+          child: const Text('★ Badge Especial',
+              style: TextStyle(fontSize: 12, color: D.aviso, fontWeight: FontWeight.w600)),
         ),
       ],
     );
@@ -180,31 +126,20 @@ class DetalheBadgePremium extends StatelessWidget {
   Widget _buildDescricao() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _cinzaClaro,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        badge.descricao!,
-        style: const TextStyle(fontSize: 14, color: Colors.black87, height: 1.5),
-      ),
+      padding: const EdgeInsets.all(D.e4),
+      decoration: BoxDecoration(color: D.fundoAlt, borderRadius: BorderRadius.circular(D.rLg)),
+      child: Text(badge.descricao!, style: D.corpo.copyWith(height: 1.5)),
     );
   }
 
   Widget _buildSecaoInfo() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _cinzaClaro,
-        borderRadius: BorderRadius.circular(12),
-      ),
+      padding: const EdgeInsets.all(D.e4),
+      decoration: BoxDecoration(color: D.fundoAlt, borderRadius: BorderRadius.circular(D.rLg)),
       child: Column(
         children: [
-          if (badge.pontos != null)
-            _buildLinhaInfo('Gamification', '${badge.pontos} Pontos',
-                destaque: true),
+          if (badge.pontos != null) _buildLinhaInfo('Gamification', '${badge.pontos} Pontos', destaque: true),
         ],
       ),
     );
@@ -214,16 +149,8 @@ class DetalheBadgePremium extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label,
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade500)),
-        Text(
-          valor,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: destaque ? _dourado : Colors.black87,
-          ),
-        ),
+        Text(label, style: D.legenda),
+        Text(valor, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: destaque ? D.aviso : D.tinta)),
       ],
     );
   }
@@ -234,42 +161,35 @@ class DetalheBadgePremium extends StatelessWidget {
         Expanded(
           child: _buildChipData(
             label: 'Conquistado em:',
-            data: BadgeUtils.formatarData(badge.dataAtribuicao),
-            cor: _azulPrimario,
+            data: _formatarData(badge.dataAtribuicao),
+            cor: D.aviso,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: D.e3),
         Expanded(
           child: _buildChipData(
             label: 'Válido até:',
-            data: BadgeUtils.formatarData(badge.dataExpiracao),
-            cor: badge.estaProximoDeExpirar
-                ? Colors.orange.shade400
-                : Colors.grey.shade500,
+            data: _formatarData(badge.dataExpiracao),
+            cor: badge.estaProximoDeExpirar ? D.erro : D.tinta50,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildChipData(
-      {required String label, required String data, required Color cor}) {
+  String _formatarData(DateTime data) =>
+      '${data.day.toString().padLeft(2, '0')}-${data.month.toString().padLeft(2, '0')}-${data.year}';
+
+  Widget _buildChipData({required String label, required String data, required Color cor}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        border: Border.all(color: cor.withValues(alpha: 0.3)),
-        borderRadius: BorderRadius.circular(10),
-        color: cor.withValues(alpha: 0.05),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: D.e3, vertical: D.e2 + 2),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(D.rMd), color: cor.withValues(alpha: 0.08)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+          Text(label, style: D.legenda.copyWith(fontSize: 11)),
           const SizedBox(height: 2),
-          Text(data,
-              style: TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w600, color: cor)),
+          Text(data, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: cor)),
         ],
       ),
     );
@@ -287,14 +207,13 @@ class DetalheBadgePremium extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF0077B5),
               side: const BorderSide(color: Color(0xFF0077B5)),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
+              padding: const EdgeInsets.symmetric(vertical: D.e3),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
             ),
           ),
         ),
-        if (badge.urlPublico != null) ...[
-          const SizedBox(height: 10),
+        const SizedBox(height: D.e2 + 2),
+        if (badge.urlPublico != null)
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -302,15 +221,13 @@ class DetalheBadgePremium extends StatelessWidget {
               icon: const Icon(Icons.open_in_new, size: 18),
               label: const Text('Ver página pública'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: _azulPrimario,
-                side: const BorderSide(color: _azulPrimario),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                foregroundColor: D.aviso,
+                side: const BorderSide(color: D.aviso),
+                padding: const EdgeInsets.symmetric(vertical: D.e3),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
               ),
             ),
           ),
-        ],
       ],
     );
   }

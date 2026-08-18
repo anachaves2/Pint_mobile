@@ -22,6 +22,7 @@ import 'package:pint_mobile/models/evidencia.dart';
 import 'package:pint_mobile/models/tipo_objetivo.dart';
 import 'package:pint_mobile/models/estados_candidatura.dart';
 import 'package:pint_mobile/models/ranking_entrada.dart';
+import 'package:pint_mobile/models/objetivos_resumo.dart';
 
 // APIService -> Camada de comunicação com o servidor (PintWeb/backend)
 
@@ -1003,5 +1004,24 @@ class APIService {
     throw Exception('Não foi possível carregar o ranking.');
   }
 
-}
+  // RESUMO DE OBJETIVOS DO DASHBOARD — ecrã 1 (Dashboard)
+  // GET /api/dashboard/objetivos-resumo
+  // Tal como o ranking, é dado volátil calculado no servidor (progresso de
+  // learning path, áreas/service lines completas, objetivos em curso) —
+  // não faz sentido guardar em SQLite, pede-se sempre à API.
 
+  Future<ObjetivosResumo> obterObjetivosResumo() async {
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('${AppConstants.baseUrl}/dashboard/objetivos-resumo'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      return ObjetivosResumo.fromJson(jsonDecode(response.body));
+    }
+
+    throw Exception('Não foi possível carregar o resumo de objetivos.');
+  }
+
+}

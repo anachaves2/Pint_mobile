@@ -79,7 +79,7 @@ class GamificationScreen extends ConsumerWidget {
                             posicao: r.posicao,
                             nome: r.nome,
                             pontos: r.totalPontos,
-                            urlFoto: r.urlFoto,
+                            urlFoto: AppConstants.resolverUrlFicheiro(r.urlFoto),
                             destacado: r.idUtilizador == utilizador?.id,
                           ))
                       .toList(),

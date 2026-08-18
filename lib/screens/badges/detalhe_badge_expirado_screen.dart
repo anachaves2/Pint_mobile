@@ -3,43 +3,41 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pint_mobile/models/badge_utilizador.dart';
 import 'package:pint_mobile/utils/badge_utils.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/utils/design.dart';
 import 'package:go_router/go_router.dart';
 
 // ECRÃ DETALHE BADGE EXPIRADO
-// Mostra os detalhes de um badge expirado.
+// Mostra os detalhes de um badge expirado. Segue os tokens D, mantendo o
+// tratamento a preto-e-branco/cinzento que já reforçava o estado inativo.
 
 class DetalheBadgeExpirado extends StatelessWidget {
   final BadgeUtilizador badge;
 
   const DetalheBadgeExpirado({super.key, required this.badge});
 
-  static const Color _azulPrimario = AppConstants.corPrimaria;
-  static const Color _cinzaClaro = Color(0xFFF5F5F5);
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: D.fundo,
       appBar: _buildAppBar(context),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        padding: const EdgeInsets.symmetric(horizontal: D.e5, vertical: D.e5),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             _buildIconeExpirado(),
-            const SizedBox(height: 16),
+            const SizedBox(height: D.e4),
             _buildNomeEEstado(),
-            const SizedBox(height: 24),
+            const SizedBox(height: D.e5),
             _buildSecaoInfo(),
-            const SizedBox(height: 20),
+            const SizedBox(height: D.e4),
             if (badge.descricao != null) ...[
               _buildDescricao(),
-              const SizedBox(height: 20),
+              const SizedBox(height: D.e4),
             ],
             _buildDatas(),
-            const SizedBox(height: 28),
+            const SizedBox(height: D.e6),
             _buildBotaoRenovar(context),
-            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -48,58 +46,40 @@ class DetalheBadgeExpirado extends StatelessWidget {
 
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       elevation: 0,
+      centerTitle: true,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios, color: _azulPrimario, size: 20),
+        icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
         onPressed: () => context.pop(),
       ),
-      title: const Text(
-        'BADGES',
-        style: TextStyle(
-          color: _azulPrimario,
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-          letterSpacing: 1.2,
-        ),
-      ),
-      centerTitle: true,
+      title: const Text('BADGES', style: D.tituloPagina),
       actions: [
         IconButton(
           icon: SvgPicture.asset(
             'assets/icons/notificacoesprimaria.svg',
             width: 24,
             height: 24,
-            colorFilter: const ColorFilter.mode(
-                AppConstants.corPrimaria, BlendMode.srcIn),
+            colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn),
           ),
           onPressed: () => context.push(AppConstants.routeNotificacoes),
         ),
       ],
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(color: Colors.grey.shade200, height: 1),
-      ),
     );
   }
 
   // Ícone a preto e branco para reforçar o estado expirado
   Widget _buildIconeExpirado() {
-    final cor = Colors.grey.shade400;
+    const cor = D.tinta30;
     final letra = badge.idBadgeEspecial != null
         ? '★'
-        : (badge.tipoNivel?.isNotEmpty == true
-            ? badge.tipoNivel![0].toUpperCase()
-            : '?');
+        : (badge.tipoNivel?.isNotEmpty == true ? badge.tipoNivel![0].toUpperCase() : '?');
 
     if (badge.urlImagem != null) {
       return Container(
         width: 96,
         height: 96,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: cor, width: 3),
-        ),
+        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: cor, width: 3)),
         child: ClipOval(
           child: ColorFiltered(
             colorFilter: const ColorFilter.matrix([
@@ -109,10 +89,9 @@ class DetalheBadgeExpirado extends StatelessWidget {
               0,      0,      0,      1, 0,
             ]),
             child: Image.network(
-              badge.urlImagem!,
+              AppConstants.resolverUrlFicheiro(badge.urlImagem)!,
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-                  _buildIconeLetra(letra, cor, 96),
+              errorBuilder: (context, error, stackTrace) => _buildIconeLetra(letra, cor, 96),
             ),
           ),
         ),
@@ -131,13 +110,7 @@ class DetalheBadgeExpirado extends StatelessWidget {
         border: Border.all(color: cor, width: 3),
       ),
       child: Center(
-        child: Text(
-          letra,
-          style: TextStyle(
-              color: cor,
-              fontWeight: FontWeight.bold,
-              fontSize: tamanho * 0.4),
-        ),
+        child: Text(letra, style: TextStyle(color: cor, fontWeight: FontWeight.bold, fontSize: tamanho * 0.4)),
       ),
     );
   }
@@ -147,36 +120,15 @@ class DetalheBadgeExpirado extends StatelessWidget {
       children: [
         Text(
           badge.nomeBadge,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey.shade600,
-          ),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: D.tinta50),
           textAlign: TextAlign.center,
         ),
         if (badge.nomeNivel != null) ...[
-          const SizedBox(height: 4),
-          Text(badge.nomeNivel!,
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade400)),
+          const SizedBox(height: D.e1 + 2),
+          Text(badge.nomeNivel!, style: D.legenda.copyWith(color: D.tinta30)),
         ],
-        const SizedBox(height: 8),
-        // Etiqueta "Expirado" em vermelho
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.red.shade50,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.red.shade200),
-          ),
-          child: Text(
-            'Expirado',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.red.shade400,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
+        const SizedBox(height: D.e2),
+        const ChipEstadoExpirado(),
       ],
     );
   }
@@ -184,21 +136,17 @@ class DetalheBadgeExpirado extends StatelessWidget {
   Widget _buildSecaoInfo() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _cinzaClaro,
-        borderRadius: BorderRadius.circular(12),
-      ),
+      padding: const EdgeInsets.all(D.e4),
+      decoration: BoxDecoration(color: D.fundoAlt, borderRadius: BorderRadius.circular(D.rLg)),
       child: Column(
         children: [
-          if (badge.nomeServiceLine != null)
-            _buildLinhaInfo('Service Line', badge.nomeServiceLine!),
+          if (badge.nomeServiceLine != null) _buildLinhaInfo('Service Line', badge.nomeServiceLine!),
           if (badge.nomeArea != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: D.e2),
             _buildLinhaInfo('Área', badge.nomeArea!),
           ],
           if (badge.pontos != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: D.e2),
             _buildLinhaInfo('Gamification', '${badge.pontos} Pontos'),
           ],
         ],
@@ -210,13 +158,8 @@ class DetalheBadgeExpirado extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label,
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade500)),
-        Text(valor,
-            style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade600)),
+        Text(label, style: D.legenda.copyWith(color: D.tinta30)),
+        Text(valor, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: D.tinta50)),
       ],
     );
   }
@@ -224,16 +167,9 @@ class DetalheBadgeExpirado extends StatelessWidget {
   Widget _buildDescricao() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _cinzaClaro,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        badge.descricao!,
-        style: TextStyle(
-            fontSize: 14, color: Colors.grey.shade600, height: 1.5),
-      ),
+      padding: const EdgeInsets.all(D.e4),
+      decoration: BoxDecoration(color: D.fundoAlt, borderRadius: BorderRadius.circular(D.rLg)),
+      child: Text(badge.descricao!, style: D.corpo.copyWith(color: D.tinta50, height: 1.5)),
     );
   }
 
@@ -244,39 +180,31 @@ class DetalheBadgeExpirado extends StatelessWidget {
           child: _buildChipData(
             label: 'Conquistado em:',
             data: BadgeUtils.formatarData(badge.dataAtribuicao),
-            cor: Colors.grey.shade500,
+            cor: D.tinta30,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: D.e3),
         Expanded(
           child: _buildChipData(
             label: 'Expirou em:',
             data: BadgeUtils.formatarData(badge.dataExpiracao),
-            cor: Colors.red.shade300,
+            cor: D.erro,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildChipData(
-      {required String label, required String data, required Color cor}) {
+  Widget _buildChipData({required String label, required String data, required Color cor}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        border: Border.all(color: cor.withValues(alpha: 0.3)),
-        borderRadius: BorderRadius.circular(10),
-        color: cor.withValues(alpha: 0.05),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: D.e3, vertical: D.e2 + 2),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(D.rMd), color: cor.withValues(alpha: 0.08)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+          Text(label, style: D.legenda.copyWith(fontSize: 11)),
           const SizedBox(height: 2),
-          Text(data,
-              style: TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w600, color: cor)),
+          Text(data, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: cor)),
         ],
       ),
     );
@@ -287,19 +215,32 @@ class DetalheBadgeExpirado extends StatelessWidget {
       width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: () {
-          //Navega para nova candidatura, o utilizador escolhe o badge
+          // Navega para nova candidatura, o utilizador escolhe o badge
           context.push(AppConstants.routeNovaCandidatura);
         },
         icon: const Icon(Icons.refresh, size: 18),
         label: const Text('Renovar'),
         style: ElevatedButton.styleFrom(
-          backgroundColor: _azulPrimario,
+          backgroundColor: D.azul600,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          padding: const EdgeInsets.symmetric(vertical: D.e3 + 2),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
         ),
       ),
+    );
+  }
+}
+
+// Etiqueta "Expirado" — sem borda, fundo suave, tal como o resto do design.
+class ChipEstadoExpirado extends StatelessWidget {
+  const ChipEstadoExpirado({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: D.e3, vertical: 4),
+      decoration: BoxDecoration(color: D.erroBg, borderRadius: BorderRadius.circular(999)),
+      child: const Text('Expirado', style: TextStyle(fontSize: 12, color: D.erro, fontWeight: FontWeight.w600)),
     );
   }
 }

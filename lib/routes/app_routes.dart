@@ -21,6 +21,7 @@ import 'package:pint_mobile/screens/badges/badges_expirados_screen.dart';
 import 'package:pint_mobile/screens/badges/detalhe_badge_regular_screen.dart';
 import 'package:pint_mobile/screens/badges/detalhe_badge_premium_screen.dart';
 import 'package:pint_mobile/screens/badges/detalhe_badge_expirado_screen.dart';
+import 'package:pint_mobile/screens/badges/detalhe_badge_requisitos_screen.dart';
 import 'package:pint_mobile/screens/notificacoes/notificacoes_screen.dart';
 import 'package:pint_mobile/screens/notificacoes/detalhe_notificacao_screen.dart';
 import 'package:pint_mobile/screens/perfil/perfil_screen.dart';
@@ -66,6 +67,7 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: AppConstants.routeDetalheBadge, builder: (ctx, state) => DetalheBadgeRegular(badge: state.extra as BadgeUtilizador)),
     GoRoute(path: AppConstants.routeDetalheBadgePremium, builder: (ctx, state) => DetalheBadgePremium(badge: state.extra as BadgeUtilizador)),
     GoRoute(path: AppConstants.routeDetalheBadgeExpirado, builder: (ctx, state) => DetalheBadgeExpirado(badge: state.extra as BadgeUtilizador)),
+    GoRoute(path: AppConstants.routeDetalheBadgeRequisitos, builder: (ctx, state) => DetalheBadgeRequisitos(badge: state.extra as BadgeUtilizador)),
     GoRoute(path: AppConstants.routeCatalogo, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Catálogo')),
     GoRoute(path: AppConstants.routeDetalheCatalogo, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Detalhe do Badge')),
     GoRoute(path: AppConstants.routeNotificacoes, builder: (ctx, state) => const NotificacoesScreen()),

@@ -35,7 +35,7 @@ class D {
   static const tinta50 = Color(0xFF64748B);
   static const tinta30 = Color(0xFF94A3B8);
   static const superficie = Color(0xFFFFFFFF);
-  static const fundo = Color(0xFFF4F6F9); // dá contraste ao card branco
+  static const fundo = Color(0xFFFFFFFF);
   static const fundoAlt = Color(0xFFF8FAFC);
 
   // ── Estado ─────────────────────────────────────────────
@@ -49,16 +49,17 @@ class D {
   static const neutroBg = Color(0xFFF3F4F6);
 
   // ── Elevação ───────────────────────────────────────────
-  // Sombras tingidas de azul em vez de preto puro: mantém a profundidade
-  // mas o cinzento resultante fica mais limpo.
+  // Sombras cinzentas neutras — iguais ao .card da web (rgba(237,237,237,1)).
+  // A cor só entra no brilho do pódio (podioXBrilho) mais abaixo; aqui é
+  // sempre profundidade neutra, nunca tingida de azul ou de qualquer marca.
   static const elev1 = <BoxShadow>[
-    BoxShadow(color: Color(0x1A1E3A5F), blurRadius: 8, offset: Offset(0, 2)),
+    BoxShadow(color: Color(0x14000000), blurRadius: 12, offset: Offset(0, 3)),
   ];
   static const elev2 = <BoxShadow>[
-    BoxShadow(color: Color(0x2E1E3A5F), blurRadius: 15),
+    BoxShadow(color: Color(0x1F000000), blurRadius: 20, offset: Offset(0, 6)),
   ];
   static const elev3 = <BoxShadow>[
-    BoxShadow(color: Color(0x401E3A5F), blurRadius: 25, offset: Offset(0, 10)),
+    BoxShadow(color: Color(0x29000000), blurRadius: 30, offset: Offset(0, 12)),
   ];
 
   // ── Pódio ──────────────────────────────────────────────

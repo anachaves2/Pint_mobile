@@ -176,7 +176,7 @@ class _Linha extends StatelessWidget {
           ),
           clipBehavior: Clip.antiAlias,
           child: entrada.urlFoto != null && entrada.urlFoto!.isNotEmpty
-              ? Image.network(entrada.urlFoto!,
+              ? Image.network(AppConstants.resolverUrlFicheiro(entrada.urlFoto)!,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => _iniciais())
               : _iniciais(),

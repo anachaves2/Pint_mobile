@@ -12,6 +12,7 @@ import 'package:pint_mobile/screens/camera/camera_screen.dart';
 import 'package:pint_mobile/providers/utilizador_provider.dart';
 import 'package:pint_mobile/providers/badges_provider.dart';
 import 'package:pint_mobile/providers/candidatura_provider.dart';
+import 'package:pint_mobile/providers/objetivos_resumo_provider.dart';
 
 // ============================================================================
 // DefinicoesScreen — Ecrã 54
@@ -148,6 +149,7 @@ class _DefinicoesScreenState extends ConsumerState<DefinicoesScreen> {
       ref.read(utilizadorProvider.notifier).limpar();
       ref.read(badgesProvider.notifier).limpar();
       ref.read(candidaturasProvider.notifier).limpar();
+      ref.read(objetivosResumoProvider.notifier).limpar();
       await APIService.instance.logout();
       if (mounted) {
         context.go(AppConstants.routeLanding);

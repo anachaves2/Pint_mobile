@@ -12,12 +12,26 @@ class AppConstants {
   static const int intervalSincronizacaoMinutos =
       5; // psra sincronizar dados periodicamente
 
+  // URL base para ficheiros (fotos, imagens de badges) — a API devolve
+  // caminhos relativos (ex.: "uploads/fotos/x.jpg"), não URLs completos.
+  // Mesma lógica do FILES_URL da web (services/api.js): tira o "/api" do
+  // fim do baseUrl.
+  static String get filesUrl => baseUrl.replaceFirst(RegExp(r'/api/?$'), '');
+
+  // Resolve um caminho de ficheiro vindo da API para uma URL completa.
+  // Se já vier completo (começa por http) ou for nulo/vazio, devolve como está.
+  static String? resolverUrlFicheiro(String? caminho) {
+    if (caminho == null || caminho.isEmpty) return null;
+    if (caminho.startsWith('http')) return caminho;
+    return '$filesUrl/$caminho';
+  }
+
   //=================================================
   //SQLite - Base de dados local
 
   static const String dbName = 'pint2526.db'; //base de dados local (SQlite)
   static const int dbVersion =
-      2; //versão da db -> compara e garante que o user tem a versão atual da db caso a altere
+      3; //versão da db -> compara e garante que o user tem a versão atual da db caso a altere
 
   //Tabelas locais
 

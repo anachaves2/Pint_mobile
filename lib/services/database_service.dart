@@ -86,6 +86,7 @@ class DatabaseService {
         linguaPadrao TEXT,
         idArea INTEGER,
         nomeArea TEXT,
+        nomeServiceLine TEXT,
         idLearningPath INTEGER,
         nomeLearningPath TEXT,
         totalPontos INTEGER,
@@ -263,6 +264,11 @@ class DatabaseService {
     //'ALTER TABLE ${AppConstants.tableUsers} ADD COLUMN foto TEXT'
     //);
     // }
+    if (oldVersion < 3) {
+      await db.execute(
+        'ALTER TABLE ${AppConstants.tableUsers} ADD COLUMN nomeServiceLine TEXT',
+      );
+    }
   }
   //==============================================================
   //Métodos CRUD para o CONSULTOR
@@ -283,6 +289,7 @@ class DatabaseService {
         'linguaPadrao': consultor.linguaPadrao,
         'idArea': consultor.idArea,
         'nomeArea': consultor.nomeArea,
+        'nomeServiceLine': consultor.nomeServiceLine,
         'idLearningPath': consultor.idLearningPath,
         'nomeLearningPath': consultor.nomeLearningPath,
         'totalPontos': consultor.totalPontos,
@@ -313,6 +320,7 @@ class DatabaseService {
       linguaPadrao: map['linguaPadrao'] as String?,
       idArea: map['idArea'] as int?,
       nomeArea: map['nomeArea'] as String?,
+      nomeServiceLine: map['nomeServiceLine'] as String?,
       idLearningPath: map['idLearningPath'] as int?,
       nomeLearningPath: map['nomeLearningPath'] as String?,
       totalPontos: map['totalPontos'] as int?,

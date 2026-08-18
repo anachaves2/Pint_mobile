@@ -3,15 +3,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/utils/design.dart';
+import 'package:pint_mobile/widgets/card_gradiente.dart';
+import 'package:pint_mobile/widgets/podio_ranking.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/models/badge_regular.dart';
 import 'package:pint_mobile/models/notificacao.dart';
+import 'package:pint_mobile/models/ranking_entrada.dart';
 import 'package:pint_mobile/providers/utilizador_provider.dart';
 import 'package:pint_mobile/providers/badges_provider.dart';
 import 'package:pint_mobile/providers/candidatura_provider.dart';
+import 'package:pint_mobile/providers/objetivos_provider.dart';
+import 'package:pint_mobile/providers/objetivos_resumo_provider.dart';
+import 'package:pint_mobile/models/objetivos_resumo.dart';
+import 'package:pint_mobile/providers/ranking_provider.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
+
+// Ecrã do Dashboard — segue os tokens de D e os componentes partilhados
+// (CardSimples, PodioRanking), tal como Objetivos, Gamification e Perfil.
+// Paridade com a web: saudação, os 4 cartões de resumo, secção de Objetivos
+// (progresso + áreas/service lines + objetivos em curso), pódio do
+// Gamification, "O teu desempenho" com mini-tabela de ranking, e badges
+// recomendados. O Drawer mantém-se tal como estava.
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -30,25 +45,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void initState() {
     super.initState();
     APIService.instance.sincronizarTodos();
-    // Sincroniza com a API e subscreve o stream para actualizações automáticas
     _carregarExtras();
     _subDados = atualizadorDados.stream.listen((_) {
       ref.invalidate(utilizadorProvider);
       ref.invalidate(badgesProvider);
       ref.invalidate(candidaturasProvider);
+      ref.invalidate(objetivosProvider);
+      ref.invalidate(objetivosResumoProvider);
+      ref.invalidate(rankingProvider);
       _carregarExtras();
     });
   }
 
   @override
   void dispose() {
-    // Cancela a subscrição quando o ecrã é destruído
     _subDados?.cancel();
     super.dispose();
   }
 
   // Catálogo e notificações não têm provider: são carregados directamente do SQLite
-  // Carrega dados que ainda não têm provider próprio (catálogo e notificações)
   Future<void> _carregarExtras() async {
     final catalogo = await DatabaseService.instance.getCatalogoBadges();
     final notificacoes = await DatabaseService.instance.getNotificacoes();
@@ -60,18 +75,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
   }
 
-  // Conta as notificações não lidas para mostrar o badge vermelho no sino
   int get _notificacoesNaoLidas => _notificacoes.where((n) => !n.lida).length;
+
+  // ── Saudação por hora, igual à web (components/Saudacao.jsx) ──────────────
+  String _saudacaoPorHora() {
+    final h = DateTime.now().hour;
+    if (h >= 6 && h < 13) return 'Bom dia';
+    if (h >= 13 && h < 20) return 'Boa tarde';
+    return 'Boa noite';
+  }
 
   @override
   Widget build(BuildContext context) {
-    // ─── Riverpod: observa os 3 providers em simultaneo ───────────────────────────────
-    // O ecrã reconstrói automaticamente quando qualquer um deles muda
     final consultorAsync = ref.watch(utilizadorProvider);
     final badgesAsync = ref.watch(badgesProvider);
     final candidaturasAsync = ref.watch(candidaturasProvider);
+    final objetivosAsync = ref.watch(objetivosProvider);
+    final objetivosResumoAsync = ref.watch(objetivosResumoProvider);
+    final rankingAsync = ref.watch(rankingProvider);
+    final podio = ref.watch(podioProvider);
 
-    // Mostra spinner enquanto qualquer provider ainda está a carregar
     final isLoading = consultorAsync.isLoading ||
         badgesAsync.isLoading ||
         candidaturasAsync.isLoading;
@@ -79,10 +102,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final consultor = consultorAsync.value;
     final badges = badgesAsync.value ?? [];
     final candidaturas = candidaturasAsync.value ?? [];
+    final objetivos = objetivosAsync.value ?? [];
+    final ranking = rankingAsync.value ?? [];
 
-    final totalBadges = badges.where((b) => b.valido).length;
-    final totalEspeciais = badges.where((b) => b.idBadgeEspecial != null && b.valido).length;
-    final totalPontos = badges.fold(0, (sum, b) => sum + (b.pontos ?? 0));
+    // ── Resumo (4 cartões) — mesmos 4 números da web ─────────────────────
+    final pedidosEmCurso = candidaturas.where((c) => !c.estaConcluida).length;
+    final badgesConquistados =
+        badges.where((b) => b.valido && b.idBadgeRegular != null).length;
+    final badgesEspeciais =
+        badges.where((b) => b.valido && b.idBadgeEspecial != null).length;
+    final objetivosAlcancados = objetivos.where((o) => o.alcancado).length;
+
+    // ── Ranking: a minha posição + próximos 3 lugares para a mini-tabela ──
+    final primeiroNome = (consultor?.nome ?? '').split(' ').first;
+    final meuDesempenho = ranking.where((r) => r.idUtilizador == consultor?.id).firstOrNull;
+    final restoRanking = ranking.skip(3).take(3).toList();
 
     // Badges recomendados: badges do catálogo que o utilizador ainda não conquistou
     final idsConquistados = badges
@@ -96,13 +130,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         .take(3)
         .toList();
 
-    final totalBadgesLp = _catalogoBadges.length;
-    final conquistadosLp = badges.where((b) => b.valido).length;
-    // Progresso no learning path: percentagem de badges conquistados vs total
-    final progressoLp = totalBadgesLp > 0 ? conquistadosLp / totalBadgesLp : 0.0;
-
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: D.fundo,
       drawer: const CustomDrawer(),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -118,10 +147,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        title: const Text(
-          'Dashboard',
-          style: TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.bold, fontSize: 20),
-        ),
+        title: const Text('DASHBOARD', style: D.tituloPagina),
         actions: [
           Stack(
             children: [
@@ -139,7 +165,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   top: 8,
                   child: Container(
                     padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(color: AppConstants.corErro, shape: BoxShape.circle),
+                    decoration: const BoxDecoration(color: D.erro, shape: BoxShape.circle),
                     child: Text(
                       '$_notificacoesNaoLidas',
                       style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
@@ -151,124 +177,167 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ],
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppConstants.corPrimaria))
+          ? const Center(child: CircularProgressIndicator(color: D.azul600))
           : RefreshIndicator(
-              // Sincroniza tudo com a API e invalida os 3 providers para actualizar o ecrã
               onRefresh: () async {
                 await APIService.instance.sincronizarTodos();
                 ref.invalidate(utilizadorProvider);
                 ref.invalidate(badgesProvider);
                 ref.invalidate(candidaturasProvider);
+                ref.invalidate(objetivosProvider);
+                ref.invalidate(objetivosResumoProvider);
+                ref.invalidate(rankingProvider);
                 await _carregarExtras();
               },
-              color: AppConstants.corPrimaria,
+              color: D.azul600,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(D.e4, D.e2, D.e4, D.e6),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // ─── Saudação ──────────────────────────
+                    Text(
+                      '${_saudacaoPorHora()}, $primeiroNome 👋',
+                      style: D.tituloSeccao.copyWith(fontSize: 18, color: D.azul600),
+                    ),
+                    const SizedBox(height: D.e4),
+
                     // ─── Barra de pesquisa ────────────────
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Container(
-                        decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(24)),
-                        child: TextField(
-                          onChanged: (value) => setState(() => _pesquisa = value),
-                          decoration: const InputDecoration(
-                            hintText: 'Procurar...',
-                            hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
-                            prefixIcon: Icon(Icons.search, color: Colors.grey, size: 20),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: D.superficie,
+                        borderRadius: BorderRadius.circular(D.rMd),
+                        boxShadow: D.elev1,
+                      ),
+                      child: TextField(
+                        onChanged: (value) => setState(() => _pesquisa = value),
+                        decoration: const InputDecoration(
+                          hintText: 'Procurar...',
+                          hintStyle: TextStyle(color: D.tinta30, fontSize: 14),
+                          prefixIcon: Icon(Icons.search, color: D.tinta30, size: 20),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: D.e4, vertical: D.e3),
                         ),
                       ),
                     ),
+                    const SizedBox(height: D.e5),
 
-                    // ─── Ações Rápidas ────────────────────
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    // ─── Resumo — os mesmos 4 números da web ──────────────
+                    const Text('RESUMO DA MINHA ATIVIDADE', style: D.etiqueta),
+                    const SizedBox(height: D.e3),
+                    Row(
+                      children: [
+                        Expanded(child: _buildCartaoResumo(icon: Icons.description_outlined, valor: pedidosEmCurso, label: 'Pedidos\nPendentes')),
+                        const SizedBox(width: D.e2),
+                        Expanded(child: _buildCartaoResumo(icon: Icons.military_tech_outlined, valor: badgesConquistados, label: 'Badges\nConquistados')),
+                      ],
+                    ),
+                    const SizedBox(height: D.e2),
+                    Row(
+                      children: [
+                        Expanded(child: _buildCartaoResumo(icon: Icons.star_outline, valor: badgesEspeciais, label: 'Badges\nEspeciais')),
+                        const SizedBox(width: D.e2),
+                        Expanded(child: _buildCartaoResumo(icon: Icons.track_changes_outlined, valor: objetivosAlcancados, label: 'Objetivos\nAlcançados')),
+                      ],
+                    ),
+                    const SizedBox(height: D.e5),
+
+                    // ─── Objetivos ─────────────────────────
+                    const Text('OBJETIVOS', style: D.etiqueta),
+                    const SizedBox(height: D.e3),
+                    objetivosResumoAsync.when(
+                      loading: () => const CardSimples(
+                        child: Center(child: Padding(padding: EdgeInsets.all(D.e3), child: CircularProgressIndicator(color: D.azul600))),
+                      ),
+                      error: (_, __) => CardSimples(
+                        child: Center(child: Text('Não foi possível carregar os objetivos.', style: D.legenda)),
+                      ),
+                      data: (resumo) => _buildCardObjetivos(resumo, context),
+                    ),
+                    const SizedBox(height: D.e5),
+
+                    // ─── Gamification — pódio ──────────────
+                    const Text('GAMIFICATION', style: D.etiqueta),
+                    const SizedBox(height: D.e2),
+                    podio.isEmpty
+                        ? CardSimples(
+                            child: Center(child: Text('Ainda sem ranking disponível.', style: D.legenda)),
+                          )
+                        : GestureDetector(
+                            onTap: () => context.push(AppConstants.routeRanking),
+                            child: PodioRanking(
+                              entradas: podio
+                                  .map((r) => PodioEntrada(
+                                        posicao: r.posicao,
+                                        nome: r.nome,
+                                        pontos: r.totalPontos,
+                                        urlFoto: AppConstants.resolverUrlFicheiro(r.urlFoto),
+                                        destacado: r.idUtilizador == consultor?.id,
+                                      ))
+                                  .toList(),
+                            ),
+                          ),
+                    const SizedBox(height: D.e5),
+
+                    // ─── O teu desempenho + mini-tabela de ranking ─────────
+                    CardSimples(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('AÇÕES RÁPIDAS', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              _buildAcaoRapida(context, icon: Icons.military_tech, label: 'BADGES', valor: '$totalBadges', rota: AppConstants.routeMeusBadges),
-                              _buildAcaoRapida(context, icon: Icons.star, label: 'ESPECIAIS', valor: '$totalEspeciais', rota: AppConstants.routeBadgesEspeciais),
-                              _buildAcaoRapida(context, icon: Icons.description_outlined, label: 'PEDIDOS', valor: '${candidaturas.length}', rota: AppConstants.routeCandidaturas),
-                              _buildAcaoRapida(context, icon: Icons.emoji_events_outlined, label: 'PONTOS', valor: '$totalPontos', rota: AppConstants.routeGamification),
-                            ],
+                          const Text('O teu desempenho', style: D.tituloCard),
+                          const SizedBox(height: D.e2),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: D.e3, vertical: D.e2),
+                            decoration: BoxDecoration(color: D.azul100, borderRadius: BorderRadius.circular(D.rSm)),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  meuDesempenho != null ? '${meuDesempenho.posicao}ª Posição' : '— Posição',
+                                  style: const TextStyle(fontWeight: FontWeight.w600, color: D.azul600),
+                                ),
+                                Text(
+                                  '${meuDesempenho?.totalPontos ?? 0} Pontos',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: D.azul600),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (restoRanking.isNotEmpty) ...[
+                            const SizedBox(height: D.e4),
+                            const Text('Ranking', style: D.tituloCard),
+                            const SizedBox(height: D.e2),
+                            for (final r in restoRanking) _buildLinhaRanking(r),
+                          ],
+                          const SizedBox(height: D.e2),
+                          Center(
+                            child: TextButton(
+                              onPressed: () => context.push(AppConstants.routeGamification),
+                              child: const Text('Ver Tudo', style: TextStyle(color: D.azul600, fontWeight: FontWeight.w600)),
+                            ),
                           ),
                         ],
                       ),
                     ),
-
-                    // ─── Learning Path ────────────────────
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Column(
-                        children: [
-                          _buildProgressCard(
-                            icon: Icons.school_outlined,
-                            titulo: 'LEARNING PATH',
-                            subtitulo: consultor?.nomeLearningPath ?? 'Sem learning path',
-                            progresso: progressoLp.clamp(0.0, 1.0),
-                            onTap: () => context.push(AppConstants.routeObjetivos),
-                          ),
-                          const SizedBox(height: 8),
-                          _buildProgressCard(
-                            icon: Icons.military_tech_outlined,
-                            titulo: 'BADGES',
-                            subtitulo: '$conquistadosLp de $totalBadgesLp conquistados',
-                            progresso: progressoLp.clamp(0.0, 1.0),
-                            onTap: () => context.push(AppConstants.routeMeusBadges),
-                          ),
-                          const SizedBox(height: 8),
-                          _buildProgressCard(
-                            icon: Icons.emoji_events_outlined,
-                            titulo: 'RANKING GAMIFICATION',
-                            subtitulo: consultor?.posicaoRanking != null
-                                ? '${consultor!.posicaoRanking}º lugar · $totalPontos pts'
-                                : '$totalPontos pontos acumulados',
-                            progresso: 0.0,
-                            onTap: () => context.push(AppConstants.routeRanking),
-                          ),
-                        ],
-                      ),
-                    ),
+                    const SizedBox(height: D.e5),
 
                     // ─── Badges Recomendados ──────────────
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('BADGES RECOMENDADOS', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                          const SizedBox(height: 8),
-                          ...badgesRecomendados.map((badge) => _buildBadgeRecomendadoItem(badge)),
-                          if (badgesRecomendados.isEmpty)
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              child: Center(child: Text('Já conquistaste todos os badges!', style: TextStyle(color: Colors.grey))),
-                            ),
-                          const SizedBox(height: 8),
-                          Center(
-                            child: OutlinedButton(
-                              onPressed: () => context.push(AppConstants.routeCatalogo),
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: AppConstants.corPrimaria),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                              ),
-                              child: const Text('VER MAIS', style: TextStyle(color: AppConstants.corPrimaria, fontSize: 12)),
-                            ),
-                          ),
-                        ],
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('BADGES RECOMENDADOS', style: D.etiqueta),
+                        TextButton(
+                          onPressed: () => context.push(AppConstants.routeCatalogo),
+                          child: const Text('Ver Tudo', style: TextStyle(color: D.azul600, fontSize: 12, fontWeight: FontWeight.w600)),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 32),
+                    ...badgesRecomendados.map((badge) => _buildBadgeRecomendadoItem(badge)),
+                    if (badgesRecomendados.isEmpty)
+                      CardSimples(
+                        child: Center(child: Text('Já conquistaste todos os badges!', style: D.legenda)),
+                      ),
                   ],
                 ),
               ),
@@ -276,102 +345,174 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  // Ícone clicável que navega para a secção correspondente
-  Widget _buildAcaoRapida(BuildContext context, {required IconData icon, required String label, required String valor, required String rota}) {
-    return GestureDetector(
-      onTap: () => context.push(rota),
-      child: Column(
-        children: [
-          Icon(icon, color: AppConstants.corPrimaria, size: 32),
-          const SizedBox(height: 4),
-          Text(valor, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-        ],
-      ),
-    );
-  }
-
-  // Card com barra de progresso: usado para Learning Path, Badges e Ranking
-  Widget _buildProgressCard({required IconData icon, required String titulo, required String subtitulo, required double progresso, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: AppConstants.corPrimaria.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-              child: Icon(icon, color: AppConstants.corPrimaria, size: 24),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(titulo, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54)),
-                  const SizedBox(height: 2),
-                  Text(subtitulo, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 6),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: progresso,
-                      backgroundColor: Colors.grey[200],
-                      color: AppConstants.corSecundaria,
-                      minHeight: 6,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Item da lista de badges recomendados: badges que o utilizador ainda pode conquistar
-  Widget _buildBadgeRecomendadoItem(BadgeRegular badge) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6)],
-      ),
+  // ─── Cartão de resumo (Pedidos/Badges/Especiais/Objetivos) ────────────────
+  Widget _buildCartaoResumo({required IconData icon, required int valor, required String label}) {
+    return CardSimples(
       child: Row(
         children: [
           Container(
-            width: 40, height: 40,
-            decoration: BoxDecoration(color: Colors.orange[100], borderRadius: BorderRadius.circular(8)),
-            child: const Icon(Icons.military_tech, color: Colors.orange, size: 24),
+            padding: const EdgeInsets.all(D.e2),
+            decoration: BoxDecoration(color: D.azul100, borderRadius: BorderRadius.circular(D.rSm)),
+            child: Icon(icon, color: D.azul600, size: 20),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: D.e2),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(badge.nome, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                Text(badge.nomeNivel, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text('$valor', style: D.tituloSeccao),
+                Text(label, style: D.legenda.copyWith(fontSize: 10, height: 1.1)),
               ],
             ),
           ),
-          Column(
+        ],
+      ),
+    );
+  }
+
+  // ─── Card de Objetivos: anel de progresso + áreas/SL + lista em curso ─────
+  Widget _buildCardObjetivos(ObjetivosResumo resumo, BuildContext context) {
+    return CardSimples(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Text('${badge.pontos ?? 0}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppConstants.corPrimaria)),
-              const Text('Requisitos', style: TextStyle(fontSize: 10, color: Colors.grey)),
+              SizedBox(
+                width: 64,
+                height: 64,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      value: resumo.progressoLearningPath / 100,
+                      strokeWidth: 7,
+                      backgroundColor: D.fundoAlt,
+                      color: D.azul600,
+                    ),
+                    Text('${resumo.progressoLearningPath}%',
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: D.azul600)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: D.e4),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('${resumo.areasCompletas} Áreas Completas', style: D.corpo),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${resumo.serviceLinesConcluidas} Service Line${resumo.serviceLinesConcluidas == 1 ? '' : 's'} Concluída${resumo.serviceLinesConcluidas == 1 ? '' : 's'}',
+                      style: D.corpo,
+                    ),
+                    const SizedBox(height: 2),
+                    Text('Progresso na Learning Path', style: D.legenda),
+                  ],
+                ),
+              ),
             ],
           ),
-          const SizedBox(width: 8),
-          const Icon(Icons.chevron_right, color: Colors.grey),
+          const SizedBox(height: D.e4),
+          const Text('Objetivos em progresso', style: D.tituloCard),
+          const SizedBox(height: D.e2),
+          if (resumo.objetivosEmProgresso.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: D.e2),
+              child: Text('Sem objetivos em curso.', style: D.legenda),
+            )
+          else
+            for (final obj in resumo.objetivosEmProgresso) _buildLinhaObjetivoProgresso(obj),
+          const SizedBox(height: D.e2),
+          Center(
+            child: TextButton(
+              onPressed: () => context.push(AppConstants.routeObjetivos),
+              child: const Text('Ver Tudo', style: TextStyle(color: D.azul600, fontWeight: FontWeight.w600)),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLinhaObjetivoProgresso(ObjetivoProgresso obj) {
+    final dataFimFormatada =
+        '${obj.dataFim.day.toString().padLeft(2, '0')}/${obj.dataFim.month.toString().padLeft(2, '0')}/${obj.dataFim.year}';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: D.e3),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(obj.titulo, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: obj.percentagem / 100,
+              backgroundColor: D.fundoAlt,
+              color: D.azul600,
+              minHeight: 6,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(obj.textoProgresso, style: D.legenda),
+              Text('Termina a $dataFimFormatada', style: D.legenda),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLinhaRanking(RankingEntrada r) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          SizedBox(width: 28, child: Text('${r.posicao}º', style: D.corpo)),
+          Expanded(child: Text(r.nome, style: D.corpo, overflow: TextOverflow.ellipsis)),
+          Text('${r.totalPontos} pts', style: D.corpo.copyWith(fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBadgeRecomendadoItem(BadgeRegular badge) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: D.e2),
+      child: CardSimples(
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(color: D.avisoBg, borderRadius: BorderRadius.circular(D.rSm)),
+              child: const Icon(Icons.military_tech, color: D.aviso, size: 24),
+            ),
+            const SizedBox(width: D.e3),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(badge.nome, style: D.tituloCard),
+                  Text(badge.nomeNivel, style: D.legenda),
+                ],
+              ),
+            ),
+            Column(
+              children: [
+                Text('${badge.pontos ?? 0}',
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: D.azul600)),
+                Text('Requisitos', style: D.legenda.copyWith(fontSize: 10)),
+              ],
+            ),
+            const SizedBox(width: D.e2),
+            const Icon(Icons.chevron_right, color: D.tinta30),
+          ],
+        ),
       ),
     );
   }

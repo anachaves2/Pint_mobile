@@ -5,11 +5,17 @@ import 'package:pint_mobile/models/badge_utilizador.dart';
 import 'package:pint_mobile/providers/badges_provider.dart';
 import 'package:pint_mobile/utils/badge_utils.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/utils/design.dart';
+import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
 
 // ECRÃ BADGES ESPECIAIS
 // Lista completa de badges especiais válidos do consultor.
+// Paridade com a web: indicador colorido de validade + contagem
+// decrescente, iguais aos de "Os Meus Badges". Segue os tokens D e o
+// CardSimples; o dourado (D.aviso) mantém-se como o acento próprio dos
+// badges especiais, tal como na web.
 
 class BadgesEspeciais extends ConsumerStatefulWidget {
   const BadgesEspeciais({super.key});
@@ -21,10 +27,6 @@ class BadgesEspeciais extends ConsumerStatefulWidget {
 class _BadgesEspeciaisState extends ConsumerState<BadgesEspeciais> {
   final TextEditingController _pesquisaController = TextEditingController();
   String _queryPesquisa = '';
-
-  static const Color _azulPrimario = AppConstants.corPrimaria;
-  static const Color _dourado = Color(0xFFF5A623);
-  static const Color _cinzaClaro = Color(0xFFF5F5F5);
 
   @override
   void dispose() {
@@ -47,28 +49,43 @@ class _BadgesEspeciaisState extends ConsumerState<BadgesEspeciais> {
         .toList();
   }
 
+  // ── Indicador de validade — igual ao corIndicadorValidade da web ──────────
+  Color _corIndicadorValidade(BadgeUtilizador b) {
+    if (!b.valido) return D.erro;
+    final horasRestantes = b.dataExpiracao.difference(DateTime.now()).inMinutes / 60;
+    if (horasRestantes > 0 && horasRestantes <= 72) return D.aviso;
+    return D.ok;
+  }
+
+  String _textoExpiracao(BadgeUtilizador b) {
+    final diff = b.dataExpiracao.difference(DateTime.now());
+    if (diff.isNegative) return b.valido ? 'Sem data de expiração' : 'Badge inválida';
+    final horas = diff.inHours;
+    final minutos = diff.inMinutes % 60;
+    return 'Expira em: ${horas}h e ${minutos}min';
+  }
+
   @override
   Widget build(BuildContext context) {
     final badgesAsync = ref.watch(badgesProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: D.fundo,
       drawer: const CustomDrawer(),
       appBar: _buildAppBar(),
       body: badgesAsync.when(
-        loading: () => const Center(
-            child: CircularProgressIndicator(color: _azulPrimario)),
+        loading: () => const Center(child: CircularProgressIndicator(color: D.azul600)),
         error: (err, _) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, color: Colors.grey.shade300, size: 64),
-              const SizedBox(height: 16),
-              Text('Erro ao carregar badges',
-                  style: TextStyle(color: Colors.grey.shade400)),
-              const SizedBox(height: 16),
+              Icon(Icons.error_outline, color: D.tinta30, size: 64),
+              const SizedBox(height: D.e4),
+              const Text('Erro ao carregar badges', style: D.corpo),
+              const SizedBox(height: D.e4),
               OutlinedButton(
                 onPressed: () => ref.invalidate(badgesProvider),
+                style: OutlinedButton.styleFrom(foregroundColor: D.azul600),
                 child: const Text('Tentar novamente'),
               ),
             ],
@@ -79,20 +96,19 @@ class _BadgesEspeciaisState extends ConsumerState<BadgesEspeciais> {
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                padding: const EdgeInsets.fromLTRB(D.e4, D.e2, D.e4, D.e2),
                 child: _buildBarraPesquisa(),
               ),
               Expanded(
                 child: RefreshIndicator(
-                  color: _azulPrimario,
+                  color: D.azul600,
                   onRefresh: () => ref.read(badgesProvider.notifier).atualizar(),
                   child: badges.isEmpty
                       ? _buildEstadoVazio()
                       : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                          padding: const EdgeInsets.fromLTRB(D.e4, D.e1, D.e4, D.e4),
                           itemCount: badges.length,
-                          itemBuilder: (context, index) =>
-                              _buildBadgeCard(badges[index]),
+                          itemBuilder: (context, index) => _buildBadgeCard(badges[index]),
                         ),
                 ),
               ),
@@ -103,63 +119,48 @@ class _BadgesEspeciaisState extends ConsumerState<BadgesEspeciais> {
     );
   }
 
-AppBar _buildAppBar() {
+  AppBar _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       elevation: 0,
+      centerTitle: true,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
         onPressed: () => context.pop(),
       ),
-      title: const Text(
-        'BADGES',
-        style: TextStyle(
-          color: _azulPrimario,
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-          letterSpacing: 1.2,
-        ),
-      ),
-      centerTitle: true,
+      title: const Text('BADGES', style: D.tituloPagina),
       actions: [
         IconButton(
           icon: SvgPicture.asset(
             'assets/icons/notificacoesprimaria.svg',
-            width: 24,
             height: 24,
-            colorFilter: const ColorFilter.mode(
-                AppConstants.corPrimaria, BlendMode.srcIn),
+            colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn),
           ),
           onPressed: () => context.push(AppConstants.routeNotificacoes),
         ),
       ],
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(color: Colors.grey.shade200, height: 1),
-      ),
     );
   }
 
   Widget _buildBarraPesquisa() {
     return Container(
-      height: 40,
       decoration: BoxDecoration(
-        color: _cinzaClaro,
-        borderRadius: BorderRadius.circular(8),
+        color: D.superficie,
+        borderRadius: BorderRadius.circular(D.rMd),
+        boxShadow: D.elev1,
       ),
       child: TextField(
         controller: _pesquisaController,
         onChanged: (texto) => setState(() => _queryPesquisa = texto),
         decoration: InputDecoration(
           hintText: 'Procura...',
-          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-          prefixIcon: Icon(Icons.search, color: Colors.grey.shade400, size: 20),
+          hintStyle: const TextStyle(color: D.tinta30, fontSize: 14),
+          prefixIcon: const Icon(Icons.search, color: D.tinta30, size: 20),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          contentPadding: const EdgeInsets.symmetric(vertical: D.e3),
           suffixIcon: _pesquisaController.text.isNotEmpty
               ? IconButton(
-                  icon:
-                      Icon(Icons.clear, size: 18, color: Colors.grey.shade400),
+                  icon: const Icon(Icons.clear, size: 18, color: D.tinta30),
                   onPressed: () {
                     _pesquisaController.clear();
                     setState(() => _queryPesquisa = '');
@@ -176,13 +177,13 @@ AppBar _buildAppBar() {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.star_outline, color: Colors.grey.shade300, size: 64),
-          const SizedBox(height: 16),
+          Icon(Icons.star_outline, color: D.tinta30, size: 64),
+          const SizedBox(height: D.e4),
           Text(
             _pesquisaController.text.isNotEmpty
                 ? 'Nenhum badge encontrado'
                 : 'Ainda não tens badges especiais',
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+            style: D.corpo,
           ),
         ],
       ),
@@ -190,94 +191,50 @@ AppBar _buildAppBar() {
   }
 
   Widget _buildBadgeCard(BadgeUtilizador badge) {
-    return GestureDetector(
-      onTap: () =>
-          context.push(AppConstants.routeDetalheBadgePremium, extra: badge),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          // Borda dourada para destacar os badges especiais
-          border: Border.all(color: _dourado.withValues(alpha: 0.4)),
-          boxShadow: [
-            BoxShadow(
-              color: _dourado.withValues(alpha: 0.08),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: D.e2),
+      child: CardSimples(
+        onTap: () => context.push(AppConstants.routeDetalheBadgePremium, extra: badge),
         child: Row(
           children: [
             _buildIconeEspecial(badge),
-            const SizedBox(width: 12),
+            const SizedBox(width: D.e3),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Expanded(
-                        child: Text(
-                          badge.nomeBadge,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: _dourado.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                              color: _dourado.withValues(alpha: 0.4)),
-                        ),
-                        child: Text(
-                          '★ Premium',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: _dourado,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+                      Expanded(child: Text(badge.nomeBadge, style: D.tituloCard)),
+                      const ChipEstado(texto: '★ Premium', cor: D.aviso, corFundo: D.avisoBg),
                     ],
                   ),
                   if (badge.descricao != null) ...[
                     const SizedBox(height: 2),
-                    Text(
-                      badge.descricao!,
-                      style:
-                          TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    Text(badge.descricao!, style: D.legenda, maxLines: 1, overflow: TextOverflow.ellipsis),
                   ],
-                  const SizedBox(height: 4),
-                  Text(
-                    'Conquistado: ${BadgeUtils.formatarData(badge.dataAtribuicao)}',
-                    style:
-                        TextStyle(fontSize: 11, color: Colors.grey.shade500),
-                  ),
-                  Text(
-                    'Válido até: ${BadgeUtils.formatarData(badge.dataExpiracao)}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: badge.estaProximoDeExpirar
-                          ? Colors.orange.shade400
-                          : Colors.grey.shade500,
-                    ),
+                  const SizedBox(height: D.e2),
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        margin: const EdgeInsets.only(right: 6),
+                        decoration: BoxDecoration(color: _corIndicadorValidade(badge), shape: BoxShape.circle),
+                      ),
+                      Expanded(
+                        child: Text(
+                          _textoExpiracao(badge),
+                          style: D.legenda.copyWith(fontSize: 11),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
+            const Icon(Icons.chevron_right, color: D.tinta30, size: 20),
           ],
         ),
       ),
@@ -289,21 +246,17 @@ AppBar _buildAppBar() {
       return Container(
         width: 44,
         height: 44,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: _dourado, width: 2),
-        ),
+        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: D.aviso, width: 2)),
         child: ClipOval(
           child: Image.network(
-            badge.urlImagem!,
+            AppConstants.resolverUrlFicheiro(badge.urlImagem)!,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) =>
-                _buildIconeLetra('★', _dourado),
+            errorBuilder: (context, error, stackTrace) => _buildIconeLetra('★', D.aviso),
           ),
         ),
       );
     }
-    return _buildIconeLetra('★', _dourado);
+    return _buildIconeLetra('★', D.aviso);
   }
 
   Widget _buildIconeLetra(String letra, Color cor) {
@@ -316,11 +269,7 @@ AppBar _buildAppBar() {
         border: Border.all(color: cor, width: 2),
       ),
       child: Center(
-        child: Text(
-          letra,
-          style: TextStyle(
-              color: cor, fontWeight: FontWeight.bold, fontSize: 18),
-        ),
+        child: Text(letra, style: TextStyle(color: cor, fontWeight: FontWeight.bold, fontSize: 18)),
       ),
     );
   }

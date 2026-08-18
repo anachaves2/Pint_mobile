@@ -2,65 +2,90 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/models/consultor.dart';
+import 'package:pint_mobile/models/badge_utilizador.dart';
+import 'package:pint_mobile/models/candidatura_badge.dart';
+import 'package:pint_mobile/providers/badges_provider.dart';
+import 'package:pint_mobile/providers/candidatura_provider.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/providers/utilizador_provider.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/utils/design.dart';
+import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
 
 // Ecrã do Perfil
-// Mostra os dados pessoais do consultor autenticado.
+// Mostra os dados pessoais do consultor autenticado, mais Learning Path,
+// Service Line, Evolução Profissional e os badges/candidaturas em separadores
+// (Obtidos / Em Progresso / Especiais / Histórico), tal como na web.
+// Segue os tokens de D e os cards partilhados (CardSimples/CardGradiente),
+// os mesmos usados em Objetivos e Gamification — profundidade por elevação
+// cinzenta, sem bordas sólidas.
 
-class Perfil extends ConsumerWidget {
+enum _TabPerfil { obtidos, progresso, especiais, historico }
+
+class Perfil extends ConsumerStatefulWidget {
   const Perfil({super.key});
 
-  static const Color _azulPrimario = AppConstants.corPrimaria;
-  static const Color _azulClaro = Color(0xFFE8F0FB);
-  static const Color _cinzaTexto = Color(0xFF555555);
-  static const Color _cinzaClaro = Color(0xFFF5F5F5);
+  @override
+  ConsumerState<Perfil> createState() => _PerfilState();
+}
+
+class _PerfilState extends ConsumerState<Perfil> {
+  _TabPerfil _tabAtiva = _TabPerfil.obtidos;
+  final TextEditingController _pesquisaController = TextEditingController();
+  String _queryPesquisa = '';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void dispose() {
+    _pesquisaController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final consultorAsync = ref.watch(utilizadorProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: D.fundo,
       drawer: const CustomDrawer(),
       appBar: _buildAppBar(context),
       body: consultorAsync.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(color: _azulPrimario),
+          child: CircularProgressIndicator(color: D.azul600),
         ),
-        // Estado de erro — mostra mensagem e botão para tentar novamente
         error: (err, _) => _buildErro(context, ref),
-        // Estado com dados — mostra o perfil (ou erro se o consultor for null)
         data: (consultor) {
           if (consultor == null) return _buildErro(context, ref);
+
+          final badges = ref.watch(badgesProvider).valueOrNull ?? [];
+          final candidaturas = ref.watch(candidaturasProvider).valueOrNull ?? [];
+
           return RefreshIndicator(
-            color: _azulPrimario,
-            // Pull to refresh: sincroniza com a API e atualiza o provider
+            color: D.azul600,
             onRefresh: () async {
               await APIService.instance.sincronizarTodos();
               ref.invalidate(utilizadorProvider);
+              ref.invalidate(badgesProvider);
+              ref.invalidate(candidaturasProvider);
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              padding: const EdgeInsets.fromLTRB(D.e4, D.e2, D.e4, D.e5),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildFotoPerfil(consultor),
-                  const SizedBox(height: 12),
-                  _buildNomeECargo(consultor),
-                  const SizedBox(height: 12),
-                  _buildRankingEPontos(consultor),
-                  const SizedBox(height: 28),
+                  _buildCabecalho(consultor),
+                  const SizedBox(height: D.e5),
                   _buildSecaoInformacoes(consultor),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: D.e5),
+                  _buildEvolucaoProfissional(badges),
+                  const SizedBox(height: D.e5),
+                  _buildSecaoBadges(badges, candidaturas),
+                  const SizedBox(height: D.e4),
                   _buildMembroDesde(consultor),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: D.e5),
                   _buildBotaoDefinicoes(context),
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -70,20 +95,18 @@ class Perfil extends ConsumerWidget {
     );
   }
 
-
-
   // ─── AppBar ───────────────────────────────────────────────────────────────
 
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       elevation: 0,
+      centerTitle: true,
       leading: Builder(
         builder: (ctx) => IconButton(
           icon: SvgPicture.asset(
             'assets/icons/drawerprimario.svg',
-            width: 24,
-            height: 24,
+            height: 20,
             colorFilter: const ColorFilter.mode(
               AppConstants.corPrimaria,
               BlendMode.srcIn,
@@ -92,21 +115,11 @@ class Perfil extends ConsumerWidget {
           onPressed: () => Scaffold.of(ctx).openDrawer(),
         ),
       ),
-      title: const Text(
-        'PERFIL',
-        style: TextStyle(
-          color: _azulPrimario,
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-          letterSpacing: 1.2,
-        ),
-      ),
-      centerTitle: true,
+      title: const Text('PERFIL', style: D.tituloPagina),
       actions: [
         IconButton(
           icon: SvgPicture.asset(
             'assets/icons/notificacoesprimaria.svg',
-            width: 24,
             height: 24,
             colorFilter: const ColorFilter.mode(
               AppConstants.corPrimaria,
@@ -116,10 +129,6 @@ class Perfil extends ConsumerWidget {
           onPressed: () => context.push(AppConstants.routeNotificacoes),
         ),
       ],
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(color: Colors.grey.shade200, height: 1),
-      ),
     );
   }
 
@@ -130,15 +139,13 @@ class Perfil extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, color: Colors.grey.shade300, size: 64),
-          const SizedBox(height: 16),
-          Text(
-            'Erro ao carregar perfil',
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-          ),
-          const SizedBox(height: 16),
+          Icon(Icons.error_outline, color: D.tinta30, size: 64),
+          const SizedBox(height: D.e4),
+          const Text('Erro ao carregar perfil', style: D.corpo),
+          const SizedBox(height: D.e4),
           OutlinedButton(
             onPressed: () => ref.invalidate(utilizadorProvider),
+            style: OutlinedButton.styleFrom(foregroundColor: D.azul600),
             child: const Text('Tentar novamente'),
           ),
         ],
@@ -146,123 +153,67 @@ class Perfil extends ConsumerWidget {
     );
   }
 
-  // ─── Widgets de conteúdo ──────────────────────────────────────────────────
+  // ─── Cabeçalho: foto, nome, cargo, ranking/pontos ─────────────────────────
 
-  Widget _buildFotoPerfil(Consultor consultor) {
-    return CircleAvatar(
-      radius: 48,
-      backgroundColor: Colors.grey.shade300,
-      backgroundImage:
-          consultor.urlFoto != null ? NetworkImage(consultor.urlFoto!) : null,
-      child: consultor.urlFoto == null
-          ? const Icon(Icons.person, size: 48, color: Colors.grey)
-          : null,
-    );
-  }
-
-  Widget _buildNomeECargo(Consultor consultor) {
+  Widget _buildCabecalho(Consultor consultor) {
     return Column(
       children: [
-        Text(
-          consultor.nome,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-          textAlign: TextAlign.center,
+        CircleAvatar(
+          radius: 44,
+          backgroundColor: D.azul100,
+          backgroundImage: consultor.urlFoto != null
+              ? NetworkImage(AppConstants.resolverUrlFicheiro(consultor.urlFoto)!)
+              : null,
+          child: consultor.urlFoto == null
+              ? const Icon(Icons.person, size: 44, color: D.azul600)
+              : null,
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: D.e3),
+        Text(consultor.nome, style: D.tituloSeccao, textAlign: TextAlign.center),
+        const SizedBox(height: D.e2),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: D.e3, vertical: 4),
           decoration: BoxDecoration(
-            color: _azulClaro,
-            borderRadius: BorderRadius.circular(12),
+            color: D.azul100,
+            borderRadius: BorderRadius.circular(999),
           ),
-          child: const Text(
-            'CONSULTOR',
-            style: TextStyle(
-              fontSize: 11,
-              color: _azulPrimario,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.0,
+          child: const Text('CONSULTOR', style: D.etiqueta),
+        ),
+        const SizedBox(height: D.e4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ChipEstado(
+              icone: Icons.emoji_events_outlined,
+              texto: consultor.posicaoRanking != null
+                  ? '${consultor.posicaoRanking}ª Posição'
+                  : '-- Posição',
+              cor: D.azul600,
+              corFundo: D.azul100,
             ),
-          ),
+            const SizedBox(width: D.e2),
+            ChipEstado(
+              icone: Icons.star_outline,
+              texto: '${consultor.totalPontos ?? 0} Pontos',
+              cor: D.aviso,
+              corFundo: D.avisoBg,
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildRankingEPontos(Consultor consultor) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildChip(
-          icon: Icons.emoji_events_outlined,
-          label: consultor.posicaoRanking != null
-              ? '${consultor.posicaoRanking}ª Posição'
-              : '-- Posição',
-          cor: _azulPrimario,
-        ),
-        const SizedBox(width: 12),
-        _buildChip(
-          icon: Icons.star_outline,
-          label: '${consultor.totalPontos ?? 0} Pontos',
-          cor: const Color(0xFFF5A623),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildChip({
-    required IconData icon,
-    required String label,
-    required Color cor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-      decoration: BoxDecoration(
-        border: Border.all(color: cor.withValues(alpha: 0.4)),
-        borderRadius: BorderRadius.circular(20),
-        color: cor.withValues(alpha: 0.07),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: cor),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              color: cor,
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // ─── Informações ──────────────────────────────────────────────────────────
 
   Widget _buildSecaoInformacoes(Consultor consultor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'INFORMAÇÕES',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: _cinzaTexto,
-            letterSpacing: 1.1,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: _cinzaClaro,
-            borderRadius: BorderRadius.circular(12),
-          ),
+        const Text('INFORMAÇÕES', style: D.etiqueta),
+        const SizedBox(height: D.e3),
+        CardSimples(
+          padding: EdgeInsets.zero,
           child: Column(
             children: [
               _buildLinhaInfo(icon: Icons.email_outlined, texto: consultor.email),
@@ -289,7 +240,19 @@ class Perfil extends ConsumerWidget {
               _buildDivisor(),
               _buildLinhaInfo(
                 icon: Icons.work_outline,
-                texto: 'Área: ${consultor.nomeArea}',
+                texto: 'Área: ${consultor.nomeArea ?? '-'}',
+              ),
+              _buildDivisor(),
+              _buildLinhaInfo(
+                icon: Icons.account_tree_outlined,
+                texto: 'Service Line: ${consultor.nomeServiceLine ?? '-'}',
+                vazio: consultor.nomeServiceLine == null,
+              ),
+              _buildDivisor(),
+              _buildLinhaInfo(
+                icon: Icons.map_outlined,
+                texto: 'Learning Path: ${consultor.nomeLearningPath ?? '-'}',
+                vazio: consultor.nomeLearningPath == null,
               ),
             ],
           ),
@@ -305,25 +268,17 @@ class Perfil extends ConsumerWidget {
     bool isLink = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      padding: const EdgeInsets.symmetric(horizontal: D.e4, vertical: 13),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 18,
-            color: vazio ? Colors.grey.shade400 : _azulPrimario,
-          ),
-          const SizedBox(width: 12),
+          Icon(icon, size: 18, color: vazio ? D.tinta30 : D.azul600),
+          const SizedBox(width: D.e3),
           Expanded(
             child: Text(
               texto,
               style: TextStyle(
                 fontSize: 13,
-                color: vazio
-                    ? Colors.grey.shade400
-                    : isLink
-                        ? _azulPrimario
-                        : Colors.black87,
+                color: vazio ? D.tinta30 : (isLink ? D.azul600 : D.tinta),
                 decoration: isLink ? TextDecoration.underline : null,
               ),
               overflow: TextOverflow.ellipsis,
@@ -335,12 +290,307 @@ class Perfil extends ConsumerWidget {
   }
 
   Widget _buildDivisor() {
-    return Divider(
-      height: 1,
-      thickness: 1,
-      color: Colors.grey.shade200,
-      indent: 16,
-      endIndent: 16,
+    return Divider(height: 1, thickness: 1, color: D.fundoAlt, indent: D.e4, endIndent: D.e4);
+  }
+
+  // ─── Evolução Profissional ────────────────────────────────────────────────
+  // Junta os badges regulares + especiais válidos, ordenados por data de
+  // atribuição (mais antigo primeiro) — igual ao que o endpoint
+  // /perfil/me/detalhe faz na web, mas calculado aqui a partir do que já
+  // está sincronizado, sem pedir nada novo à API.
+
+  Widget _buildEvolucaoProfissional(List<BadgeUtilizador> badges) {
+    final itens = badges.where((b) => b.valido).toList()
+      ..sort((a, b) => a.dataAtribuicao.compareTo(b.dataAtribuicao));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('EVOLUÇÃO PROFISSIONAL', style: D.etiqueta),
+        const SizedBox(height: D.e3),
+        if (itens.isEmpty)
+          CardSimples(
+            child: Center(
+              child: Text('Ainda sem conquistas registadas.', style: D.legenda),
+            ),
+          )
+        else
+          CardSimples(
+            child: Column(
+              children: [
+                for (int i = 0; i < itens.length; i++)
+                  _buildLinhaEvolucao(badge: itens[i], ultimo: i == itens.length - 1),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildLinhaEvolucao({required BadgeUtilizador badge, required bool ultimo}) {
+    final titulo = badge.idBadgeEspecial != null
+        ? 'Conquista Badge Especial: ${badge.nomeBadge}'
+        : 'Conquista ${badge.nomeBadge}';
+    final data = badge.dataAtribuicao;
+    final dataFormatada =
+        '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
+
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                margin: const EdgeInsets.only(top: 4),
+                decoration: const BoxDecoration(color: D.azul600, shape: BoxShape.circle),
+              ),
+              if (!ultimo)
+                Expanded(child: Container(width: 2, color: D.fundoAlt)),
+            ],
+          ),
+          const SizedBox(width: D.e3),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: D.e4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(titulo, style: D.tituloCard),
+                  const SizedBox(height: 2),
+                  Text(dataFormatada, style: D.legenda),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Separadores de Badges (Obtidos / Em Progresso / Especiais / Histórico) ──
+  // Mesma estrutura de 4 separadores da web, mais o filtro de pesquisa que já
+  // existe em "Os Meus Badges" — tudo alimentado pelos providers já
+  // sincronizados, sem pedidos novos à API.
+
+  Widget _buildSecaoBadges(List<BadgeUtilizador> badges, List<CandidaturaBadge> candidaturas) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('BADGES', style: D.etiqueta),
+        const SizedBox(height: D.e3),
+        _buildTabsPills(),
+        const SizedBox(height: D.e3),
+        _buildCampoPesquisa(),
+        const SizedBox(height: D.e3),
+        _buildConteudoTab(badges, candidaturas),
+      ],
+    );
+  }
+
+  Widget _buildTabsPills() {
+    final tabs = {
+      _TabPerfil.obtidos: 'Obtidos',
+      _TabPerfil.progresso: 'Em Progresso',
+      _TabPerfil.especiais: 'Especiais',
+      _TabPerfil.historico: 'Histórico',
+    };
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: D.superficie,
+        borderRadius: BorderRadius.circular(D.rSm),
+        boxShadow: D.elev1,
+      ),
+      child: Row(
+        children: tabs.entries.map((entry) {
+          final ativo = _tabAtiva == entry.key;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _tabAtiva = entry.key),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: ativo ? D.azul600 : Colors.transparent,
+                  borderRadius: BorderRadius.circular(D.rSm - 2),
+                ),
+                child: Text(
+                  entry.value,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: ativo ? Colors.white : D.tinta30,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildCampoPesquisa() {
+    return Container(
+      decoration: BoxDecoration(
+        color: D.superficie,
+        borderRadius: BorderRadius.circular(D.rMd),
+        boxShadow: D.elev1,
+      ),
+      child: TextField(
+        controller: _pesquisaController,
+        onChanged: (v) => setState(() => _queryPesquisa = v),
+        decoration: InputDecoration(
+          hintText: 'Pesquisar badge...',
+          hintStyle: const TextStyle(fontSize: 13, color: D.tinta30),
+          prefixIcon: const Icon(Icons.search, size: 20, color: D.tinta30),
+          filled: true,
+          fillColor: D.superficie,
+          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(D.rMd),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        style: const TextStyle(fontSize: 13),
+      ),
+    );
+  }
+
+  List<BadgeUtilizador> _filtrarBadges(List<BadgeUtilizador> lista) {
+    if (_queryPesquisa.isEmpty) return lista;
+    final q = _queryPesquisa.toLowerCase();
+    return lista.where((b) {
+      return b.nomeBadge.toLowerCase().contains(q) ||
+          (b.nomeNivel?.toLowerCase().contains(q) ?? false) ||
+          (b.nomeArea?.toLowerCase().contains(q) ?? false);
+    }).toList();
+  }
+
+  List<CandidaturaBadge> _filtrarCandidaturas(List<CandidaturaBadge> lista) {
+    if (_queryPesquisa.isEmpty) return lista;
+    final q = _queryPesquisa.toLowerCase();
+    return lista.where((c) => c.nomeBadge.toLowerCase().contains(q)).toList();
+  }
+
+  Widget _buildConteudoTab(List<BadgeUtilizador> badges, List<CandidaturaBadge> candidaturas) {
+    switch (_tabAtiva) {
+      case _TabPerfil.obtidos:
+        final lista = _filtrarBadges(
+          badges.where((b) => b.valido && b.idBadgeEspecial == null).toList()
+            ..sort((a, b) => b.dataAtribuicao.compareTo(a.dataAtribuicao)),
+        );
+        return _buildListaBadges(lista, vazio: 'Ainda não tens badges obtidos.');
+
+      case _TabPerfil.especiais:
+        final lista = _filtrarBadges(
+          badges.where((b) => b.valido && b.idBadgeEspecial != null).toList()
+            ..sort((a, b) => b.dataAtribuicao.compareTo(a.dataAtribuicao)),
+        );
+        return _buildListaBadges(lista, vazio: 'Ainda não tens badges especiais.');
+
+      case _TabPerfil.progresso:
+        final lista = _filtrarCandidaturas(
+          candidaturas.where((c) => !c.estaConcluida).toList()
+            ..sort((a, b) => b.dataCriacao.compareTo(a.dataCriacao)),
+        );
+        return _buildListaCandidaturas(lista, vazio: 'Sem candidaturas em progresso.');
+
+      case _TabPerfil.historico:
+        final lista = _filtrarCandidaturas(
+          candidaturas.where((c) => c.estaConcluida).toList()
+            ..sort((a, b) => b.dataCriacao.compareTo(a.dataCriacao)),
+        );
+        return _buildListaCandidaturas(lista, vazio: 'Ainda sem histórico.');
+    }
+  }
+
+  Widget _buildListaBadges(List<BadgeUtilizador> lista, {required String vazio}) {
+    if (lista.isEmpty) return CardSimples(child: Center(child: Text(vazio, style: D.legenda)));
+    return Column(
+      children: lista.map((b) {
+        final subtitulo =
+            [b.nomeArea, b.nomeNivel].where((s) => s != null && s.isNotEmpty).join(' · ');
+        return _buildLinhaBadge(
+          titulo: b.nomeBadge,
+          subtitulo: subtitulo.isEmpty ? null : subtitulo,
+          data: b.dataAtribuicao,
+          pontos: b.pontos,
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildListaCandidaturas(List<CandidaturaBadge> lista, {required String vazio}) {
+    if (lista.isEmpty) return CardSimples(child: Center(child: Text(vazio, style: D.legenda)));
+    return Column(
+      children: lista.map((c) {
+        return _buildLinhaBadge(
+          titulo: c.nomeBadge,
+          subtitulo: c.nomeEstadoAtual,
+          data: c.dataCriacao,
+          aprovada: c.aprovada,
+          rejeitada: c.rejeitada,
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildLinhaBadge({
+    required String titulo,
+    String? subtitulo,
+    required DateTime data,
+    int? pontos,
+    bool aprovada = false,
+    bool rejeitada = false,
+  }) {
+    final dataFormatada =
+        '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: D.e2),
+      child: CardSimples(
+        padding: const EdgeInsets.symmetric(horizontal: D.e4, vertical: D.e3),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(titulo, style: D.tituloCard),
+                  if (subtitulo != null) ...[
+                    const SizedBox(height: 4),
+                    aprovada || rejeitada
+                        ? ChipEstado(
+                            texto: subtitulo,
+                            cor: aprovada ? D.ok : D.erro,
+                            corFundo: aprovada ? D.okBg : D.erroBg,
+                          )
+                        : Text(subtitulo, style: D.legenda),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: D.e2),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(dataFormatada, style: D.legenda),
+                if (pontos != null) ...[
+                  const SizedBox(height: 2),
+                  Text('$pontos pts',
+                      style: const TextStyle(fontSize: 11, color: D.azul600, fontWeight: FontWeight.w600)),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -351,34 +601,25 @@ class Perfil extends ConsumerWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey),
+        const Icon(Icons.calendar_today_outlined, size: 14, color: D.tinta30),
         const SizedBox(width: 6),
-        Text(
-          'Membro desde: $dataFormatada',
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
+        Text('Membro desde: $dataFormatada', style: D.legenda),
       ],
     );
   }
 
   Widget _buildBotaoDefinicoes(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton(
-        onPressed: () => context.push(AppConstants.routeDefinicoes),
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: _azulPrimario),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-        ),
-        child: const Text(
-          'DEFINIÇÕES',
-          style: TextStyle(
-            color: _azulPrimario,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.1,
-          ),
-        ),
+    return OutlinedButton(
+      onPressed: () => context.push(AppConstants.routeDefinicoes),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: D.azul600,
+        side: const BorderSide(color: D.azul600),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+      ),
+      child: const Text(
+        'DEFINIÇÕES',
+        style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.1),
       ),
     );
   }
