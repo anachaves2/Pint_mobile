@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pint_mobile/models/badge_utilizador.dart';
+import 'package:pint_mobile/models/badge_regular.dart';
 import 'package:pint_mobile/providers/badges_provider.dart';
+import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/utils/badge_utils.dart';
+import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
 
-// ECRÃ TODOS OS BADGES
-// Lista completa de badges regulares válidos do consultor.
+// ECRÃ CATÁLOGO DE BADGES
+// Requisito 8 (Consultor): "Deve ter um Catálogo de badges disponíveis com
+// descrições." — isto é TODOS os badges regulares da plataforma (não só os
+// que o consultor já tem), com filtro por texto e por nível, tal como a
+// secção "Catálogo de Badges" de views/consultor/Badges.jsx na web.
+// Badges já obtidos ficam marcados, os outros levam ao detalhe + candidatura.
 
 class TodosOsBadges extends ConsumerStatefulWidget {
   const TodosOsBadges({super.key});
@@ -21,9 +28,20 @@ class TodosOsBadges extends ConsumerStatefulWidget {
 class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
   final TextEditingController _pesquisaController = TextEditingController();
   String _queryPesquisa = '';
+  String _nivelSelecionado = 'todos';
 
-  static const Color _azulPrimario = AppConstants.corPrimaria;
-  static const Color _cinzaClaro = Color(0xFFF5F5F5);
+  List<BadgeRegular>? _catalogo;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregar();
+  }
+
+  Future<void> _carregar() async {
+    final lista = await DatabaseService.instance.getCatalogoBadges();
+    if (mounted) setState(() => _catalogo = lista);
+  }
 
   @override
   void dispose() {
@@ -31,141 +49,115 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
     super.dispose();
   }
 
-  // Filtra a lista de badges regulares válidos pelo texto de pesquisa.
-  List<BadgeUtilizador> _aplicarFiltro(List<BadgeUtilizador> todos) {
-    // Só badges regulares (sem especiais) e não expirados
-    final regulares = todos
-        .where((b) => b.idBadgeEspecial == null && !b.jaExpirou)
-        .toList()
-      ..sort((a, b) => b.dataAtribuicao.compareTo(a.dataAtribuicao));
+  List<BadgeRegular> _aplicarFiltro(List<BadgeRegular> catalogo) {
+    var lista = catalogo;
 
-    if (_queryPesquisa.isEmpty) return regulares;
+    if (_nivelSelecionado != 'todos') {
+      lista = lista.where((b) => b.nomeNivel == _nivelSelecionado).toList();
+    }
 
-    final q = _queryPesquisa.toLowerCase();
-    return regulares.where((b) {
-      return b.nomeBadge.toLowerCase().contains(q) ||
-          (b.nomeNivel?.toLowerCase().contains(q) ?? false) ||
-          (b.nomeArea?.toLowerCase().contains(q) ?? false) ||
-          (b.nomeServiceLine?.toLowerCase().contains(q) ?? false);
-    }).toList();
+    if (_queryPesquisa.isNotEmpty) {
+      final q = _queryPesquisa.toLowerCase();
+      lista = lista.where((b) {
+        return b.nome.toLowerCase().contains(q) ||
+            b.nomeNivel.toLowerCase().contains(q) ||
+            b.nomeArea.toLowerCase().contains(q) ||
+            b.nomeServiceLine.toLowerCase().contains(q);
+      }).toList();
+    }
+
+    return lista..sort((a, b) => a.nome.compareTo(b.nome));
   }
 
   @override
   Widget build(BuildContext context) {
-    final badgesAsync = ref.watch(badgesProvider);
+    final badgesObtidos = ref.watch(badgesProvider).valueOrNull ?? [];
+    final idsObtidos = badgesObtidos
+        .where((b) => b.valido && b.idBadgeRegular != null)
+        .map((b) => b.idBadgeRegular!)
+        .toSet();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: D.fundo,
       drawer: const CustomDrawer(),
       appBar: _buildAppBar(),
-      body: badgesAsync.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator(color: _azulPrimario)),
-        error: (err, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, color: Colors.grey.shade300, size: 64),
-              const SizedBox(height: 16),
-              Text('Erro ao carregar badges',
-                  style: TextStyle(color: Colors.grey.shade400)),
-              const SizedBox(height: 16),
-              OutlinedButton(
-                onPressed: () => ref.invalidate(badgesProvider),
-                child: const Text('Tentar novamente'),
-              ),
-            ],
-          ),
-        ),
-        data: (todos) {
-          final badgesFiltrados = _aplicarFiltro(todos);
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                child: _buildBarraPesquisa(),
-              ),
-              Expanded(
-                child: RefreshIndicator(
-                  color: _azulPrimario,
-                  onRefresh: () => ref.read(badgesProvider.notifier).atualizar(),
-                  child: badgesFiltrados.isEmpty
-                      ? _buildEstadoVazio()
-                      : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                          itemCount: badgesFiltrados.length,
-                          itemBuilder: (context, index) =>
-                              _buildBadgeCard(badgesFiltrados[index]),
-                        ),
-                ),
-              ),
-            ],
-          );
-        },
+      body: _catalogo == null
+          ? const Center(child: CircularProgressIndicator(color: D.azul600))
+          : _buildConteudo(idsObtidos),
+    );
+  }
+
+  Widget _buildConteudo(Set<int> idsObtidos) {
+    final niveis = {for (final b in _catalogo!) b.nomeNivel}.toList()..sort();
+    final filtrados = _aplicarFiltro(_catalogo!);
+
+    return RefreshIndicator(
+      color: D.azul600,
+      onRefresh: _carregar,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(D.e4, D.e2, D.e4, D.e5),
+        children: [
+          _buildBarraPesquisa(),
+          const SizedBox(height: D.e3),
+          _buildFiltroNivel(niveis),
+          const SizedBox(height: D.e2),
+          Text('${filtrados.length} badge${filtrados.length == 1 ? '' : 's'} disponíve${filtrados.length == 1 ? 'l' : 'is'}',
+              style: D.legenda),
+          const SizedBox(height: D.e3),
+          if (filtrados.isEmpty)
+            CardSimples(
+              child: Center(child: Text('Nenhum badge encontrado.', style: D.legenda)),
+            )
+          else
+            for (final badge in filtrados) _buildCardCatalogo(badge, idsObtidos.contains(badge.id)),
+        ],
       ),
     );
   }
 
-  // ─── AppBar ───────────────────────────────────────────────────────────────
-
-AppBar _buildAppBar() {
+  AppBar _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       elevation: 0,
+      centerTitle: true,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
         onPressed: () => context.pop(),
       ),
-      title: const Text(
-        'BADGES',
-        style: TextStyle(
-          color: _azulPrimario,
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-          letterSpacing: 1.2,
-        ),
-      ),
-      centerTitle: true,
+      title: const Text('CATÁLOGO', style: D.tituloPagina),
       actions: [
         IconButton(
           icon: SvgPicture.asset(
             'assets/icons/notificacoesprimaria.svg',
             width: 24,
             height: 24,
-            colorFilter: const ColorFilter.mode(
-                AppConstants.corPrimaria, BlendMode.srcIn),
+            colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn),
           ),
           onPressed: () => context.push(AppConstants.routeNotificacoes),
         ),
       ],
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(color: Colors.grey.shade200, height: 1),
-      ),
     );
   }
 
-  // ─── Barra de pesquisa ────────────────────────────────────────────────────
-
   Widget _buildBarraPesquisa() {
     return Container(
-      height: 40,
       decoration: BoxDecoration(
-        color: _cinzaClaro,
-        borderRadius: BorderRadius.circular(8),
+        color: D.superficie,
+        borderRadius: BorderRadius.circular(D.rMd),
+        boxShadow: D.elev1,
       ),
       child: TextField(
         controller: _pesquisaController,
         onChanged: (texto) => setState(() => _queryPesquisa = texto),
         decoration: InputDecoration(
           hintText: 'Procura...',
-          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-          prefixIcon: Icon(Icons.search, color: Colors.grey.shade400, size: 20),
+          hintStyle: const TextStyle(color: D.tinta30, fontSize: 14),
+          prefixIcon: const Icon(Icons.search, color: D.tinta30, size: 20),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          contentPadding: const EdgeInsets.symmetric(vertical: D.e3),
           suffixIcon: _pesquisaController.text.isNotEmpty
               ? IconButton(
-                  icon: Icon(Icons.clear, size: 18, color: Colors.grey.shade400),
+                  icon: const Icon(Icons.clear, size: 18, color: D.tinta30),
                   onPressed: () {
                     _pesquisaController.clear();
                     setState(() => _queryPesquisa = '');
@@ -177,122 +169,98 @@ AppBar _buildAppBar() {
     );
   }
 
-  // ─── Estado vazio ─────────────────────────────────────────────────────────
-
-  Widget _buildEstadoVazio() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.workspace_premium_outlined,
-              color: Colors.grey.shade300, size: 64),
-          const SizedBox(height: 16),
-          Text(
-            _pesquisaController.text.isNotEmpty
-                ? 'Nenhum badge encontrado'
-                : 'Ainda não tens badges conquistados',
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-          ),
-        ],
+  Widget _buildFiltroNivel(List<String> niveis) {
+    final opcoes = ['todos', ...niveis];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: opcoes.map((nivel) {
+          final ativo = _nivelSelecionado == nivel;
+          return Padding(
+            padding: const EdgeInsets.only(right: D.e2),
+            child: GestureDetector(
+              onTap: () => setState(() => _nivelSelecionado = nivel),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: D.e3, vertical: 6),
+                decoration: BoxDecoration(
+                  color: ativo ? D.azul600 : D.superficie,
+                  borderRadius: BorderRadius.circular(999),
+                  boxShadow: ativo ? null : D.elev1,
+                ),
+                child: Text(
+                  nivel == 'todos' ? 'Todos' : nivel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: ativo ? Colors.white : D.tinta30,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
 
-  // ─── Card de badge ────────────────────────────────────────────────────────
+  Widget _buildCardCatalogo(BadgeRegular badge, bool jaObtido) {
+    final cor = BadgeUtils.corDoNivel(badge.nomeNivel);
+    final letra = badge.nomeNivel.isNotEmpty ? badge.nomeNivel[0].toUpperCase() : '?';
 
-  Widget _buildBadgeCard(BadgeUtilizador badge) {
-    return GestureDetector(
-      onTap: () => context.push(AppConstants.routeDetalheBadge, extra: badge),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: D.e2),
+      child: CardSimples(
+        onTap: () => context.push(AppConstants.routeDetalheCatalogo, extra: badge),
         child: Row(
           children: [
-            _buildIconeBadge(badge),
-            const SizedBox(width: 12),
+            _buildIconeBadge(badge, letra, cor, jaObtido),
+            const SizedBox(width: D.e3),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    badge.nomeBadge,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  if (badge.nomeNivel != null) ...[
-                    const SizedBox(height: 2),
-                    Text(badge.nomeNivel!,
-                        style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade500)),
-                  ],
-                  const SizedBox(height: 4),
-                  Text(
-                    'Conquistado: ${BadgeUtils.formatarData(badge.dataAtribuicao)}',
-                    style:
-                        TextStyle(fontSize: 11, color: Colors.grey.shade500),
-                  ),
-                  Text(
-                    'Válido até: ${BadgeUtils.formatarData(badge.dataExpiracao)}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: badge.estaProximoDeExpirar
-                          ? Colors.orange.shade400
-                          : Colors.grey.shade500,
-                    ),
-                  ),
+                  Text(badge.nome, style: D.tituloCard),
+                  const SizedBox(height: 2),
+                  Text('${badge.nomeNivel} · ${badge.nomeArea}', style: D.legenda),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
+            if (jaObtido)
+              const ChipEstado(texto: 'Obtido', cor: D.ok, corFundo: D.okBg)
+            else
+              Column(
+                children: [
+                  Text('${badge.pontos ?? 0}',
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: D.azul600)),
+                  Text('pontos', style: D.legenda.copyWith(fontSize: 10)),
+                ],
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildIconeBadge(BadgeUtilizador badge) {
-    final cor = BadgeUtils.corDoNivel(badge.tipoNivel);
-    final letra = badge.tipoNivel?.isNotEmpty == true
-        ? badge.tipoNivel![0].toUpperCase()
-        : '?';
-
+  Widget _buildIconeBadge(BadgeRegular badge, String letra, Color cor, bool jaObtido) {
+    final corFinal = jaObtido ? D.ok : cor;
     if (badge.urlImagem != null) {
       return Container(
         width: 44,
         height: 44,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: cor, width: 2),
-        ),
+        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: corFinal, width: 2)),
         child: ClipOval(
           child: Image.network(
-            badge.urlImagem!,
+            AppConstants.resolverUrlFicheiro(badge.urlImagem)!,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) =>
-                _buildIconeLetra(letra, cor),
+            errorBuilder: (context, error, stackTrace) => _buildIconeLetra(letra, corFinal, jaObtido),
           ),
         ),
       );
     }
-    return _buildIconeLetra(letra, cor);
+    return _buildIconeLetra(letra, corFinal, jaObtido);
   }
 
-  Widget _buildIconeLetra(String letra, Color cor) {
+  Widget _buildIconeLetra(String letra, Color cor, bool jaObtido) {
     return Container(
       width: 44,
       height: 44,
@@ -302,11 +270,9 @@ AppBar _buildAppBar() {
         border: Border.all(color: cor, width: 2),
       ),
       child: Center(
-        child: Text(
-          letra,
-          style: TextStyle(
-              color: cor, fontWeight: FontWeight.bold, fontSize: 16),
-        ),
+        child: jaObtido
+            ? const Icon(Icons.check, color: D.ok, size: 20)
+            : Text(letra, style: TextStyle(color: cor, fontWeight: FontWeight.bold, fontSize: 16)),
       ),
     );
   }

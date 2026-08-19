@@ -21,6 +21,10 @@ class Consultor {
   final int? totalPontos;
   final int? posicaoRanking;
 
+  //Estado da conta — controlam o fluxo pós-login (ver login_screen.dart)
+  final bool aceitouRgpd;   // false => tem de passar pelo ecrã de aceitação do RGPD
+  final bool primeiroAcesso; // true  => tem de trocar a password temporária
+
   // Construtor
   Consultor({
     required this.id, //colocar required nos campos obrigatórios
@@ -38,6 +42,8 @@ class Consultor {
     this.nomeLearningPath,
     this.totalPontos,
     this.posicaoRanking,
+    this.aceitouRgpd = true,
+    this.primeiroAcesso = false,
   });
 
   //fromJson - converto do formato json da API para o objeto
@@ -61,6 +67,8 @@ class Consultor {
       nomeLearningPath: json['nomeLearningPath'],
       totalPontos: json['totalPontos'],
       posicaoRanking: json['posicaoRanking'],
+      aceitouRgpd: json['aceitouRgpd'] as bool? ?? true,
+      primeiroAcesso: json['primeiroAcesso'] as bool? ?? false,
     );
   }
 
@@ -82,6 +90,8 @@ class Consultor {
       'nomeServiceLine': nomeServiceLine,
       'idLearningPath': idLearningPath,
       'nomeLearningPath': nomeLearningPath,
+      'aceitouRgpd': aceitouRgpd,
+      'primeiroAcesso': primeiroAcesso,
     };
   }
 }

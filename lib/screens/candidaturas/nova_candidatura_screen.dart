@@ -7,7 +7,10 @@ import 'package:pint_mobile/models/evidencia.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/utils/design.dart';
+import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:pint_mobile/widgets/requisito_evidencia_tile.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pint_mobile/screens/camera/camera_screen.dart';
 
@@ -17,7 +20,11 @@ enum _Fase { selecionarBadge, carregarEvidencias }
 class NovaCandidatura extends StatefulWidget {
   /// Quando não null, o ecrã abre directamente no modo "continuar rascunho".
   final Map<String, dynamic>? rascunho;
-  const NovaCandidatura({super.key, this.rascunho});
+  /// Quando não null (e sem rascunho), o ecrã salta logo para a fase de
+  /// evidências com este badge — usado quando se vem do Catálogo e já se
+  /// sabe exatamente a que badge se quer candidatar.
+  final BadgeRegular? badgePreselecionado;
+  const NovaCandidatura({super.key, this.rascunho, this.badgePreselecionado});
   @override
   State<NovaCandidatura> createState() => _NovaCandidaturaState();
 }
@@ -39,6 +46,9 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
   // Caso contrário, é uma candidatura nova (fluxo original).
   bool _modoRascunho = false;
 
+  final TextEditingController _pesquisaController = TextEditingController();
+  String _query = '';
+
   @override
   void initState() {
     super.initState();
@@ -46,9 +56,18 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     // Evita depender de addPostFrameCallback + GoRouterState.of, que pode resolver null.
     if (widget.rascunho != null) {
       _carregarRascunho(widget.rascunho!);
+    } else if (widget.badgePreselecionado != null) {
+      _badgeSelecionado = widget.badgePreselecionado;
+      _criarCandidatura();
     } else {
       _carregarBadges();
     }
+  }
+
+  @override
+  void dispose() {
+    _pesquisaController.dispose();
+    super.dispose();
   }
 
   Future<void> _carregarBadges() async {
@@ -60,7 +79,6 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
   // idBadgeRegular, lê os requisitos e as evidências já guardadas, e salta
   // diretamente para a fase de carregamento de evidências.
   Future<void> _carregarRascunho(Map<String, dynamic> rascunho) async {
-    // Lê com cast seguro — o endpoint /rascunhos pode devolver int ou String
     final numCandidatura = (rascunho['numCandidatura'] ?? rascunho['num_candidatura']) as int?;
     final idBadge = (rascunho['idBadgeRegular'] ?? rascunho['id_badge_regular']) as int?;
 
@@ -72,7 +90,6 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
       return;
     }
 
-    // Vai buscar o badge ao catálogo local
     final badges = await DatabaseService.instance.getCatalogoBadges();
     BadgeRegular? badge;
     for (final b in badges) {
@@ -86,11 +103,10 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
 
     if (badge == null) {
       _mostrarErro('Não foi possível carregar este rascunho.');
-      context.pop();
+      setState(() => _isLoadingBadges = false);
       return;
     }
 
-    // Carrega requisitos do badge e evidências já submetidas
     final requisitos = await DatabaseService.instance.getRequisitos(idBadge);
     final evidencias = await DatabaseService.instance.getEvidencias(numCandidatura);
 
@@ -134,12 +150,11 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
       type: FileType.custom,
       allowedExtensions: ['pdf', 'zip', 'jpg', 'jpeg', 'png'],
     );
-    if (resultado == null || resultado.files.single.path == null) return;
-    final caminho = resultado.files.single.path!;
+    final caminho = resultado?.files.single.path;
+    if (caminho == null) return;
     setState(() => _ficheirosPendentes[req.id] = caminho);
     await _uploadEvidencia(req, caminho);
   }
-
 
   // Permite tirar uma foto com a câmara como evidência
   Future<void> _tirarFoto(Requisito req) async {
@@ -193,27 +208,16 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Cancelar candidatura?',
-          style: TextStyle(fontWeight: FontWeight.bold, color: AppConstants.corPrimaria),
-        ),
+        title: const Text('Cancelar candidatura?', style: TextStyle(fontWeight: FontWeight.bold, color: D.azul600)),
         content: const Text(
-          'Esta acção não pode ser desfeita. As evidências carregadas serão removidas.',
+          'Esta ação não pode ser desfeita. As evidências carregadas serão removidas.',
           style: TextStyle(fontSize: 13),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Não', style: TextStyle(color: Colors.black54)),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Não', style: TextStyle(color: D.tinta50))),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'Sim, cancelar',
-              style: TextStyle(color: AppConstants.corErro, fontWeight: FontWeight.bold),
-            ),
+            child: const Text('Sim, cancelar', style: TextStyle(color: D.erro, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -229,10 +233,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
 
     if (resultado.sucesso) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Candidatura cancelada.'),
-          backgroundColor: AppConstants.corSucesso,
-        ),
+        const SnackBar(content: Text('Candidatura cancelada.'), backgroundColor: D.ok),
       );
       context.go(AppConstants.routeCandidaturas);
     } else {
@@ -241,32 +242,38 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
   }
 
   void _mostrarErro(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: AppConstants.corErro));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: D.erro));
   }
+
   // Só permite submeter se todos os requisitos tiverem evidência carregada
   bool get _podeSubmeter {
     if (_requisitos.isEmpty) return true;
     return _requisitos.every((r) => _evidenciasGuardadas.containsKey(r.id));
   }
 
+  List<BadgeRegular> get _badgesFiltrados {
+    if (_query.isEmpty) return _badges;
+    final q = _query.toLowerCase();
+    return _badges.where((b) =>
+        b.nome.toLowerCase().contains(q) ||
+        b.nomeNivel.toLowerCase().contains(q) ||
+        b.nomeArea.toLowerCase().contains(q)).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: D.fundo,
       drawer: const CustomDrawer(),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        leading: Builder(
-          builder: (ctx) => IconButton(
-            icon: SvgPicture.asset('assets/icons/drawerprimario.svg', height: 20,
-                colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
+          onPressed: () => context.pop(),
         ),
-        title: const Text('Candidaturas',
-            style: TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.bold, fontSize: 20)),
+        title: Text(_modoRascunho ? 'CONTINUAR RASCUNHO' : 'NOVA CANDIDATURA', style: D.tituloPagina),
         actions: [
           IconButton(
             icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
@@ -275,101 +282,72 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.chevron_left, color: AppConstants.corPrimaria),
-                ),
-                // Título dinâmico
-                Text(
-                  _modoRascunho ? 'Continuar Rascunho' : 'Nova Candidatura',
-                  style: const TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.w600, fontSize: 14),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: Colors.black12),
-          Expanded(child: _fase == _Fase.selecionarBadge ? _buildFaseSelecionarBadge() : _buildFaseEvidencias()),
-        ],
-      ),
+      body: _fase == _Fase.selecionarBadge ? _buildFaseSelecionarBadge() : _buildFaseEvidencias(),
     );
   }
 
   // Fase 1: lista de badges disponíveis para o utilizador escolher
   Widget _buildFaseSelecionarBadge() {
-    if (_isLoadingBadges) return const Center(child: CircularProgressIndicator(color: AppConstants.corPrimaria));
+    if (_isLoadingBadges) return const Center(child: CircularProgressIndicator(color: D.azul600));
     return Column(
       children: [
-        if (_badgeSelecionado != null)
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
-              border: Border.all(color: Colors.black.withValues(alpha: 0.06), width: 1),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(D.e4, D.e3, D.e4, D.e2),
+          child: Container(
+            decoration: BoxDecoration(color: D.superficie, borderRadius: BorderRadius.circular(D.rMd), boxShadow: D.elev1),
+            child: TextField(
+              controller: _pesquisaController,
+              onChanged: (v) => setState(() => _query = v),
+              decoration: const InputDecoration(
+                hintText: 'Procurar badge...',
+                hintStyle: TextStyle(color: D.tinta30, fontSize: 14),
+                prefixIcon: Icon(Icons.search, color: D.tinta30, size: 20),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(vertical: D.e3),
+              ),
             ),
-            child: Column(children: [
-              _linhaInfo('Badge:', _badgeSelecionado!.nome),
-              _linhaInfo('Service line:', _badgeSelecionado!.nomeServiceLine),
-              _linhaInfo('Área:', _badgeSelecionado!.nomeArea),
-              _linhaInfo('Nível:', _badgeSelecionado!.nomeNivel),
-            ]),
           ),
+        ),
         Expanded(
-          child: _badges.isEmpty
-              ? const Center(child: Text('Sem badges no catálogo.', style: TextStyle(color: Colors.grey)))
-              : ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: _badges.length,
-                  separatorBuilder: (ctx, i) => const SizedBox(height: 8),
+          child: _badgesFiltrados.isEmpty
+              ? Center(child: Text('Nenhum badge encontrado.', style: D.legenda))
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(D.e4, D.e1, D.e4, D.e2),
+                  itemCount: _badgesFiltrados.length,
                   itemBuilder: (context, i) {
-                    final b = _badges[i];
+                    final b = _badgesFiltrados[i];
                     final selecionado = _badgeSelecionado?.id == b.id;
-                    return GestureDetector(
-                      onTap: () => setState(() => _badgeSelecionado = b),
-                      child: Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: selecionado ? AppConstants.corPrimaria.withValues(alpha: 0.06) : Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          // Sombra muito subtil para um look clean
-                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
-                          border: Border.all(
-                            color: selecionado ? AppConstants.corPrimaria : Colors.black.withValues(alpha: 0.06),
-                            width: selecionado ? 1.5 : 1,
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: D.e2),
+                      child: GestureDetector(
+                        onTap: () => setState(() => _badgeSelecionado = b),
+                        child: Container(
+                          padding: const EdgeInsets.all(D.e3 + 2),
+                          decoration: BoxDecoration(
+                            color: selecionado ? D.azul100 : D.superficie,
+                            borderRadius: BorderRadius.circular(D.rMd),
+                            boxShadow: D.elev1,
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            // Ícone de medalha em tom azul (paleta da app) em vez de laranja
-                            Container(
-                              width: 40, height: 40,
-                              decoration: BoxDecoration(
-                                color: AppConstants.corPrimaria.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(10),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 40, height: 40,
+                                decoration: BoxDecoration(color: D.azul100, borderRadius: BorderRadius.circular(D.rSm)),
+                                child: const Icon(Icons.military_tech, color: D.azul600, size: 22),
                               ),
-                              child: const Icon(Icons.military_tech, color: AppConstants.corPrimaria, size: 22),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(b.nome, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                                  Text('${b.nomeNivel} · ${b.nomeArea}', style: const TextStyle(fontSize: 11, color: Colors.black45)),
-                                ],
+                              const SizedBox(width: D.e3),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(b.nome, style: D.tituloCard),
+                                    Text('${b.nomeNivel} · ${b.nomeArea}', style: D.legenda),
+                                  ],
+                                ),
                               ),
-                            ),
-                            if (selecionado)
-                              const Icon(Icons.check_circle, color: AppConstants.corPrimaria, size: 20),
-                          ],
+                              if (selecionado) const Icon(Icons.check_circle, color: D.azul600, size: 20),
+                            ],
+                          ),
                         ),
                       ),
                     );
@@ -377,17 +355,17 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
                 ),
         ),
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(D.e4),
           child: SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _badgeSelecionado != null && !_isLoadingBadges ? _criarCandidatura : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppConstants.corPrimaria,
+                backgroundColor: D.azul600,
                 foregroundColor: Colors.white,
-                disabledBackgroundColor: Colors.black12,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                disabledBackgroundColor: D.fundoAlt,
+                padding: const EdgeInsets.symmetric(vertical: D.e3 + 2),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
               ),
               child: _isLoadingBadges
                   ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
@@ -403,72 +381,71 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
   Widget _buildFaseEvidencias() {
     return Column(
       children: [
-        Container(
-          margin: const EdgeInsets.all(16),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
-            border: Border.all(color: Colors.black.withValues(alpha: 0.06), width: 1),
-          ),
-          child: Column(children: [
-            _linhaInfo('Badge:', _badgeSelecionado!.nome),
-            _linhaInfo('Service line:', _badgeSelecionado!.nomeServiceLine),
-            _linhaInfo('Área:', _badgeSelecionado!.nomeArea),
-            _linhaInfo('Nível:', _badgeSelecionado!.nomeNivel),
-          ]),
-        ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text('REQUISITOS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black45, letterSpacing: 0.5)),
-          ),
-        ),
-        const SizedBox(height: 8),
         Expanded(
-          child: _requisitos.isEmpty
-              ? const Center(child: Text('Este badge não tem requisitos definidos.', style: TextStyle(color: Colors.grey)))
-              : ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  itemCount: _requisitos.length,
-                  separatorBuilder: (ctx, i) => const SizedBox(height: 10),
-                  itemBuilder: (context, i) => _buildCardRequisito(_requisitos[i]),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(D.e4, D.e3, D.e4, D.e2),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CardSimples(
+                  child: Column(children: [
+                    _linhaInfo('Badge:', _badgeSelecionado!.nome),
+                    _linhaInfo('Service line:', _badgeSelecionado!.nomeServiceLine),
+                    _linhaInfo('Área:', _badgeSelecionado!.nomeArea),
+                    _linhaInfo('Nível:', _badgeSelecionado!.nomeNivel),
+                  ]),
                 ),
+                const SizedBox(height: D.e4),
+                const Text('REQUISITOS', style: D.etiqueta),
+                const SizedBox(height: D.e2),
+                if (_requisitos.isEmpty)
+                  CardSimples(child: Center(child: Text('Este badge não tem requisitos definidos.', style: D.legenda)))
+                else
+                  for (final req in _requisitos)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: D.e2),
+                      child: RequisitoEvidenciaTile(
+                        requisito: req,
+                        temEvidencia: _evidenciasGuardadas.containsKey(req.id),
+                        emUpload: _uploading[req.id] == true,
+                        nomeFicheiro: _evidenciasGuardadas[req.id]?.pathFicheiro.split('/').last ??
+                            _ficheirosPendentes[req.id]?.split('/').last,
+                        onEscolherFicheiro: () => _escolherFicheiro(req),
+                        onTirarFoto: () => _tirarFoto(req),
+                      ),
+                    ),
+              ],
+            ),
+          ),
         ),
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(D.e4),
           child: Row(
             children: [
               Expanded(
                 child: OutlinedButton(
                   onPressed: (_isSubmitting || _isCancelling) ? null : _cancelarCandidatura,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppConstants.corErro,
-                    side: const BorderSide(color: AppConstants.corErro),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    foregroundColor: D.erro,
+                    side: const BorderSide(color: D.erro),
+                    padding: const EdgeInsets.symmetric(vertical: D.e3 + 2),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
                   ),
                   child: _isCancelling
-                      ? const SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppConstants.corErro),
-                        )
+                      ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: D.erro))
                       : const Text('Cancelar', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: D.e3),
               Expanded(
                 child: ElevatedButton(
                   onPressed: (_podeSubmeter && !_isSubmitting && !_isCancelling) ? _submeter : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppConstants.corPrimaria,
+                    backgroundColor: D.azul600,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: Colors.black12,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    disabledBackgroundColor: D.fundoAlt,
+                    padding: const EdgeInsets.symmetric(vertical: D.e3 + 2),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
                   ),
                   child: _isSubmitting
                       ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
@@ -482,112 +459,14 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     );
   }
 
-  // Card de cada requisito: mostra o estado da evidência e os botões de upload/câmara
-  Widget _buildCardRequisito(Requisito req) {
-    final temEvidencia = _evidenciasGuardadas.containsKey(req.id);
-    final emUpload = _uploading[req.id] == true;
-    final nomeFicheiro = temEvidencia
-        ? _evidenciasGuardadas[req.id]!.pathFicheiro.split('/').last
-        : (_ficheirosPendentes.containsKey(req.id) ? _ficheirosPendentes[req.id]!.split('/').last : null);
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        // Sombra subtil para um look clean
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
-        border: Border.all(
-          color: temEvidencia
-              ? AppConstants.corSucesso.withValues(alpha: 0.4)
-              : Colors.black.withValues(alpha: 0.06),
-          width: temEvidencia ? 1 : 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(req.nome, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-          if (req.descricao != null && req.descricao!.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Text(req.descricao!, style: const TextStyle(fontSize: 11, color: Colors.black38)),
-          ],
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Container(
-                width: 44, height: 44,
-                decoration: BoxDecoration(
-                  color: temEvidencia ? AppConstants.corSucesso.withValues(alpha: 0.08) : Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: emUpload
-                    ? const Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2, color: AppConstants.corPrimaria))
-                    : Icon(
-                        temEvidencia ? Icons.check_circle : Icons.insert_drive_file_outlined,
-                        color: temEvidencia ? AppConstants.corSucesso : Colors.black26,
-                        size: 24,
-                      ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  nomeFicheiro ?? 'Clica para carregar ${req.nome}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11, color: nomeFicheiro != null ? Colors.black54 : Colors.black38),
-                ),
-              ),
-              // Botão upload ficheiro
-              GestureDetector(
-                onTap: emUpload ? null : () => _escolherFicheiro(req),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: temEvidencia
-                        ? Colors.black.withValues(alpha: 0.05)
-                        : AppConstants.corPrimaria,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    temEvidencia ? Icons.refresh : Icons.upload_outlined,
-                    size: 18,
-                    color: temEvidencia ? Colors.black54 : Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              // Botão câmara — image_picker (Aula 11)
-              GestureDetector(
-                onTap: emUpload ? null : () => _tirarFoto(req),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppConstants.corSecundaria.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.camera_alt_outlined,
-                    size: 18,
-                    color: AppConstants.corSecundaria,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _linhaInfo(String label, String valor) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 90, child: Text(label, style: const TextStyle(fontSize: 11, color: Colors.black45))),
-          Expanded(child: Text(valor, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black87))),
+          SizedBox(width: 100, child: Text(label, style: D.legenda)),
+          Expanded(child: Text(valor, style: D.tituloCard)),
         ],
       ),
     );

@@ -5,8 +5,16 @@ import 'package:pint_mobile/models/candidatura_badge.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/providers/candidatura_provider.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/utils/design.dart';
+import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
+
+// ECRÃ HISTÓRICO DE CANDIDATURAS
+// Paridade com a web (Pedidos Finalizados): pesquisa, filtro por nível e
+// separador Todos/Aprovados/Rejeitados — nada disto existia.
+
+enum _TabHistorico { todos, aprovados, rejeitados }
 
 class HistoricoCandidaturas extends ConsumerStatefulWidget {
   const HistoricoCandidaturas({super.key});
@@ -16,172 +24,203 @@ class HistoricoCandidaturas extends ConsumerStatefulWidget {
 }
 
 class _HistoricoCandidaturasState extends ConsumerState<HistoricoCandidaturas> {
+  final TextEditingController _pesquisaController = TextEditingController();
+  String _query = '';
+  String _nivel = 'todos';
+  _TabHistorico _tab = _TabHistorico.todos;
 
   @override
   void initState() {
     super.initState();
-    // Quando chega uma actualização, invalida o provider para recarregar a lista
-    atualizadorDados.stream.listen((_) {
-      ref.invalidate(candidaturasProvider);
-    });
+    atualizadorDados.stream.listen((_) => ref.invalidate(candidaturasProvider));
+  }
+
+  @override
+  void dispose() {
+    _pesquisaController.dispose();
+    super.dispose();
+  }
+
+  List<CandidaturaBadge> _aplicarFiltro(List<CandidaturaBadge> lista) {
+    var filtrada = lista;
+    if (_nivel != 'todos') {
+      filtrada = filtrada.where((c) => c.nomeNivel == _nivel).toList();
+    }
+    if (_tab == _TabHistorico.aprovados) {
+      filtrada = filtrada.where((c) => c.aprovada).toList();
+    } else if (_tab == _TabHistorico.rejeitados) {
+      filtrada = filtrada.where((c) => c.rejeitada).toList();
+    }
+    if (_query.isNotEmpty) {
+      final q = _query.toLowerCase();
+      filtrada = filtrada.where((c) => c.nomeBadge.toLowerCase().contains(q)).toList();
+    }
+    return filtrada;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: D.fundo,
       drawer: const CustomDrawer(),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        leading: Builder(
-          builder: (ctx) => IconButton(
-            icon: SvgPicture.asset('assets/icons/drawerprimario.svg', height: 20,
-                colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
-          ),
-        ),
-        title: const Text('Candidaturas',
-            style: TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.bold, fontSize: 20)),
-        actions: [
-          IconButton(
-            icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
-                colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
-            onPressed: () => context.push(AppConstants.routeNotificacoes),
-          ),
-        ],
-      ),
-      // Riverpod - filtra apenas as candidaturas concluídas (aprovadas ou rejeitadas)
+      appBar: _buildAppBar(),
       body: ref.watch(candidaturasProvider).when(
-        loading: () => const Center(child: CircularProgressIndicator(color: AppConstants.corPrimaria)),
+        loading: () => const Center(child: CircularProgressIndicator(color: D.azul600)),
         error: (err, _) => Center(child: Text('Erro: $err')),
         data: (todas) {
-          // Filtra apenas as candidaturas que já estão concluídas
           final historico = todas.where((c) => c.estaConcluida).toList();
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: const Icon(Icons.chevron_left, color: AppConstants.corPrimaria),
-                    ),
-                    const Text('Histórico de Candidaturas',
-                        style: TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.w600, fontSize: 14)),
-                  ],
-                ),
-              ),
-              const Divider(height: 1, color: Colors.black12),
-              Expanded(
-                child: RefreshIndicator(
-                  color: AppConstants.corPrimaria,
-                  // Sincroniza com a API e invalida o provider para actualizar a lista
-                  onRefresh: () async {
-                    await APIService.instance.sincronizarCandidaturas();
-                    ref.invalidate(candidaturasProvider);
-                  },
-                  child: historico.isEmpty
-                      ? ListView(children: const [
-                          SizedBox(height: 80),
-                          Center(child: Column(children: [
-                            Icon(Icons.history, size: 56, color: Colors.grey),
-                            SizedBox(height: 10),
-                            Text('Ainda não tens candidaturas concluídas.',
-                                style: TextStyle(color: Colors.grey, fontSize: 14)),
-                          ])),
-                        ])
-                      : ListView.separated(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          itemCount: historico.length,
-                          separatorBuilder: (ctx, i) => const SizedBox(height: 8),
-                          itemBuilder: (context, i) => _CardHistorico(
-                            candidatura: historico[i],
-                            onTap: () => context.push(
-                              AppConstants.routeDetalheCandidatura,
-                              extra: historico[i].numCandidatura,
-                            ).then((_) => ref.invalidate(candidaturasProvider)),
-                          ),
-                        ),
-                ),
-              ),
-            ],
+          final niveis = {for (final c in historico) if (c.nomeNivel != null) c.nomeNivel!}.toList()..sort();
+          final filtradas = _aplicarFiltro(historico);
+
+          return RefreshIndicator(
+            color: D.azul600,
+            onRefresh: () async {
+              await APIService.instance.sincronizarCandidaturas();
+              ref.invalidate(candidaturasProvider);
+            },
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(D.e4, D.e2, D.e4, D.e5),
+              children: [
+                _buildBarraPesquisa(),
+                const SizedBox(height: D.e3),
+                if (niveis.isNotEmpty) ...[
+                  _buildFiltroNivel(niveis),
+                  const SizedBox(height: D.e2),
+                ],
+                _buildTabsPills(),
+                const SizedBox(height: D.e3),
+                if (filtradas.isEmpty)
+                  CardSimples(child: Center(child: Text('Sem candidaturas encontradas.', style: D.legenda)))
+                else
+                  for (final c in filtradas) _buildCard(c),
+              ],
+            ),
           );
         },
       ),
     );
   }
-}
 
-// Card de cada candidatura do histórico: mostra o resultado final (Aprovado/Rejeitado)
-class _CardHistorico extends StatelessWidget {
-  final CandidaturaBadge candidatura;
-  final VoidCallback onTap;
-
-  const _CardHistorico({required this.candidatura, required this.onTap});
-
-  String _fmt(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year.toString().substring(2)}';
-
-  @override
-  Widget build(BuildContext context) {
-    final aprovada = candidatura.aprovada;
-    // Verde se aprovada, vermelho se rejeitada
-    final corDecisao = aprovada ? AppConstants.corSucesso : AppConstants.corErro;
-    final textoDecisao = aprovada ? 'Aprovado' : 'Rejeitado';
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
+  AppBar _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      centerTitle: true,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
+        onPressed: () => context.pop(),
+      ),
+      title: const Text('HISTÓRICO', style: D.tituloPagina),
+      actions: [
+        IconButton(
+          icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
+              colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
+          onPressed: () => context.push(AppConstants.routeNotificacoes),
         ),
+      ],
+    );
+  }
+
+  Widget _buildBarraPesquisa() {
+    return Container(
+      decoration: BoxDecoration(color: D.superficie, borderRadius: BorderRadius.circular(D.rMd), boxShadow: D.elev1),
+      child: TextField(
+        controller: _pesquisaController,
+        onChanged: (v) => setState(() => _query = v),
+        decoration: InputDecoration(
+          hintText: 'Pesquisar badge...',
+          hintStyle: const TextStyle(color: D.tinta30, fontSize: 14),
+          prefixIcon: const Icon(Icons.search, color: D.tinta30, size: 20),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: D.e3),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFiltroNivel(List<String> niveis) {
+    final opcoes = ['todos', ...niveis];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: opcoes.map((n) {
+          final ativo = _nivel == n;
+          return Padding(
+            padding: const EdgeInsets.only(right: D.e2),
+            child: GestureDetector(
+              onTap: () => setState(() => _nivel = n),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: D.e3, vertical: 6),
+                decoration: BoxDecoration(
+                  color: ativo ? D.azul600 : D.superficie,
+                  borderRadius: BorderRadius.circular(999),
+                  boxShadow: ativo ? null : D.elev1,
+                ),
+                child: Text(n == 'todos' ? 'Nível: Todos' : n,
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: ativo ? Colors.white : D.tinta30)),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildTabsPills() {
+    final tabs = {
+      _TabHistorico.todos: 'Todos',
+      _TabHistorico.aprovados: 'Aprovados',
+      _TabHistorico.rejeitados: 'Rejeitados',
+    };
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(color: D.superficie, borderRadius: BorderRadius.circular(D.rSm), boxShadow: D.elev1),
+      child: Row(
+        children: tabs.entries.map((e) {
+          final ativo = _tab == e.key;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _tab = e.key),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(color: ativo ? D.azul600 : Colors.transparent, borderRadius: BorderRadius.circular(D.rSm - 2)),
+                child: Text(e.value, textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: ativo ? Colors.white : D.tinta30)),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildCard(CandidaturaBadge c) {
+    final aprovada = c.aprovada;
+    final cor = aprovada ? D.ok : D.erro;
+    final corFundo = aprovada ? D.okBg : D.erroBg;
+    final texto = aprovada ? 'Aprovado' : 'Rejeitado';
+    final data = c.dataCriacao;
+    final dataFmt = '${data.day.toString().padLeft(2, '0')}-${data.month.toString().padLeft(2, '0')}-${data.year.toString().substring(2)}';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: D.e2),
+      child: CardSimples(
+        onTap: () => context
+            .push(AppConstants.routeDetalheCandidatura, extra: c.numCandidatura)
+            .then((_) => ref.invalidate(candidaturasProvider)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(candidatura.nomeBadge,
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.black87)),
-            if (candidatura.nomeNivel != null)
-              Text('Nível ${candidatura.nomeNivel!}',
-                  style: const TextStyle(fontSize: 12, color: Colors.black45)),
-            const SizedBox(height: 8),
+            Text(c.nomeBadge, style: D.tituloCard),
+            if (c.nomeNivel != null) Text('Nível ${c.nomeNivel!}', style: D.legenda),
+            const SizedBox(height: D.e2),
             Row(
               children: [
-                const Icon(Icons.calendar_today_outlined, size: 12, color: Colors.black38),
+                const Icon(Icons.calendar_today_outlined, size: 12, color: D.tinta30),
                 const SizedBox(width: 4),
-                Text('Criado em: ${_fmt(candidatura.dataCriacao)}',
-                    style: const TextStyle(fontSize: 11, color: Colors.black38)),
+                Text('Criado em: $dataFmt', style: D.legenda.copyWith(fontSize: 11)),
                 const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text('Fechado',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.black54)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: corDecisao.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(textoDecisao,
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: corDecisao)),
-                ),
+                ChipEstado(texto: texto, cor: cor, corFundo: corFundo),
               ],
             ),
           ],

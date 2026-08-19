@@ -3,7 +3,6 @@ import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_logo.dart'; // Import do nosso novo logo!
 import 'package:go_router/go_router.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/providers/utilizador_provider.dart';
 
@@ -22,7 +21,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   bool _obscurePassword = true;
   bool _manterSessao = false;
-  bool _aceitaPolitica = false;
   bool _isLoading = false;
 
   @override
@@ -33,18 +31,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   //Valida o formulário, chama a API e navega para o Dashboard ou Configuração Inicial
+  // Encaminhamento pós-login, pela mesma ordem da web (Login.jsx):
+  //   1. primeiroAcesso  -> trocar a password temporária
+  //   2. !aceitouRgpd    -> aceitar a Política de Privacidade
+  //   3. sem área/config -> configuração inicial
+  //   4. caso contrário  -> dashboard
   Future<void> _fazerLogin() async {
     if (!_formKey.currentState!.validate()) return;
-
-    if (!_aceitaPolitica) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Tem de aceitar a Política de Privacidade para continuar.'),
-          backgroundColor: AppConstants.corErro,
-        ),
-      );
-      return;
-    }
 
     setState(() => _isLoading = true);
 
@@ -54,83 +47,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       manterSessao: _manterSessao,
     );
 
-    if (mounted) setState(() => _isLoading = false);
+    if (!mounted) return;
+    setState(() => _isLoading = false);
 
-    if (resultado.sucesso) {
-      if (mounted) {
-        if (!resultado.configuracaoCompleta) {
-          //Força o provider a recarregar os dados do novo utilizador autenticado
-          ref.invalidate(utilizadorProvider);
-          context.go(AppConstants.routeConfiguracaoInicial);
-          APIService.instance.sincronizarTodos();
-          APIService.instance.iniciarSincronizacaoPeriodica(
-            const Duration(minutes: AppConstants.intervalSincronizacaoMinutos),
-          );
-        } else {
-          ref.invalidate(utilizadorProvider);
-          context.go(AppConstants.routeDashboard);
-          APIService.instance.sincronizarTodos();
-          APIService.instance.iniciarSincronizacaoPeriodica(
-            const Duration(minutes: AppConstants.intervalSincronizacaoMinutos),
-          );
-        }
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(resultado.erro ?? 'Erro desconhecido'),
-            backgroundColor: AppConstants.corErro,
-          ),
-        );
-      }
+    if (!resultado.sucesso) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(resultado.erro ?? 'Erro desconhecido'),
+          backgroundColor: AppConstants.corErro,
+        ),
+      );
+      return;
     }
+
+    // Força o provider a recarregar os dados do novo utilizador autenticado
+    ref.invalidate(utilizadorProvider);
+
+    if (resultado.primeiroAcesso) {
+      context.go(AppConstants.routeTrocarPasswordPrimeiroAcesso);
+      return;
+    }
+
+    if (!resultado.aceitouRgpd) {
+      context.go(AppConstants.routeAceitarRgpd);
+      return;
+    }
+
+    // Só a partir daqui vale a pena sincronizar — nos casos acima o
+    // utilizador ainda não tem acesso ao resto da app.
+    APIService.instance.sincronizarTodos();
+    APIService.instance.iniciarSincronizacaoPeriodica(
+      const Duration(minutes: AppConstants.intervalSincronizacaoMinutos),
+    );
+
+    context.go(resultado.configuracaoCompleta
+        ? AppConstants.routeDashboard
+        : AppConstants.routeConfiguracaoInicial);
   }
-  //Mostra um loading enquanto carrega a política da API, depois abre o diálogo
-void _mostrarPoliticaPrivacidade(BuildContext context) async {
-  final nav = Navigator.of(context);
-
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) => const Center(child: CircularProgressIndicator()),
-  );
-
-  final texto = await APIService.instance.getPoliticaPrivacidade();
-  if (!mounted) return;
-  nav.pop();
-
-  _mostrarDialogoPolitica(texto);
-}
-
-//Separado em método síncrono para evitar usar BuildContext após await
-void _mostrarDialogoPolitica(String? texto) {
-  showDialog(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Política de Privacidade e RGPD'),
-      content: SingleChildScrollView(
-        child: Text(
-          texto ?? 'Não foi possível carregar a política de privacidade.',
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Fechar'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            setState(() => _aceitaPolitica = true);
-            Navigator.pop(ctx);
-          },
-          child: const Text('Aceitar'),
-        ),
-      ],
-    ),
-  );
-}
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -196,42 +149,6 @@ void _mostrarDialogoPolitica(String? texto) {
                           activeColor: AppConstants.corPrimaria,
                         ),
                         const Expanded(child: Text('Manter sessão iniciada', style: TextStyle(fontSize: 12))),
-                      ],
-                    ),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Checkbox(
-                          value: _aceitaPolitica,
-                          onChanged: (value) => setState(() => _aceitaPolitica = value!),
-                          activeColor: AppConstants.corPrimaria,
-                        ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 12.0),
-                            child: RichText(
-                              text: TextSpan(
-                                style: const TextStyle(fontSize: 12, color: Colors.black87),
-                                children: [
-                                  const TextSpan(text: 'Li e aceito a '),
-                                  TextSpan(
-                                    text: 'Política de Privacidade',
-                                    style: const TextStyle(
-                                      color: AppConstants.corPrimaria,
-                                      fontWeight: FontWeight.bold,
-                                      decoration: TextDecoration.underline,
-                                    ),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () => _mostrarPoliticaPrivacidade(context),
-                                  ),
-                                  const TextSpan(
-                                    text: ' e autorizo o tratamento dos meus dados pessoais para efeitos de certificação profissional.',
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 16),

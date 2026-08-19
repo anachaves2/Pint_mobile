@@ -87,6 +87,8 @@ class DatabaseService {
         idArea INTEGER,
         nomeArea TEXT,
         nomeServiceLine TEXT,
+        aceitouRgpd INTEGER NOT NULL DEFAULT 1,
+        primeiroAcesso INTEGER NOT NULL DEFAULT 0,
         idLearningPath INTEGER,
         nomeLearningPath TEXT,
         totalPontos INTEGER,
@@ -269,6 +271,14 @@ class DatabaseService {
         'ALTER TABLE ${AppConstants.tableUsers} ADD COLUMN nomeServiceLine TEXT',
       );
     }
+    if (oldVersion < 4) {
+      await db.execute(
+        'ALTER TABLE ${AppConstants.tableUsers} ADD COLUMN aceitouRgpd INTEGER NOT NULL DEFAULT 1',
+      );
+      await db.execute(
+        'ALTER TABLE ${AppConstants.tableUsers} ADD COLUMN primeiroAcesso INTEGER NOT NULL DEFAULT 0',
+      );
+    }
   }
   //==============================================================
   //Métodos CRUD para o CONSULTOR
@@ -290,6 +300,8 @@ class DatabaseService {
         'idArea': consultor.idArea,
         'nomeArea': consultor.nomeArea,
         'nomeServiceLine': consultor.nomeServiceLine,
+        'aceitouRgpd': consultor.aceitouRgpd ? 1 : 0,
+        'primeiroAcesso': consultor.primeiroAcesso ? 1 : 0,
         'idLearningPath': consultor.idLearningPath,
         'nomeLearningPath': consultor.nomeLearningPath,
         'totalPontos': consultor.totalPontos,
@@ -321,6 +333,8 @@ class DatabaseService {
       idArea: map['idArea'] as int?,
       nomeArea: map['nomeArea'] as String?,
       nomeServiceLine: map['nomeServiceLine'] as String?,
+      aceitouRgpd: (map['aceitouRgpd'] as int? ?? 1) == 1,
+      primeiroAcesso: (map['primeiroAcesso'] as int? ?? 0) == 1,
       idLearningPath: map['idLearningPath'] as int?,
       nomeLearningPath: map['nomeLearningPath'] as String?,
       totalPontos: map['totalPontos'] as int?,
@@ -717,6 +731,21 @@ Future<void> deleteCandidaturas() async {
       where: 'id = ?',
       whereArgs: [idNotificacao],
     );
+  }
+
+  Future<void> marcarNaoLidaLocal(int idNotificacao) async {
+    final db = await database;
+    await db.update(
+      AppConstants.tableNotificacoesCache,
+      {'lida': 0},
+      where: 'id = ?',
+      whereArgs: [idNotificacao],
+    );
+  }
+
+  Future<void> marcarTodasLidasLocal() async {
+    final db = await database;
+    await db.update(AppConstants.tableNotificacoesCache, {'lida': 1});
   }
 
   // Guarda uma notificação como pendente de sync (lida offline)

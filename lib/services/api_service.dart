@@ -73,7 +73,7 @@ class APIService {
   // Devolve true se o login foi bem sucedido, false caso contrário
   // Devolve também se a configuração inicial está completa (ecra 06)para que o main.dart saiba para que ecrã navegar
 
-  Future<({bool sucesso, bool configuracaoCompleta, String? erro})> login(
+  Future<({bool sucesso, bool configuracaoCompleta, bool primeiroAcesso, bool aceitouRgpd, String? erro})> login(
     String email,
     String password, {
     bool manterSessao = false,
@@ -88,7 +88,18 @@ class APIService {
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         final token = json['token'] as String;
-        final consultor = Consultor.fromJson(json['consultor']);
+
+        // primeiroAcesso só vem no objeto "utilizador" (o "consultor" não o
+        // traz) — juntamos os dois antes de construir o modelo, para o
+        // Consultor ficar com as duas flags de estado da conta.
+        final dadosConsultor = Map<String, dynamic>.from(json['consultor']);
+        final dadosUtilizador = json['utilizador'] as Map<String, dynamic>?;
+        if (dadosUtilizador != null) {
+          dadosConsultor['primeiroAcesso'] = dadosUtilizador['primeiroAcesso'];
+          dadosConsultor['aceitouRgpd'] ??= dadosUtilizador['aceitouRgpd'];
+        }
+
+        final consultor = Consultor.fromJson(dadosConsultor);
         final configuracaoCompleta =
             json['consultor']['configuracaoCompleta'] as bool? ?? true;
 
@@ -105,6 +116,8 @@ class APIService {
         return (
           sucesso: true,
           configuracaoCompleta: configuracaoCompleta,
+          primeiroAcesso: consultor.primeiroAcesso,
+          aceitouRgpd: consultor.aceitouRgpd,
           erro: null,
         );
       }
@@ -114,6 +127,8 @@ class APIService {
       return (
         sucesso: false,
         configuracaoCompleta: false,
+        primeiroAcesso: false,
+        aceitouRgpd: true,
         erro: json['error'] as String? ?? 'Erro ao fazer login',
       );
     } catch (e) {
@@ -121,6 +136,8 @@ class APIService {
       return (
         sucesso: false,
         configuracaoCompleta: false,
+        primeiroAcesso: false,
+        aceitouRgpd: true,
         erro: 'Sem ligação ao servidor. Verifica a tua internet.',
       );
     }
@@ -820,6 +837,34 @@ class APIService {
   }
 }
 
+  // Marca como não lida — usado quando o consultor quer voltar a ver a
+  // notificação como nova. Atualiza local primeiro, depois tenta a API;
+  // se falhar, fica só localmente (não há fila de pendentes para isto,
+  // ao contrário de "marcar lida" — a próxima sincronização completa
+  // acaba por repor o valor real do servidor).
+  Future<void> marcarNotificacaoNaoLida(int idNotificacao) async {
+    await DatabaseService.instance.marcarNaoLidaLocal(idNotificacao);
+    try {
+      final headers = await _getHeaders();
+      await http.put(
+        Uri.parse('${AppConstants.baseUrl}/notificacoes/$idNotificacao/nao-lida'),
+        headers: headers,
+      );
+    } catch (_) {}
+  }
+
+  // Marca todas como lidas de uma vez — igual ao botão da web.
+  Future<void> marcarTodasNotificacoesLidas() async {
+    await DatabaseService.instance.marcarTodasLidasLocal();
+    try {
+      final headers = await _getHeaders();
+      await http.put(
+        Uri.parse('${AppConstants.baseUrl}/notificacoes/marcar-todas-lidas'),
+        headers: headers,
+      );
+    } catch (_) {}
+  }
+
   //==============================================================
   //ACTUALIZAR PERFIL - Ecrã 54
 
@@ -1009,6 +1054,104 @@ class APIService {
   // Tal como o ranking, é dado volátil calculado no servidor (progresso de
   // learning path, áreas/service lines completas, objetivos em curso) —
   // não faz sentido guardar em SQLite, pede-se sempre à API.
+
+  // TROCAR PASSWORD NO PRIMEIRO ACESSO
+  // PUT /api/auth/trocar-password-primeiro-acesso
+  // Obrigatório para contas criadas pelo Admin que ainda nunca fizeram login.
+  Future<({bool sucesso, String? erro})> trocarPasswordPrimeiroAcesso(String novaPassword) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.put(
+        Uri.parse('${AppConstants.baseUrl}/auth/trocar-password-primeiro-acesso'),
+        headers: headers,
+        body: jsonEncode({'novaPassword': novaPassword}),
+      );
+
+      if (response.statusCode == 200) {
+        // Actualiza a flag local para não voltar a pedir
+        final utilizador = await DatabaseService.instance.getUser();
+        final token = await DatabaseService.instance.getToken();
+        if (utilizador != null && token != null) {
+          await DatabaseService.instance.saveUser(
+            Consultor(
+              id: utilizador.id,
+              nome: utilizador.nome,
+              email: utilizador.email,
+              telefone: utilizador.telefone,
+              urlLinkedin: utilizador.urlLinkedin,
+              urlFoto: utilizador.urlFoto,
+              dataMembro: utilizador.dataMembro,
+              linguaPadrao: utilizador.linguaPadrao,
+              idArea: utilizador.idArea,
+              nomeArea: utilizador.nomeArea,
+              nomeServiceLine: utilizador.nomeServiceLine,
+              idLearningPath: utilizador.idLearningPath,
+              nomeLearningPath: utilizador.nomeLearningPath,
+              totalPontos: utilizador.totalPontos,
+              posicaoRanking: utilizador.posicaoRanking,
+              aceitouRgpd: utilizador.aceitouRgpd,
+              primeiroAcesso: false,
+            ),
+            token,
+          );
+        }
+        return (sucesso: true, erro: null);
+      }
+
+      final json = jsonDecode(response.body);
+      return (sucesso: false, erro: json['error'] as String? ?? 'Erro ao trocar a password.');
+    } catch (e) {
+      return (sucesso: false, erro: 'Sem ligação ao servidor.');
+    }
+  }
+
+  // ACEITAR / REVOGAR O CONSENTIMENTO RGPD
+  // PUT /api/perfil/rgpd
+  Future<({bool sucesso, String? erro})> atualizarConsentimentoRgpd(bool aceitar) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.put(
+        Uri.parse('${AppConstants.baseUrl}/perfil/rgpd'),
+        headers: headers,
+        body: jsonEncode({'aceitar': aceitar}),
+      );
+
+      if (response.statusCode == 200) {
+        final utilizador = await DatabaseService.instance.getUser();
+        final token = await DatabaseService.instance.getToken();
+        if (utilizador != null && token != null) {
+          await DatabaseService.instance.saveUser(
+            Consultor(
+              id: utilizador.id,
+              nome: utilizador.nome,
+              email: utilizador.email,
+              telefone: utilizador.telefone,
+              urlLinkedin: utilizador.urlLinkedin,
+              urlFoto: utilizador.urlFoto,
+              dataMembro: utilizador.dataMembro,
+              linguaPadrao: utilizador.linguaPadrao,
+              idArea: utilizador.idArea,
+              nomeArea: utilizador.nomeArea,
+              nomeServiceLine: utilizador.nomeServiceLine,
+              idLearningPath: utilizador.idLearningPath,
+              nomeLearningPath: utilizador.nomeLearningPath,
+              totalPontos: utilizador.totalPontos,
+              posicaoRanking: utilizador.posicaoRanking,
+              aceitouRgpd: aceitar,
+              primeiroAcesso: utilizador.primeiroAcesso,
+            ),
+            token,
+          );
+        }
+        return (sucesso: true, erro: null);
+      }
+
+      final json = jsonDecode(response.body);
+      return (sucesso: false, erro: json['error'] as String? ?? 'Erro ao registar o consentimento.');
+    } catch (e) {
+      return (sucesso: false, erro: 'Sem ligação ao servidor.');
+    }
+  }
 
   Future<ObjetivosResumo> obterObjetivosResumo() async {
     final headers = await _getHeaders();

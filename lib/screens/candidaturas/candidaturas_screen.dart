@@ -6,8 +6,14 @@ import 'package:pint_mobile/models/candidatura_badge.dart';
 import 'package:pint_mobile/providers/candidatura_provider.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/utils/design.dart';
+import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
+
+// ECRÃ CANDIDATURAS (hub)
+// Rascunhos + prévia de "Em progresso" e "Histórico" (3 de cada, com "Ver
+// Todos"). Segue os tokens D e o CardSimples.
 
 class Candidaturas extends ConsumerStatefulWidget {
   const Candidaturas({super.key});
@@ -17,12 +23,10 @@ class Candidaturas extends ConsumerStatefulWidget {
 }
 
 class _CandidaturasState extends ConsumerState<Candidaturas> {
-  // Rascunhos são geridos separadamente do provider, vêm directamente da API
   List<Map<String, dynamic>> _rascunhos = [];
   StreamSubscription<void>? _subAtualizador;
 
   @override
-  // Carrega os rascunhos e subscreve o stream para actualizações automáticas
   void initState() {
     super.initState();
     _carregarRascunhos();
@@ -38,7 +42,6 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
     super.dispose();
   }
 
-  // Vai buscar os rascunhos à API: candidaturas iniciadas mas não submetidas
   Future<void> _carregarRascunhos() async {
     final resultadoRascunhos = await APIService.instance.getRascunhos();
     if (mounted) {
@@ -46,32 +49,20 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
     }
   }
 
-  // Pede confirmação antes de apagar: acção irreversível
   Future<void> _apagarRascunho(int numCandidatura) async {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Apagar rascunho?',
-          style: TextStyle(fontWeight: FontWeight.bold, color: AppConstants.corPrimaria),
-        ),
+        title: const Text('Apagar rascunho?', style: TextStyle(fontWeight: FontWeight.bold, color: D.azul600)),
         content: const Text(
-          'Esta acção não pode ser desfeita. As evidências carregadas serão removidas.',
+          'Esta ação não pode ser desfeita. As evidências carregadas serão removidas.',
           style: TextStyle(fontSize: 13),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Não', style: TextStyle(color: Colors.black54)),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Não', style: TextStyle(color: D.tinta50))),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'Sim, apagar',
-              style: TextStyle(color: AppConstants.corErro, fontWeight: FontWeight.bold),
-            ),
+            child: const Text('Sim, apagar', style: TextStyle(color: D.erro, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -85,16 +76,12 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
 
     if (resultado.sucesso) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Rascunho apagado.'),
-            backgroundColor: AppConstants.corSucesso),
+        const SnackBar(content: Text('Rascunho apagado.'), backgroundColor: D.ok),
       );
       _carregarRascunhos();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(resultado.erro ?? 'Erro ao apagar'),
-            backgroundColor: AppConstants.corErro),
+        SnackBar(content: Text(resultado.erro ?? 'Erro ao apagar'), backgroundColor: D.erro),
       );
     }
   }
@@ -102,7 +89,7 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: D.fundo,
       drawer: const CustomDrawer(),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -110,38 +97,27 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
         centerTitle: true,
         leading: Builder(
           builder: (ctx) => IconButton(
-            icon: SvgPicture.asset('assets/icons/drawerprimario.svg',
-                height: 20,
-                colorFilter: const ColorFilter.mode(
-                    AppConstants.corPrimaria, BlendMode.srcIn)),
+            icon: SvgPicture.asset('assets/icons/drawerprimario.svg', height: 20,
+                colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: const Text('Candidaturas',
-            style: TextStyle(
-                color: AppConstants.corPrimaria,
-                fontWeight: FontWeight.bold,
-                fontSize: 20)),
+        title: const Text('CANDIDATURAS', style: D.tituloPagina),
         actions: [
           IconButton(
-            icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg',
-                height: 24,
-                colorFilter: const ColorFilter.mode(
-                    AppConstants.corPrimaria, BlendMode.srcIn)),
+            icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
+                colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
             onPressed: () => context.push(AppConstants.routeNotificacoes),
           ),
         ],
       ),
-      // ─── Riverpod ───────────────────────────────────────────
-      // Observa as candidaturas e reconstrói o ecrã quando mudam
       body: ref.watch(candidaturasProvider).when(
         data: (candidaturas) {
-          // Separa as candidaturas em duas listas: em curso e concluídas
           final emProgresso = candidaturas.where((c) => !c.estaConcluida).toList();
           final historico = candidaturas.where((c) => c.estaConcluida).toList();
 
           return RefreshIndicator(
-            color: AppConstants.corPrimaria,
+            color: D.azul600,
             onRefresh: () async {
               await APIService.instance.sincronizarCandidaturas();
               await APIService.instance.sincronizarEstados();
@@ -150,63 +126,45 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.fromLTRB(D.e4, D.e2, D.e4, D.e5),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (emProgresso.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Row(
-                        children: [
-                          Text(
-                            '${emProgresso.length} candidatura${emProgresso.length == 1 ? '' : 's'} a decorrer',
-                            style: const TextStyle(
-                                color: AppConstants.corPrimaria,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13),
-                          ),
-                        ],
+                      padding: const EdgeInsets.only(bottom: D.e3),
+                      child: Text(
+                        '${emProgresso.length} candidatura${emProgresso.length == 1 ? '' : 's'} a decorrer',
+                        style: const TextStyle(color: D.azul600, fontWeight: FontWeight.w600, fontSize: 13),
                       ),
                     ),
-                  // Secção genérica reutilizada para "Em progresso" e "Histórico"
-                  // Mostra no máximo 3 itens com botão "Ver Todos" se houver mais
                   _buildSecao(
-                    titulo: 'Em progresso',
+                    titulo: 'EM PROGRESSO',
                     lista: emProgresso,
                     rotaVerTodos: AppConstants.routeCandidaturasDecorrentes,
                     vazioMsg: 'Não tens candidaturas em curso.',
                   ),
-                  const SizedBox(height: 24),
-                  // Mostra os racunhos apenas se existirem, widget retorna SizedBox.shrink() se vazio
+                  const SizedBox(height: D.e5),
                   _buildSecaoRascunhos(),
-                  if (_rascunhos.isNotEmpty) const SizedBox(height: 12),
+                  if (_rascunhos.isNotEmpty) const SizedBox(height: D.e3),
                   Center(
                     child: OutlinedButton.icon(
-                      onPressed: () => context
-                          .push(AppConstants.routeNovaCandidatura)
-                          .then((_) {
+                      onPressed: () => context.push(AppConstants.routeNovaCandidatura).then((_) {
                         ref.invalidate(candidaturasProvider);
                         _carregarRascunhos();
                       }),
-                      icon: const Icon(Icons.add,
-                          size: 18, color: AppConstants.corPrimaria),
-                      label: const Text('Nova Candidatura',
-                          style: TextStyle(
-                              color: AppConstants.corPrimaria,
-                              fontWeight: FontWeight.w600)),
+                      icon: const Icon(Icons.add, size: 18, color: D.azul600),
+                      label: const Text('Nova Candidatura', style: TextStyle(color: D.azul600, fontWeight: FontWeight.w600)),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppConstants.corPrimaria),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20)),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 10),
+                        side: const BorderSide(color: D.azul600),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: D.e5),
                   _buildSecao(
-                    titulo: 'Histórico',
+                    titulo: 'HISTÓRICO',
                     lista: historico,
                     rotaVerTodos: AppConstants.routeHistoricoCandidaturas,
                     vazioMsg: 'Ainda não tens candidaturas concluídas.',
@@ -216,8 +174,7 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
             ),
           );
         },
-        loading: () => const Center(
-            child: CircularProgressIndicator(color: AppConstants.corPrimaria)),
+        loading: () => const Center(child: CircularProgressIndicator(color: D.azul600)),
         error: (err, _) => Center(child: Text('Erro: $err')),
       ),
     );
@@ -231,43 +188,26 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
       children: [
         Row(
           children: [
-            const Text('Rascunhos',
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black54,
-                    letterSpacing: 0.5)),
-            const SizedBox(width: 6),
+            const Text('RASCUNHOS', style: D.etiqueta),
+            const SizedBox(width: D.e2),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppConstants.corPrimaria.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '${_rascunhos.length}',
-                style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: AppConstants.corPrimaria),
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: D.e2, vertical: 2),
+              decoration: BoxDecoration(color: D.azul100, borderRadius: BorderRadius.circular(10)),
+              child: Text('${_rascunhos.length}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: D.azul600)),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: D.e2),
         ..._rascunhos.map((r) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: D.e2),
               child: CardRascunho(
                 rascunho: r,
-                onContinuar: () => context
-                    .push(AppConstants.routeNovaCandidatura, extra: r)
-                    .then((_) {
+                onContinuar: () => context.push(AppConstants.routeNovaCandidatura, extra: r).then((_) {
                   ref.invalidate(candidaturasProvider);
                   _carregarRascunhos();
                 }),
                 onApagar: () {
-                  final num =
-                      (r['numCandidatura'] ?? r['num_candidatura']) as int?;
+                  final num = (r['numCandidatura'] ?? r['num_candidatura']) as int?;
                   if (num != null) _apagarRascunho(num);
                 },
               ),
@@ -286,46 +226,25 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(titulo,
-            style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: Colors.black54,
-                letterSpacing: 0.5)),
-        const SizedBox(height: 8),
+        Text(titulo, style: D.etiqueta),
+        const SizedBox(height: D.e2),
         if (preview.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Center(
-                child: Text(vazioMsg ?? 'Sem dados.',
-                    style: const TextStyle(
-                        color: Colors.black38, fontSize: 13))),
-          )
+          CardSimples(child: Center(child: Text(vazioMsg ?? 'Sem dados.', style: D.legenda)))
         else
           ...preview.map((c) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: D.e2),
                 child: CardCandidatura(
                   candidatura: c,
                   onTap: () => context
-                      .push(AppConstants.routeDetalheCandidatura,
-                          extra: c.numCandidatura)
+                      .push(AppConstants.routeDetalheCandidatura, extra: c.numCandidatura)
                       .then((_) => ref.invalidate(candidaturasProvider)),
                 ),
               )),
         if (lista.length > 3)
           Center(
-            child: OutlinedButton(
-              onPressed: () => context
-                  .push(rotaVerTodos)
-                  .then((_) => ref.invalidate(candidaturasProvider)),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppConstants.corPrimaria),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
-              ),
-              child: const Text('VER TODOS',
-                  style: TextStyle(
-                      color: AppConstants.corPrimaria, fontSize: 12)),
+            child: TextButton(
+              onPressed: () => context.push(rotaVerTodos).then((_) => ref.invalidate(candidaturasProvider)),
+              child: const Text('VER TODOS', style: TextStyle(color: D.azul600, fontSize: 12, fontWeight: FontWeight.w600)),
             ),
           ),
       ],
@@ -338,76 +257,44 @@ class CardCandidatura extends StatelessWidget {
   final CandidaturaBadge candidatura;
   final VoidCallback onTap;
 
-  const CardCandidatura(
-      {super.key, required this.candidatura, required this.onTap});
+  const CardCandidatura({super.key, required this.candidatura, required this.onTap});
 
-  // Define a cor do estado com base na situação actual da candidatura
   Color get _corEstado {
-    if (candidatura.aprovada) return AppConstants.corSucesso;
-    if (candidatura.rejeitada) return AppConstants.corErro;
-    if (candidatura.aguardaAcaoConsultor) return Colors.orange;
-    return AppConstants.corPrimaria;
+    if (candidatura.aprovada) return D.ok;
+    if (candidatura.rejeitada) return D.erro;
+    if (candidatura.aguardaAcaoConsultor) return D.aviso;
+    return D.azul600;
   }
 
-  String _fmt(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year.toString().substring(2)}';
+  Color get _corEstadoFundo {
+    if (candidatura.aprovada) return D.okBg;
+    if (candidatura.rejeitada) return D.erroBg;
+    if (candidatura.aguardaAcaoConsultor) return D.avisoBg;
+    return D.azul100;
+  }
+
+  String _fmt(DateTime d) => '${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year.toString().substring(2)}';
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return CardSimples(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 8,
-                offset: const Offset(0, 2))
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(candidatura.nomeBadge,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: Colors.black87)),
-            if (candidatura.nomeNivel != null)
-              Text('Nível ${candidatura.nomeNivel!}',
-                  style: const TextStyle(fontSize: 12, color: Colors.black45)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.calendar_today_outlined,
-                    size: 12, color: Colors.black38),
-                const SizedBox(width: 4),
-                Text('Criado em: ${_fmt(candidatura.dataCriacao)}',
-                    style:
-                        const TextStyle(fontSize: 11, color: Colors.black38)),
-                const Spacer(),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: _corEstado.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    candidatura.nomeEstadoAtual,
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: _corEstado),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(candidatura.nomeBadge, style: D.tituloCard),
+          if (candidatura.nomeNivel != null) Text('Nível ${candidatura.nomeNivel!}', style: D.legenda),
+          const SizedBox(height: D.e2),
+          Row(
+            children: [
+              const Icon(Icons.calendar_today_outlined, size: 12, color: D.tinta30),
+              const SizedBox(width: 4),
+              Text('Criado em: ${_fmt(candidatura.dataCriacao)}', style: D.legenda.copyWith(fontSize: 11)),
+              const Spacer(),
+              ChipEstado(texto: candidatura.nomeEstadoAtual, cor: _corEstado, corFundo: _corEstadoFundo),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -419,15 +306,9 @@ class CardRascunho extends StatelessWidget {
   final VoidCallback onContinuar;
   final VoidCallback onApagar;
 
-  const CardRascunho({
-    super.key,
-    required this.rascunho,
-    required this.onContinuar,
-    required this.onApagar,
-  });
+  const CardRascunho({super.key, required this.rascunho, required this.onContinuar, required this.onApagar});
 
-  String _fmt(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year.toString().substring(2)}';
+  String _fmt(DateTime d) => '${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year.toString().substring(2)}';
 
   @override
   Widget build(BuildContext context) {
@@ -436,23 +317,9 @@ class CardRascunho extends StatelessWidget {
     final dataStr = rascunho['dataCriacao'] as String? ?? '';
     final data = DateTime.tryParse(dataStr);
     final dataFormatada = data != null ? _fmt(data) : '—';
-    final progresso =
-        numRequisitos > 0 ? numEvidencias / numRequisitos : 0.0;
+    final progresso = numRequisitos > 0 ? numEvidencias / numRequisitos : 0.0;
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 2))
-        ],
-        border: Border.all(
-            color: AppConstants.corPrimaria.withValues(alpha: 0.2), width: 1),
-      ),
+    return CardSimples(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -462,17 +329,8 @@ class CardRascunho extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      rascunho['nomeBadge'] as String? ?? 'Sem nome',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: Colors.black87),
-                    ),
-                    if (rascunho['nomeNivel'] != null)
-                      Text('Nível ${rascunho['nomeNivel']}',
-                          style: const TextStyle(
-                              fontSize: 12, color: Colors.black45)),
+                    Text(rascunho['nomeBadge'] as String? ?? 'Sem nome', style: D.tituloCard),
+                    if (rascunho['nomeNivel'] != null) Text('Nível ${rascunho['nomeNivel']}', style: D.legenda),
                   ],
                 ),
               ),
@@ -480,85 +338,51 @@ class CardRascunho extends StatelessWidget {
                 onTap: onApagar,
                 child: Container(
                   padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppConstants.corErro.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.delete_outline,
-                      size: 18, color: AppConstants.corErro),
+                  decoration: BoxDecoration(color: D.erroBg, borderRadius: BorderRadius.circular(D.rSm)),
+                  child: const Icon(Icons.delete_outline, size: 18, color: D.erro),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: D.e2),
           Row(
             children: [
-              const Icon(Icons.calendar_today_outlined,
-                  size: 12, color: Colors.black38),
+              const Icon(Icons.calendar_today_outlined, size: 12, color: D.tinta30),
               const SizedBox(width: 4),
-              Text('Criado em: $dataFormatada',
-                  style: const TextStyle(fontSize: 11, color: Colors.black38)),
+              Text('Criado em: $dataFormatada', style: D.legenda.copyWith(fontSize: 11)),
               const Spacer(),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppConstants.corPrimaria.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'Rascunho',
-                  style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppConstants.corPrimaria),
-                ),
-              ),
+              const ChipEstado(texto: 'Rascunho', cor: D.azul600, corFundo: D.azul100),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: D.e3),
           Row(
             children: [
               Expanded(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(4),
-                  // Barra de progresso: mostra quantas evidências já foram carregadas
                   child: LinearProgressIndicator(
                     value: progresso,
                     minHeight: 5,
-                    backgroundColor: Colors.black12,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppConstants.corPrimaria),
+                    backgroundColor: D.fundoAlt,
+                    valueColor: const AlwaysStoppedAnimation<Color>(D.azul600),
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-              Text(
-                '$numEvidencias / $numRequisitos evidências',
-                style: const TextStyle(
-                    fontSize: 11,
-                    color: Colors.black54,
-                    fontWeight: FontWeight.w600),
-              ),
+              const SizedBox(width: D.e3),
+              Text('$numEvidencias / $numRequisitos evidências', style: D.legenda.copyWith(fontWeight: FontWeight.w600)),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: D.e3),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: onContinuar,
-              icon: const Icon(Icons.arrow_forward,
-                  size: 16, color: Colors.white),
-              label: const Text('Continuar',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13)),
+              icon: const Icon(Icons.arrow_forward, size: 16, color: Colors.white),
+              label: const Text('Continuar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppConstants.corPrimaria,
+                backgroundColor: D.azul600,
                 padding: const EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
               ),
             ),
           ),

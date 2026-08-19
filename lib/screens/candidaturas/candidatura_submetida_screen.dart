@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,11 +10,10 @@ class CandidaturaSubmetida extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Recebe o número da candidatura passado pelo ecrã anterior via go_router
     final numCandidatura = GoRouterState.of(context).extra as int?;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: D.fundo,
       drawer: const CustomDrawer(),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -27,8 +27,7 @@ class CandidaturaSubmetida extends StatelessWidget {
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: const Text('Candidaturas',
-            style: TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.bold, fontSize: 20)),
+        title: const Text('CANDIDATURAS', style: D.tituloPagina),
         actions: [
           IconButton(
             icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
@@ -39,72 +38,62 @@ class CandidaturaSubmetida extends StatelessWidget {
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+          padding: const EdgeInsets.symmetric(horizontal: D.e6, vertical: D.e6),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
                 width: 96, height: 96,
-                decoration: BoxDecoration(
-                  color: AppConstants.corSucesso.withValues(alpha: 0.10),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.check_circle_outline, size: 56, color: AppConstants.corSucesso),
+                decoration: BoxDecoration(color: D.okBg, shape: BoxShape.circle),
+                child: const Icon(Icons.check_circle_outline, size: 56, color: D.ok),
               ),
-              const SizedBox(height: 28),
-              const Text('Novo pedido submetido!',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.black87),
-                  textAlign: TextAlign.center),
-              const SizedBox(height: 12),
-              const Text(
+              const SizedBox(height: D.e5),
+              Text('Novo pedido submetido!', style: D.tituloSeccao.copyWith(fontSize: 22), textAlign: TextAlign.center),
+              const SizedBox(height: D.e2),
+              Text(
                 'A tua candidatura foi submetida com sucesso e encontra-se agora em validação pelo Talent Manager.',
-                style: TextStyle(fontSize: 14, color: Colors.black45, height: 1.5),
+                style: D.corpo.copyWith(color: D.tinta30, height: 1.5),
                 textAlign: TextAlign.center,
               ),
-              // Só mostra o número se foi passado pelo ecrã anterior
               if (numCandidatura != null) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: D.e3),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: D.e3, vertical: D.e2 + 2),
+                  decoration: BoxDecoration(color: D.fundoAlt, borderRadius: BorderRadius.circular(D.rMd)),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.confirmation_number_outlined, size: 16, color: Colors.black38),
+                      const Icon(Icons.confirmation_number_outlined, size: 16, color: D.tinta30),
                       const SizedBox(width: 6),
-                      Text('Candidatura Nº $numCandidatura',
-                          style: const TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500)),
+                      Text('Candidatura Nº $numCandidatura', style: D.legenda.copyWith(fontWeight: FontWeight.w500)),
                     ],
                   ),
                 ),
               ],
-              const SizedBox(height: 48),
+              const SizedBox(height: D.e6),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => context.go(AppConstants.routeCandidaturas),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppConstants.corPrimaria,
+                    backgroundColor: D.azul600,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: D.e3 + 2),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
                   ),
                   child: const Text('Ver Candidaturas', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: D.e2 + 2),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () => context.go(AppConstants.routeNovaCandidatura),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppConstants.corPrimaria,
-                    side: const BorderSide(color: AppConstants.corPrimaria),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    foregroundColor: D.azul600,
+                    side: const BorderSide(color: D.azul600),
+                    padding: const EdgeInsets.symmetric(vertical: D.e3 + 2),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
                   ),
                   child: const Text('Nova Candidatura', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                 ),

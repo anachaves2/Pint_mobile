@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:pint_mobile/models/candidatura_badge.dart';
 import 'package:pint_mobile/models/historico_candidatura.dart';
 import 'package:pint_mobile/models/requisitos.dart';
@@ -9,9 +10,18 @@ import 'package:pint_mobile/providers/candidatura_provider.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/utils/design.dart';
+import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:pint_mobile/widgets/requisito_evidencia_tile.dart';
+import 'package:pint_mobile/screens/camera/camera_screen.dart';
 import 'package:go_router/go_router.dart';
 
+// ECRÃ DETALHES DA CANDIDATURA
+// Segue os tokens D. Acrescentei o que faltava em relação à web: "Rever
+// Candidatura" — quando o TM/SLL devolve a candidatura (aguardaAcaoConsultor),
+// o consultor consegue reenviar evidências e submeter outra vez, sem sair
+// deste ecrã. Antes disto não existia nenhuma ação possível aqui.
 
 class DetalhesCandidatura extends ConsumerStatefulWidget {
   final int numCandidatura;
@@ -28,17 +38,20 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
   List<Requisito> _requisitos = [];
   Map<int, Evidencia> _evidencias = {};
 
+  // ── Estado do modo "Rever Candidatura" ──
+  bool _modoRevisao = false;
+  final Map<int, String> _ficheirosPendentes = {};
+  final Map<int, bool> _uploading = {};
+  bool _isSubmitting = false;
+
   @override
   void initState() {
     super.initState();
     _carregar();
   }
 
-  // Carrega primeiro do SQLite (offline-first) e depois sincroniza com a API em background
   Future<void> _carregar() async {
     final numCandidatura = widget.numCandidatura;
-    // 1ª fase: dados locais (SQLite) para mostrar imediatamente sem esperar pela rede
-    // Mostra cache primeiro (offline-first)
     final todasCandidaturas = await DatabaseService.instance.getCandidaturas();
     final candidatura = todasCandidaturas.where((c) => c.numCandidatura == numCandidatura).firstOrNull;
     final historico = await DatabaseService.instance.getHistorico(numCandidatura);
@@ -56,8 +69,7 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
         _isLoading = false;
       });
     }
-    // 2ª fase: sincroniza com a API e atualiza o ecrã com dados frescos
-    // Sincroniza em background e atualiza
+
     await APIService.instance.sincronizarDetalhesCandidatura(numCandidatura);
     final todasAtual = await DatabaseService.instance.getCandidaturas();
     final candidaturaAtual = todasAtual.where((c) => c.numCandidatura == numCandidatura).firstOrNull;
@@ -74,7 +86,6 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
         _requisitos = requisitosAtual;
         _evidencias = {for (final e in evidenciasAtual) e.idRequisito: e};
       });
-      // Invalida o provider para que a lista de candidaturas seja actualizada e notifica os outros ecrãs
       ref.invalidate(candidaturasProvider);
     }
   }
@@ -84,70 +95,110 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
     await _carregar();
   }
 
+  // ── Ações do modo de revisão ──
+
+  Future<void> _escolherFicheiro(Requisito req) async {
+    final resultado = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'zip', 'jpg', 'jpeg', 'png'],
+    );
+    final caminho = resultado?.files.single.path;
+    if (caminho == null) return;
+    setState(() => _ficheirosPendentes[req.id] = caminho);
+    await _uploadEvidencia(req, caminho);
+  }
+
+  Future<void> _tirarFoto(Requisito req) async {
+    final caminho = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const CameraScreen()),
+    );
+    if (caminho == null) return;
+    setState(() => _ficheirosPendentes[req.id] = caminho);
+    await _uploadEvidencia(req, caminho);
+  }
+
+  Future<void> _uploadEvidencia(Requisito req, String caminho) async {
+    setState(() => _uploading[req.id] = true);
+    final resultado = await APIService.instance.uploadEvidencia(
+      numCandidatura: widget.numCandidatura, idRequisito: req.id, filePath: caminho,
+    );
+    if (!mounted) return;
+    if (resultado.sucesso) {
+      final evidencias = await DatabaseService.instance.getEvidencias(widget.numCandidatura);
+      setState(() {
+        _evidencias = {for (final e in evidencias) e.idRequisito: e};
+        _uploading[req.id] = false;
+      });
+    } else {
+      setState(() => _uploading[req.id] = false);
+      _mostrarErro(resultado.erro ?? 'Erro ao enviar evidência.');
+    }
+  }
+
+  Future<void> _submeterRevisao() async {
+    setState(() => _isSubmitting = true);
+    final resultado = await APIService.instance.submeterCandidatura(widget.numCandidatura);
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+    if (resultado.sucesso) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Candidatura reenviada com sucesso!'), backgroundColor: D.ok),
+      );
+      setState(() => _modoRevisao = false);
+      await _refresh();
+    } else {
+      _mostrarErro(resultado.erro ?? 'Erro ao reenviar candidatura.');
+    }
+  }
+
+  void _mostrarErro(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: D.erro));
+  }
+
+  bool get _podeSubmeterRevisao {
+    if (_requisitos.isEmpty) return true;
+    return _requisitos.every((r) => _evidencias.containsKey(r.id));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: D.fundo,
       drawer: const CustomDrawer(),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        leading: Builder(
-          builder: (ctx) => IconButton(
-            icon: SvgPicture.asset('assets/icons/drawerprimario.svg', height: 20,
-                colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
-          ),
-        ),
-        title: const Text('Candidaturas',
-            style: TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.bold, fontSize: 20)),
-        actions: [
-          IconButton(
-            icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
-                colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
-            onPressed: () => context.push(AppConstants.routeNotificacoes),
-          ),
-        ],
-      ),
+      appBar: _buildAppBar(),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppConstants.corPrimaria))
+          ? const Center(child: CircularProgressIndicator(color: D.azul600))
           : _candidatura == null
-              ? const Center(child: Text('Candidatura não encontrada.'))
+              ? const Center(child: Text('Candidatura não encontrada.', style: D.corpo))
               : RefreshIndicator(
-                  color: AppConstants.corPrimaria,
+                  color: D.azul600,
                   onRefresh: _refresh,
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.fromLTRB(D.e4, D.e2, D.e4, D.e5),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            GestureDetector(
-                              onTap: () => Navigator.pop(context),
-                              child: const Icon(Icons.chevron_left, color: AppConstants.corPrimaria),
-                            ),
-                            const Text('Detalhes da Candidatura',
-                                style: TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.w600, fontSize: 14)),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        // Mostra nome do badge, nível e decisão final (se concluída)
                         _buildCabecalho(),
-                        if (_requisitos.isNotEmpty) ...[
-                          const SizedBox(height: 20),
-                          const Text('Requisitos submetidos:',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black54, letterSpacing: 0.3)),
-                          const SizedBox(height: 10),
-                          ..._requisitos.map((req) => _buildCardRequisito(req)),
+                        if (_candidatura!.aguardaAcaoConsultor) ...[
+                          const SizedBox(height: D.e3),
+                          _buildAvisoRevisao(),
                         ],
-                        const SizedBox(height: 20),
-                        const Text('Timeline:',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black54, letterSpacing: 0.3)),
-                        const SizedBox(height: 10),
-                        // Mostra o histórico em ordem inversa: mais recente no topo
+                        if (_modoRevisao) ...[
+                          const SizedBox(height: D.e5),
+                          _buildSecaoRevisao(),
+                        ] else ...[
+                          if (_requisitos.isNotEmpty) ...[
+                            const SizedBox(height: D.e5),
+                            const Text('REQUISITOS SUBMETIDOS', style: D.etiqueta),
+                            const SizedBox(height: D.e3),
+                            ..._requisitos.map((req) => _buildCardRequisito(req)),
+                          ],
+                        ],
+                        const SizedBox(height: D.e5),
+                        const Text('TIMELINE', style: D.etiqueta),
+                        const SizedBox(height: D.e3),
                         _buildTimeline(),
                       ],
                     ),
@@ -156,39 +207,46 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
     );
   }
 
+  AppBar _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      centerTitle: true,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
+        onPressed: () => context.pop(),
+      ),
+      title: const Text('CANDIDATURA', style: D.tituloPagina),
+      actions: [
+        IconButton(
+          icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
+              colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
+          onPressed: () => context.push(AppConstants.routeNotificacoes),
+        ),
+      ],
+    );
+  }
+
   Widget _buildCabecalho() {
     final c = _candidatura!;
     final aprovada = c.aprovada;
     final rejeitada = c.rejeitada;
-    final corDecisao = aprovada ? AppConstants.corSucesso : (rejeitada ? AppConstants.corErro : Colors.black38);
-    final textoDecisao = aprovada ? 'Aprovado' : (rejeitada ? 'Rejeitado' : '—');
+    final cor = aprovada ? D.ok : (rejeitada ? D.erro : D.tinta30);
+    final corFundo = aprovada ? D.okBg : (rejeitada ? D.erroBg : D.fundoAlt);
+    final texto = aprovada ? 'Aprovado' : (rejeitada ? 'Rejeitado' : '—');
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
-      ),
+    return CardSimples(
       child: Column(
         children: [
           _linhaInfo('Badge:', c.nomeBadge),
           if (c.nomeNivel != null) _linhaInfo('Nível:', c.nomeNivel!),
           if (c.estaConcluida)
             Padding(
-              padding: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.only(top: D.e2),
               child: Row(
                 children: [
-                  const SizedBox(width: 100, child: Text('Decisão final:', style: TextStyle(fontSize: 12, color: Colors.black45))),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: corDecisao.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(textoDecisao,
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: corDecisao)),
-                  ),
+                  const SizedBox(width: 100, child: Text('Decisão final:', style: D.legenda)),
+                  ChipEstado(texto: texto, cor: cor, corFundo: corFundo),
                 ],
               ),
             ),
@@ -203,107 +261,177 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 100, child: Text(label, style: const TextStyle(fontSize: 12, color: Colors.black45))),
-          Expanded(child: Text(valor, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87))),
+          SizedBox(width: 100, child: Text(label, style: D.legenda)),
+          Expanded(child: Text(valor, style: D.tituloCard)),
         ],
+      ),
+    );
+  }
+
+  // Banner de aviso + botão que ativa o modo de revisão
+  Widget _buildAvisoRevisao() {
+    return Container(
+      padding: const EdgeInsets.all(D.e4),
+      decoration: BoxDecoration(color: D.avisoBg, borderRadius: BorderRadius.circular(D.rLg)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.info_outline, color: D.aviso, size: 18),
+              SizedBox(width: D.e2),
+              Expanded(
+                child: Text(
+                  'Esta candidatura foi devolvida e precisa da tua ação.',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: D.aviso),
+                ),
+              ),
+            ],
+          ),
+          if (!_modoRevisao) ...[
+            const SizedBox(height: D.e3),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => setState(() => _modoRevisao = true),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Rever Candidatura'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: D.aviso,
+                  side: const BorderSide(color: D.aviso),
+                  padding: const EdgeInsets.symmetric(vertical: D.e2 + 2),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // Modo de revisão: reenviar evidências + submeter
+  Widget _buildSecaoRevisao() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text('REQUISITOS', style: D.etiqueta),
+            const Spacer(),
+            TextButton(
+              onPressed: () => setState(() => _modoRevisao = false),
+              child: const Text('Cancelar', style: TextStyle(color: D.tinta30, fontSize: 12)),
+            ),
+          ],
+        ),
+        const SizedBox(height: D.e2),
+        if (_requisitos.isEmpty)
+          CardSimples(child: Center(child: Text('Sem requisitos definidos.', style: D.legenda)))
+        else
+          for (final req in _requisitos)
+            Padding(
+              padding: const EdgeInsets.only(bottom: D.e2),
+              child: RequisitoEvidenciaTile(
+                requisito: req,
+                temEvidencia: _evidencias.containsKey(req.id),
+                emUpload: _uploading[req.id] == true,
+                nomeFicheiro: _evidencias[req.id]?.pathFicheiro.split('/').last ??
+                    _ficheirosPendentes[req.id]?.split('/').last,
+                onEscolherFicheiro: () => _escolherFicheiro(req),
+                onTirarFoto: () => _tirarFoto(req),
+              ),
+            ),
+        const SizedBox(height: D.e3),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: (_podeSubmeterRevisao && !_isSubmitting) ? _submeterRevisao : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: D.azul600,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: D.fundoAlt,
+              padding: const EdgeInsets.symmetric(vertical: D.e3 + 2),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
+            ),
+            child: _isSubmitting
+                ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Text('Submeter', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Mostra o estado de cada requisito quando NÃO está em modo de revisão
+  Widget _buildCardRequisito(Requisito req) {
+    final evidencia = _evidencias[req.id];
+
+    Color cor;
+    IconData icone;
+    String texto;
+
+    if (evidencia == null) {
+      cor = D.aviso;
+      icone = Icons.upload_file_outlined;
+      texto = 'Sem evidência';
+    } else if (evidencia.aprovada) {
+      cor = D.ok;
+      icone = Icons.check_circle_outline;
+      texto = 'Aprovada';
+    } else if (evidencia.rejeitada) {
+      cor = D.erro;
+      icone = Icons.cancel_outlined;
+      texto = 'Rejeitada';
+    } else {
+      cor = D.azul600;
+      icone = Icons.hourglass_empty_outlined;
+      texto = 'Pendente';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: D.e2),
+      child: CardSimples(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icone, color: cor, size: 18),
+                const SizedBox(width: D.e2),
+                Expanded(child: Text(req.nome, style: D.tituloCard)),
+                ChipEstado(texto: texto, cor: cor, corFundo: cor.withValues(alpha: 0.1)),
+              ],
+            ),
+            if (req.descricao != null && req.descricao!.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(req.descricao!, style: D.legenda.copyWith(height: 1.4)),
+            ],
+            if (evidencia != null) ...[
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  const Icon(Icons.attach_file, size: 12, color: D.tinta30),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(evidencia.pathFicheiro.split('/').last, style: D.legenda.copyWith(fontSize: 11), overflow: TextOverflow.ellipsis),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildTimeline() {
     if (_historico.isEmpty) {
-      return const Center(child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
-        child: Text('Sem histórico disponível.', style: TextStyle(color: Colors.grey)),
-      ));
+      return CardSimples(child: Center(child: Text('Sem histórico disponível.', style: D.legenda)));
     }
     final invertido = _historico.reversed.toList();
     return Column(
-      children: List.generate(
-        invertido.length,
-        (i) => _ItemTimeline(entrada: invertido[i], isLast: i == invertido.length - 1),
-      ),
-    );
-  }
-  // Mostra o estado de cada requisito: sem evidência, pendente, aprovada ou rejeitada
-  Widget _buildCardRequisito(Requisito req) {
-    final evidencia = _evidencias[req.id];
-
-    Color corEstado;
-    IconData iconEstado;
-    String textoEstado;
-
-    if (evidencia == null) {
-      corEstado = Colors.orange;
-      iconEstado = Icons.upload_file_outlined;
-      textoEstado = 'Sem evidência';
-    } else if (evidencia.aprovada) {
-      corEstado = AppConstants.corSucesso;
-      iconEstado = Icons.check_circle_outline;
-      textoEstado = 'Aprovada';
-    } else if (evidencia.rejeitada) {
-      corEstado = AppConstants.corErro;
-      iconEstado = Icons.cancel_outlined;
-      textoEstado = 'Rejeitada';
-    } else {
-      corEstado = AppConstants.corPrimaria;
-      iconEstado = Icons.hourglass_empty_outlined;
-      textoEstado = 'Pendente';
-    }
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: corEstado.withValues(alpha: 0.3)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(iconEstado, color: corEstado, size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(req.nome, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: corEstado.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(textoEstado,
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: corEstado)),
-              ),
-            ],
-          ),
-          if (req.descricao != null && req.descricao!.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(req.descricao!,
-                style: const TextStyle(fontSize: 12, color: Colors.black45, height: 1.4)),
-          ],
-          if (evidencia != null) ...[
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                const Icon(Icons.attach_file, size: 12, color: Colors.black38),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    evidencia.pathFicheiro.split('/').last,
-                    style: const TextStyle(fontSize: 11, color: Colors.black38),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
+      children: List.generate(invertido.length, (i) => _ItemTimeline(entrada: invertido[i], isLast: i == invertido.length - 1)),
     );
   }
 }
@@ -313,14 +441,12 @@ class _ItemTimeline extends StatelessWidget {
   final bool isLast;
   const _ItemTimeline({required this.entrada, required this.isLast});
 
-  // Cor do ponto da timeline consoante o estado da candidatura
-  // 5=Aprovado, 6=Rejeitado, 2/4=Incorreto, resto=Em curso
   Color get _corPonto {
     switch (entrada.idEstadoAtual) {
-      case 5: return AppConstants.corSucesso;
-      case 6: return AppConstants.corErro;
-      case 2: case 4: return Colors.orange;
-      default: return AppConstants.corSecundaria;
+      case 5: return D.ok;
+      case 6: return D.erro;
+      case 2: case 4: return D.aviso;
+      default: return D.azul600;
     }
   }
 
@@ -336,9 +462,9 @@ class _ItemTimeline extends StatelessWidget {
 
   Color get _corDecisao {
     switch (entrada.idEstadoAtual) {
-      case 5: case 1: case 3: return AppConstants.corSucesso;
-      case 6: case 2: case 4: return AppConstants.corErro;
-      default: return Colors.black38;
+      case 5: case 1: case 3: return D.ok;
+      case 6: case 2: case 4: return D.erro;
+      default: return D.tinta30;
     }
   }
 
@@ -354,63 +480,42 @@ class _ItemTimeline extends StatelessWidget {
           Column(
             children: [
               Container(width: 12, height: 12, decoration: BoxDecoration(color: _corPonto, shape: BoxShape.circle)),
-              if (!isLast) Expanded(child: Container(width: 2, color: Colors.black12)),
+              if (!isLast) Expanded(child: Container(width: 2, color: D.fundoAlt)),
             ],
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: D.e3),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 1))],
-                ),
+              padding: const EdgeInsets.only(bottom: D.e4),
+              child: CardSimples(
+                padding: const EdgeInsets.all(D.e3),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.access_time, size: 11, color: Colors.black38),
+                        const Icon(Icons.access_time, size: 11, color: D.tinta30),
                         const SizedBox(width: 4),
-                        Text(hora, style: const TextStyle(fontSize: 11, color: Colors.black45)),
+                        Text(hora, style: D.legenda.copyWith(fontSize: 11)),
                         const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.06),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(entrada.nomeEstadoAtual,
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.black54)),
-                        ),
+                        ChipEstado(texto: entrada.nomeEstadoAtual, cor: D.tinta50, corFundo: D.fundoAlt),
                       ],
                     ),
                     if (_textoDecisao.isNotEmpty) ...[
-                      const SizedBox(height: 6),
+                      const SizedBox(height: D.e2),
                       Row(
                         children: [
-                          const Text('Decisão: ', style: TextStyle(fontSize: 12, color: Colors.black45)),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: _corDecisao.withValues(alpha: 0.5),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(_textoDecisao,
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _corDecisao)),
-                          ),
+                          const Text('Decisão: ', style: D.legenda),
+                          ChipEstado(texto: _textoDecisao, cor: _corDecisao, corFundo: _corDecisao.withValues(alpha: 0.12)),
                         ],
                       ),
                     ],
                     if (entrada.comentario != null && entrada.comentario!.isNotEmpty) ...[
-                      const SizedBox(height: 6),
+                      const SizedBox(height: D.e2),
                       RichText(
-                        text: TextSpan(style: const TextStyle(fontSize: 12), children: [
-                          const TextSpan(text: 'Comentário: ', style: TextStyle(color: Colors.black45)),
-                          TextSpan(text: entrada.comentario!, style: const TextStyle(color: Colors.black54)),
+                        text: TextSpan(style: D.legenda.copyWith(fontSize: 12), children: [
+                          const TextSpan(text: 'Comentário: ', style: TextStyle(color: D.tinta30)),
+                          TextSpan(text: entrada.comentario!, style: const TextStyle(color: D.tinta50)),
                         ]),
                       ),
                     ],
@@ -424,7 +529,6 @@ class _ItemTimeline extends StatelessWidget {
     );
   }
 
-  // Converte o número do mês para abreviatura em português
   String _mesAbrev(int mes) {
     const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     return meses[mes - 1];

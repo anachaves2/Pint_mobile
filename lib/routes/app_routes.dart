@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/models/notificacao.dart';
 import 'package:pint_mobile/models/badge_utilizador.dart';
+import 'package:pint_mobile/models/badge_regular.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -16,6 +17,8 @@ import 'package:pint_mobile/screens/auth/configuracao_inicial_screen.dart';
 import 'package:pint_mobile/screens/dashboard/dashboard_screen.dart';
 import 'package:pint_mobile/screens/badges/meus_badges_screen.dart';
 import 'package:pint_mobile/screens/badges/todos_badges_screen.dart';
+import 'package:pint_mobile/screens/badges/badges_regulares_screen.dart';
+import 'package:pint_mobile/screens/badges/detalhe_badge_catalogo_screen.dart';
 import 'package:pint_mobile/screens/badges/badges_especiais_screen.dart';
 import 'package:pint_mobile/screens/badges/badges_expirados_screen.dart';
 import 'package:pint_mobile/screens/badges/detalhe_badge_regular_screen.dart';
@@ -37,6 +40,8 @@ import 'package:pint_mobile/screens/objetivos/novo_objetivos_screen.dart';
 import 'package:pint_mobile/screens/objetivos/objetivos_screen.dart';
 import 'package:pint_mobile/screens/gamification/gamification_screen.dart';
 import 'package:pint_mobile/screens/gamification/ranking_screen.dart';
+import 'package:pint_mobile/screens/auth/trocar_password_primeiro_acesso_screen.dart';
+import 'package:pint_mobile/screens/auth/aceitar_rgpd_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: AppConstants.routeLanding,
@@ -46,11 +51,18 @@ final GoRouter appRouter = GoRouter(
         state.matchedLocation == AppConstants.routeLogin;
     if (!naAuth) return null;    //noutras rotas não faz nada
     final token = await DatabaseService.instance.getToken();
-    if (token != null) {
-      return AppConstants.routeDashboard;  //se já tiver token, vai para dashboard
-    } else {
-      return null;  //senão, deixa ir para landing/login
+    if (token == null) return null;  //sem token, deixa ir para landing/login
+
+    // Já tem sessão: respeita a mesma ordem do login antes de ir ao dashboard,
+    // senão quem reabre a app saltava por cima da troca de password / RGPD.
+    final utilizador = await DatabaseService.instance.getUser();
+    if (utilizador?.primeiroAcesso == true) {
+      return AppConstants.routeTrocarPasswordPrimeiroAcesso;
     }
+    if (utilizador?.aceitouRgpd == false) {
+      return AppConstants.routeAceitarRgpd;
+    }
+    return AppConstants.routeDashboard;
   },
   routes: [
     GoRoute(path: AppConstants.routeLanding, builder: (ctx, state) => const LandingPageScreen()),
@@ -58,18 +70,20 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: AppConstants.routeRecuperarPassword, builder: (ctx, state) => const RecuperarPasswordScreen()),
     GoRoute(path: AppConstants.routeRedefinirPassword1, builder: (ctx, state) => const RedefinirPassword1Screen()),
     GoRoute(path: AppConstants.routeRedefinirPassword2, builder: (ctx, state) => const RedefinirPassword2Screen()),
+    GoRoute(path: AppConstants.routeTrocarPasswordPrimeiroAcesso, builder: (ctx, state) => const TrocarPasswordPrimeiroAcesso()),
+    GoRoute(path: AppConstants.routeAceitarRgpd, builder: (ctx, state) => const AceitarRgpdScreen()),
     GoRoute(path: AppConstants.routeConfiguracaoInicial, builder: (ctx, state) => const ConfiguracaoInicialScreen()),
     GoRoute(path: AppConstants.routeDashboard, builder: (ctx, state) => const DashboardScreen()),
     GoRoute(path: AppConstants.routeMeusBadges, builder: (ctx, state) => const OsMeusBadges()),
-    GoRoute(path: AppConstants.routeTodosBadges, builder: (ctx, state) => const TodosOsBadges()),
+    GoRoute(path: AppConstants.routeTodosBadges, builder: (ctx, state) => const BadgesRegulares()),
     GoRoute(path: AppConstants.routeBadgesEspeciais, builder: (ctx, state) => const BadgesEspeciais()),
     GoRoute(path: AppConstants.routeBadgesExpirados, builder: (ctx, state) => const BadgesExpirados()),
     GoRoute(path: AppConstants.routeDetalheBadge, builder: (ctx, state) => DetalheBadgeRegular(badge: state.extra as BadgeUtilizador)),
     GoRoute(path: AppConstants.routeDetalheBadgePremium, builder: (ctx, state) => DetalheBadgePremium(badge: state.extra as BadgeUtilizador)),
     GoRoute(path: AppConstants.routeDetalheBadgeExpirado, builder: (ctx, state) => DetalheBadgeExpirado(badge: state.extra as BadgeUtilizador)),
     GoRoute(path: AppConstants.routeDetalheBadgeRequisitos, builder: (ctx, state) => DetalheBadgeRequisitos(badge: state.extra as BadgeUtilizador)),
-    GoRoute(path: AppConstants.routeCatalogo, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Catálogo')),
-    GoRoute(path: AppConstants.routeDetalheCatalogo, builder: (ctx, state) => const PlaceholderScreen(titulo: 'Detalhe do Badge')),
+    GoRoute(path: AppConstants.routeCatalogo, builder: (ctx, state) => const TodosOsBadges()),
+    GoRoute(path: AppConstants.routeDetalheCatalogo, builder: (ctx, state) => DetalheBadgeCatalogo(badge: state.extra as BadgeRegular)),
     GoRoute(path: AppConstants.routeNotificacoes, builder: (ctx, state) => const NotificacoesScreen()),
     GoRoute(path: AppConstants.routeDetalheNotificacao, builder: (ctx, state) => DetalheNotificacaoScreen(notificacao: state.extra as Notificacao)),
     GoRoute(path: AppConstants.routePerfil, builder: (ctx, state) => const Perfil()),
@@ -80,7 +94,16 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: AppConstants.routeCandidaturaSubmetida, builder: (ctx, state) => const CandidaturaSubmetida()),
     GoRoute(path: AppConstants.routeDetalheCandidatura, builder: (ctx, state) => DetalhesCandidatura(numCandidatura: state.extra as int)),
     GoRoute(path: AppConstants.routeCandidaturas, builder: (ctx, state) => const Candidaturas()),
-    GoRoute(path: AppConstants.routeNovaCandidatura, builder: (ctx, state) => NovaCandidatura(rascunho: state.extra as Map<String, dynamic>?)),
+    GoRoute(
+      path: AppConstants.routeNovaCandidatura,
+      builder: (ctx, state) {
+        final extra = state.extra;
+        if (extra is BadgeRegular) {
+          return NovaCandidatura(badgePreselecionado: extra);
+        }
+        return NovaCandidatura(rascunho: extra as Map<String, dynamic>?);
+      },
+    ),
     GoRoute(path: AppConstants.routeObjetivos, builder: (ctx, state) => const ObjetivosScreen()),
     GoRoute(path: '${AppConstants.routeObjetivos}/novo', builder: (ctx, state) => const NovoObjetivoScreen()),
     GoRoute(path: AppConstants.routeGamification, builder: (ctx, state) => const GamificationScreen()),

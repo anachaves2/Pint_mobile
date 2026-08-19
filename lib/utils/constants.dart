@@ -31,7 +31,7 @@ class AppConstants {
 
   static const String dbName = 'pint2526.db'; //base de dados local (SQlite)
   static const int dbVersion =
-      3; //versão da db -> compara e garante que o user tem a versão atual da db caso a altere
+      4; //versão da db -> compara e garante que o user tem a versão atual da db caso a altere
 
   //Tabelas locais
 
@@ -73,6 +73,10 @@ class AppConstants {
   static const String routeRedefinirPassword1 = '/redefinir-password-1';
   static const String routeRedefinirPassword2 = '/redefinir-password-2';
   static const String routeConfiguracaoInicial = '/configuracao-inicial';
+  // Fluxo pós-login (mesma ordem da web): trocar password no 1º acesso,
+  // depois aceitar RGPD, depois configuração inicial / dashboard.
+  static const String routeTrocarPasswordPrimeiroAcesso = '/trocar-password-primeiro-acesso';
+  static const String routeAceitarRgpd = '/aceitar-rgpd';
 
   // DASHBOARD
   static const String routeDashboard = '/dashboard';
