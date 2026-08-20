@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pint_mobile/models/badge_utilizador.dart';
 import 'package:pint_mobile/models/requisitos.dart';
 import 'package:pint_mobile/services/database_service.dart';
+import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
@@ -37,7 +38,15 @@ class _DetalheBadgeRequisitosState extends State<DetalheBadgeRequisitos> {
       setState(() => _requisitos = []);
       return;
     }
-    final lista = await DatabaseService.instance.getRequisitos(widget.badge.idBadgeRegular!);
+    var lista = await DatabaseService.instance.getRequisitos(widget.badge.idBadgeRegular!);
+
+    // Os requisitos vêm no mesmo pedido do catálogo — se este ainda não foi
+    // sincronizado, a lista vinha vazia sem explicação.
+    if (lista.isEmpty) {
+      await APIService.instance.sincronizarCatalogo();
+      lista = await DatabaseService.instance.getRequisitos(widget.badge.idBadgeRegular!);
+    }
+
     if (mounted) setState(() => _requisitos = lista);
   }
 

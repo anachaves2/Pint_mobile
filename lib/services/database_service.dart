@@ -364,6 +364,11 @@ class DatabaseService {
         'telefone': consultor.telefone,
         'urlLinkedin': consultor.urlLinkedin,
         'urlFoto': consultor.urlFoto,
+        // Estes três também são editáveis nas Definições — sem eles, mudar
+        // de área ou de idioma não ficava guardado localmente.
+        'idArea': consultor.idArea,
+        'nomeArea': consultor.nomeArea,
+        'linguaPadrao': consultor.linguaPadrao,
       },
       // O WHERE garante que só actualiza o registo do consultor correcto
       where: 'id = ?',

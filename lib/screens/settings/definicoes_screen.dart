@@ -6,6 +6,8 @@ import 'package:pint_mobile/models/consultor.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/utils/design.dart';
+import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pint_mobile/screens/camera/camera_screen.dart';
@@ -13,17 +15,21 @@ import 'package:pint_mobile/providers/utilizador_provider.dart';
 import 'package:pint_mobile/providers/badges_provider.dart';
 import 'package:pint_mobile/providers/candidatura_provider.dart';
 import 'package:pint_mobile/providers/objetivos_resumo_provider.dart';
+import 'package:pint_mobile/providers/badges_recomendados_provider.dart';
 
 // ============================================================================
-// DefinicoesScreen — Ecrã 54
+// DefinicoesScreen
 //
-// Permite ao consultor:
-//   - Ver o seu avatar e nome
-//   - Mudar de área (dropdown)
-//   - Mudar o idioma (dropdown — PT/EN/ES)
-//   - Navegar para "Alterar Password"
-//   - Fazer logout
+// Paridade com a web (components/Definicoes.jsx): 3 separadores —
+//   1. Editar Perfil     — foto, telefone, LinkedIn, área
+//   2. Password          — alterar password
+//   3. Política de Privacidade — texto + estado do consentimento RGPD,
+//                          revogável (liga ao ecrã aceitar_rgpd_screen.dart)
+//
+// O idioma (PT/EN/ES) é extra do mobile e mantém-se.
 // ============================================================================
+
+enum _Seccao { perfil, password, privacidade }
 
 class DefinicoesScreen extends ConsumerStatefulWidget {
   const DefinicoesScreen({super.key});
@@ -35,14 +41,31 @@ class DefinicoesScreen extends ConsumerStatefulWidget {
 class _DefinicoesScreenState extends ConsumerState<DefinicoesScreen> {
   Consultor? _consultor;
   bool _isLoading = true;
+  _Seccao _seccao = _Seccao.perfil;
 
-  // Estado local dos dropdowns
+  // ── Perfil ──
+  final _telefoneController = TextEditingController();
+  final _linkedinController = TextEditingController();
   String _linguaSelecionada = 'pt';
   int? _idAreaSelecionada;
   String? _nomeAreaSelecionada;
-
-  // Áreas disponíveis (carregadas da API)
   List<_Area> _areas = [];
+  bool _aGuardarPerfil = false;
+  bool _aEnviarFoto = false;
+
+  // ── Password ──
+  final _passwordAtualController = TextEditingController();
+  final _novaPasswordController = TextEditingController();
+  final _confirmarPasswordController = TextEditingController();
+  bool _aGuardarPassword = false;
+
+  // ── Privacidade ──
+  String? _politica;
+  bool _aCarregarPolitica = false;
+  bool _aAtualizarRgpd = false;
+
+  String? _erro;
+  String? _sucesso;
 
   static const _linguas = [
     _Lingua(codigo: 'pt', nome: 'Português', bandeira: '🇵🇹'),
@@ -56,89 +79,247 @@ class _DefinicoesScreenState extends ConsumerState<DefinicoesScreen> {
     _carregarDados();
   }
 
+  @override
+  void dispose() {
+    _telefoneController.dispose();
+    _linkedinController.dispose();
+    _passwordAtualController.dispose();
+    _novaPasswordController.dispose();
+    _confirmarPasswordController.dispose();
+    super.dispose();
+  }
+
   Future<void> _carregarDados() async {
     final consultor = await DatabaseService.instance.getUser();
     final areasRaw = await APIService.instance.getAreas();
-    final areas = areasRaw
-        .map((m) => _Area(id: m['id'] as int, nome: m['nome'] as String))
-        .toList();
+    final areas = areasRaw.map((m) => _Area(id: m['id'] as int, nome: m['nome'] as String)).toList();
 
-    if (mounted) {
+    if (!mounted) return;
+    setState(() {
+      _consultor = consultor;
+      _telefoneController.text = consultor?.telefone ?? '';
+      _linkedinController.text = consultor?.urlLinkedin ?? '';
+      _linguaSelecionada = consultor?.linguaPadrao ?? 'pt';
+      _idAreaSelecionada = consultor?.idArea;
+      _nomeAreaSelecionada = consultor?.nomeArea;
+      _areas = areas;
+      _isLoading = false;
+    });
+  }
+
+  void _limparMensagens() => setState(() {
+        _erro = null;
+        _sucesso = null;
+      });
+
+  // Reconstrói o Consultor mantendo TODOS os campos — em especial
+  // nomeServiceLine, aceitouRgpd e primeiroAcesso, que se perdiam antes.
+  Consultor _consultorComAlteracoes({
+    String? telefone,
+    String? urlLinkedin,
+    String? urlFoto,
+    String? linguaPadrao,
+    int? idArea,
+    String? nomeArea,
+    bool? aceitouRgpd,
+  }) {
+    final c = _consultor!;
+    return Consultor(
+      id: c.id,
+      nome: c.nome,
+      email: c.email,
+      telefone: telefone ?? c.telefone,
+      urlLinkedin: urlLinkedin ?? c.urlLinkedin,
+      urlFoto: urlFoto ?? c.urlFoto,
+      dataMembro: c.dataMembro,
+      linguaPadrao: linguaPadrao ?? c.linguaPadrao,
+      idArea: idArea ?? c.idArea,
+      nomeArea: nomeArea ?? c.nomeArea,
+      nomeServiceLine: c.nomeServiceLine,
+      idLearningPath: c.idLearningPath,
+      nomeLearningPath: c.nomeLearningPath,
+      totalPontos: c.totalPontos,
+      posicaoRanking: c.posicaoRanking,
+      aceitouRgpd: aceitouRgpd ?? c.aceitouRgpd,
+      primeiroAcesso: c.primeiroAcesso,
+    );
+  }
+
+  // ── Guardar perfil (telefone, LinkedIn, área) ──
+  Future<void> _guardarPerfil() async {
+    _limparMensagens();
+    setState(() => _aGuardarPerfil = true);
+
+    final atualizado = _consultorComAlteracoes(
+      telefone: _telefoneController.text.trim(),
+      urlLinkedin: _linkedinController.text.trim(),
+      idArea: _idAreaSelecionada,
+      nomeArea: _nomeAreaSelecionada,
+    );
+
+    final resultado = await APIService.instance.atualizarPerfil(atualizado);
+    if (!mounted) return;
+    setState(() {
+      _aGuardarPerfil = false;
+      if (resultado.sucesso) {
+        _consultor = atualizado;
+        _sucesso = 'Perfil atualizado com sucesso!';
+      } else {
+        _erro = resultado.erro ?? 'Não foi possível guardar as alterações.';
+      }
+    });
+    if (resultado.sucesso) ref.invalidate(utilizadorProvider);
+  }
+
+  // ── Alterar foto (câmara -> upload) ──
+  Future<void> _alterarFotoPerfil() async {
+    final caminho = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const CameraScreen()),
+    );
+    if (caminho == null || !mounted) return;
+
+    _limparMensagens();
+    setState(() => _aEnviarFoto = true);
+
+    final resultado = await APIService.instance.uploadFotoPerfil(caminho);
+    if (!mounted) return;
+
+    if (resultado.sucesso) {
+      final atualizado = _consultorComAlteracoes(urlFoto: resultado.urlFoto);
+      await DatabaseService.instance.updateUser(atualizado);
+      if (!mounted) return;
       setState(() {
-        _consultor = consultor;
-        _linguaSelecionada = consultor?.linguaPadrao ?? 'pt';
-        _idAreaSelecionada = consultor?.idArea;
-        _nomeAreaSelecionada = consultor?.nomeArea;
-        _areas = areas;
-        _isLoading = false;
+        _consultor = atualizado;
+        _aEnviarFoto = false;
+        _sucesso = 'Foto atualizada com sucesso!';
+      });
+      ref.invalidate(utilizadorProvider);
+    } else {
+      setState(() {
+        _aEnviarFoto = false;
+        _erro = resultado.erro ?? 'Não foi possível enviar a foto.';
       });
     }
   }
 
-  // ── Guarda a área selecionada ──
-  Future<void> _guardarArea() async {
-    if (_idAreaSelecionada == null || _nomeAreaSelecionada == null) return;
+  // ── Guardar idioma ──
+  Future<void> _guardarIdioma(String codigo) async {
+    setState(() => _linguaSelecionada = codigo);
+    final atualizado = _consultorComAlteracoes(linguaPadrao: codigo);
+    await DatabaseService.instance.updateUser(atualizado);
+    if (mounted) setState(() => _consultor = atualizado);
+  }
 
-    final sucesso = await APIService.instance.configuracaoInicial(
-      idArea: _idAreaSelecionada!,
-      nomeArea: _nomeAreaSelecionada!,
+  // ── Alterar password ──
+  Future<void> _guardarPassword() async {
+    _limparMensagens();
+
+    final atual = _passwordAtualController.text;
+    final nova = _novaPasswordController.text;
+    final confirmar = _confirmarPasswordController.text;
+
+    if (atual.isEmpty || nova.isEmpty || confirmar.isEmpty) {
+      setState(() => _erro = 'Preenche os 3 campos.');
+      return;
+    }
+    if (nova != confirmar) {
+      setState(() => _erro = 'A nova password e a confirmação não coincidem.');
+      return;
+    }
+    if (nova.length < 6) {
+      setState(() => _erro = 'A nova password deve ter pelo menos 6 caracteres.');
+      return;
+    }
+
+    setState(() => _aGuardarPassword = true);
+    final resultado = await APIService.instance.alterarPassword(
+      passwordAtual: atual,
+      novaPassword: nova,
     );
+    if (!mounted) return;
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(sucesso ? 'Área atualizada.' : 'Erro ao atualizar área.'),
-          backgroundColor: sucesso ? AppConstants.corSucesso : AppConstants.corErro,
+    setState(() {
+      _aGuardarPassword = false;
+      if (resultado.sucesso) {
+        _passwordAtualController.clear();
+        _novaPasswordController.clear();
+        _confirmarPasswordController.clear();
+        _sucesso = 'Password alterada com sucesso!';
+      } else {
+        _erro = resultado.erro ?? 'Não foi possível alterar a password.';
+      }
+    });
+  }
+
+  // ── Política de privacidade (carrega só quando se abre o separador) ──
+  Future<void> _carregarPolitica() async {
+    if (_politica != null) return;
+    setState(() => _aCarregarPolitica = true);
+    final texto = await APIService.instance.getPoliticaPrivacidade();
+    if (!mounted) return;
+    setState(() {
+      _politica = texto ?? '';
+      _aCarregarPolitica = false;
+    });
+  }
+
+  // ── Aceitar / revogar consentimento RGPD ──
+  Future<void> _alternarConsentimentoRgpd() async {
+    _limparMensagens();
+    final novoValor = !(_consultor?.aceitouRgpd ?? true);
+
+    if (!novoValor) {
+      final confirmar = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Revogar consentimento?', style: TextStyle(fontWeight: FontWeight.bold, color: D.azul600)),
+          content: const Text(
+            'Se revogares, vais ter de aceitar novamente a Política de Privacidade no próximo login.',
+            style: TextStyle(fontSize: 13),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar', style: TextStyle(color: D.tinta50))),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Sim, revogar', style: TextStyle(color: D.erro, fontWeight: FontWeight.bold)),
+            ),
+          ],
         ),
       );
+      if (confirmar != true || !mounted) return;
     }
+
+    setState(() => _aAtualizarRgpd = true);
+    final resultado = await APIService.instance.atualizarConsentimentoRgpd(novoValor);
+    if (!mounted) return;
+
+    setState(() {
+      _aAtualizarRgpd = false;
+      if (resultado.sucesso) {
+        _consultor = _consultorComAlteracoes(aceitouRgpd: novoValor);
+        _sucesso = novoValor
+            ? 'Consentimento RGPD aceite com sucesso.'
+            : 'Consentimento revogado. Terás de o aceitar no próximo login.';
+      } else {
+        _erro = resultado.erro ?? 'Não foi possível atualizar o consentimento.';
+      }
+    });
+    if (resultado.sucesso) ref.invalidate(utilizadorProvider);
   }
 
-  // ── Guarda o idioma ──
-  Future<void> _guardarIdioma(String codigo) async {
-    if (_consultor == null) return;
-
-    // Atualiza localmente
-    setState(() => _linguaSelecionada = codigo);
-
-    // Guarda na API e no SQLite através do updatePerfil
-    final consultorAtualizado = Consultor(
-      id: _consultor!.id,
-      nome: _consultor!.nome,
-      email: _consultor!.email,
-      telefone: _consultor!.telefone,
-      urlLinkedin: _consultor!.urlLinkedin,
-      urlFoto: _consultor!.urlFoto,
-      dataMembro: _consultor!.dataMembro,
-      linguaPadrao: codigo,
-      idArea: _consultor!.idArea,
-      nomeArea: _consultor!.nomeArea,
-      idLearningPath: _consultor!.idLearningPath,
-      nomeLearningPath: _consultor!.nomeLearningPath,
-      totalPontos: _consultor!.totalPontos,
-      posicaoRanking: _consultor!.posicaoRanking,
-    );
-
-    await APIService.instance.atualizarPerfil(consultorAtualizado);
-  }
-
-  // ── Logout com confirmação ──
+  // ── Logout ──
   Future<void> _terminarSessao() async {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Terminar sessão'),
-        content: const Text('Pretende terminar a sua sessão?'),
+        title: const Text('Terminar sessão', style: TextStyle(fontWeight: FontWeight.bold, color: D.azul600)),
+        content: const Text('Pretende terminar a sua sessão?', style: TextStyle(fontSize: 13)),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar', style: TextStyle(color: D.tinta50))),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppConstants.corPrimaria,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: D.azul600),
             child: const Text('Terminar sessão'),
           ),
         ],
@@ -150,291 +331,349 @@ class _DefinicoesScreenState extends ConsumerState<DefinicoesScreen> {
       ref.read(badgesProvider.notifier).limpar();
       ref.read(candidaturasProvider.notifier).limpar();
       ref.read(objetivosResumoProvider.notifier).limpar();
+      ref.read(badgesRecomendadosProvider.notifier).limpar();
       await APIService.instance.logout();
-      if (mounted) {
-        context.go(AppConstants.routeLanding);
-      }
+      if (mounted) context.go(AppConstants.routeLanding);
     }
-  }
-
-  // ── AppBar ──
-  AppBar _buildAppBar() {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      leading: Builder(
-        builder: (context) => IconButton(
-          icon: SvgPicture.asset(
-            'assets/icons/drawerprimario.svg',
-            width: 24,
-            height: 24,
-            colorFilter: const ColorFilter.mode(
-              AppConstants.corPrimaria,
-              BlendMode.srcIn,
-            ),
-          ),
-          onPressed: () => Scaffold.of(context).openDrawer(),
-        ),
-      ),
-      title: const Text(
-        'DEFINIÇÕES',
-        style: TextStyle(
-          color: AppConstants.corPrimaria,
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-          letterSpacing: 1.2,
-        ),
-      ),
-      centerTitle: true,
-      actions: [
-        IconButton(
-          icon: SvgPicture.asset(
-            'assets/icons/notificacoesprimaria.svg',
-            width: 24,
-            height: 24,
-            colorFilter: const ColorFilter.mode(
-              AppConstants.corPrimaria,
-              BlendMode.srcIn,
-            ),
-          ),
-          onPressed: () =>
-              context.push(AppConstants.routeNotificacoes),
-        ),
-      ],
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(color: Colors.grey.shade200, height: 1),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: D.fundo,
       drawer: const CustomDrawer(),
       appBar: _buildAppBar(),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppConstants.corPrimaria),
-            )
+          ? const Center(child: CircularProgressIndicator(color: D.azul600))
           : _consultor == null
-              ? const Center(child: Text('Erro ao carregar dados.'))
+              ? const Center(child: Text('Erro ao carregar dados.', style: D.corpo))
               : _buildBody(),
+    );
+  }
+
+  AppBar _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      centerTitle: true,
+      leading: Builder(
+        builder: (ctx) => IconButton(
+          icon: SvgPicture.asset('assets/icons/drawerprimario.svg', height: 20,
+              colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
+          onPressed: () => Scaffold.of(ctx).openDrawer(),
+        ),
+      ),
+      title: const Text('DEFINIÇÕES', style: D.tituloPagina),
+      actions: [
+        IconButton(
+          icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
+              colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn)),
+          onPressed: () => context.push(AppConstants.routeNotificacoes),
+        ),
+      ],
     );
   }
 
   Widget _buildBody() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+      padding: const EdgeInsets.fromLTRB(D.e4, D.e2, D.e4, D.e5),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Avatar + nome ──
           _buildAvatar(),
-          const SizedBox(height: 32),
-
-          // ── Área ──
-          _buildSectionLabel('Área'),
-          const SizedBox(height: 8),
-          _buildAreaDropdown(),
-          const SizedBox(height: 24),
-
-          // ── Idioma ──
-          _buildSectionLabel('Idioma'),
-          const SizedBox(height: 8),
-          _buildIdiomaDropdown(),
-          const SizedBox(height: 24),
-
-          // ── Alterar password ──
-          _buildSectionLabel('Segurança'),
-          const SizedBox(height: 8),
-          _buildListItem(
-            icone: Icons.lock_outline,
-            label: 'Alterar Password',
-            onTap: () => context.push(AppConstants.routeAlterarPassword),
+          const SizedBox(height: D.e5),
+          _buildTabs(),
+          const SizedBox(height: D.e4),
+          if (_erro != null) _buildMensagem(_erro!, D.erro, D.erroBg),
+          if (_sucesso != null) _buildMensagem(_sucesso!, D.ok, D.okBg),
+          switch (_seccao) {
+            _Seccao.perfil => _buildSeccaoPerfil(),
+            _Seccao.password => _buildSeccaoPassword(),
+            _Seccao.privacidade => _buildSeccaoPrivacidade(),
+          },
+          const SizedBox(height: D.e5),
+          ElevatedButton(
+            onPressed: _terminarSessao,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: D.azul600,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: D.e3 + 2),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
+            ),
+            child: const Text('Terminar Sessão', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: D.e3),
+          Center(child: Text('BadgeBoost v1.0.0', style: D.legenda.copyWith(fontSize: 12))),
+        ],
+      ),
+    );
+  }
 
-          // ── Terminar sessão ──
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _terminarSessao,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppConstants.corPrimaria,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+  Widget _buildMensagem(String texto, Color cor, Color fundo) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: D.e3),
+      padding: const EdgeInsets.all(D.e3),
+      decoration: BoxDecoration(color: fundo, borderRadius: BorderRadius.circular(D.rSm)),
+      child: Text(texto, style: TextStyle(color: cor, fontSize: 13)),
+    );
+  }
+
+  Widget _buildTabs() {
+    final tabs = {
+      _Seccao.perfil: 'Perfil',
+      _Seccao.password: 'Password',
+      _Seccao.privacidade: 'Privacidade',
+    };
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(color: D.superficie, borderRadius: BorderRadius.circular(D.rSm), boxShadow: D.elev1),
+      child: Row(
+        children: tabs.entries.map((e) {
+          final ativo = _seccao == e.key;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() => _seccao = e.key);
+                _limparMensagens();
+                if (e.key == _Seccao.privacidade) _carregarPolitica();
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 9),
+                decoration: BoxDecoration(
+                  color: ativo ? D.azul600 : Colors.transparent,
+                  borderRadius: BorderRadius.circular(D.rSm - 2),
                 ),
-              ),
-              child: const Text(
-                'Terminar Sessão',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                child: Text(e.value, textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: ativo ? Colors.white : D.tinta30)),
               ),
             ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  // ─── Avatar ───────────────────────────────────────────────────────────────
+
+  Widget _buildAvatar() {
+    final inicial = _consultor!.nome.isNotEmpty ? _consultor!.nome[0].toUpperCase() : '?';
+    final urlFoto = AppConstants.resolverUrlFicheiro(_consultor!.urlFoto);
+
+    return Column(
+      children: [
+        Container(
+          width: 88,
+          height: 88,
+          decoration: const BoxDecoration(shape: BoxShape.circle, color: D.azul100),
+          child: urlFoto != null
+              ? ClipOval(
+                  child: CachedNetworkImage(
+                    imageUrl: urlFoto,
+                    fit: BoxFit.cover,
+                    placeholder: (ctx, url) => const Center(child: CircularProgressIndicator(strokeWidth: 2, color: D.azul600)),
+                    errorWidget: (ctx, url, err) => Center(child: Text(inicial, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: D.azul600))),
+                  ),
+                )
+              : Center(child: Text(inicial, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: D.azul600))),
+        ),
+        const SizedBox(height: D.e2),
+        GestureDetector(
+          onTap: _aEnviarFoto ? null : _alterarFotoPerfil,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: D.e3, vertical: 5),
+            decoration: BoxDecoration(color: D.azul100, borderRadius: BorderRadius.circular(999)),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_aEnviarFoto)
+                  const SizedBox(height: 12, width: 12, child: CircularProgressIndicator(strokeWidth: 2, color: D.azul600))
+                else
+                  const Icon(Icons.camera_alt_outlined, size: 14, color: D.azul600),
+                const SizedBox(width: 5),
+                Text(_aEnviarFoto ? 'A enviar...' : 'Alterar foto',
+                    style: const TextStyle(fontSize: 12, color: D.azul600, fontWeight: FontWeight.w600)),
+              ],
+            ),
           ),
+        ),
+        const SizedBox(height: D.e3),
+        Text(_consultor!.nome, style: D.tituloSeccao.copyWith(fontSize: 18)),
+        Text(_nomeAreaSelecionada ?? _consultor!.nomeArea ?? '', style: D.legenda),
+      ],
+    );
+  }
 
-          const SizedBox(height: 16),
+  // ─── Secção Perfil ────────────────────────────────────────────────────────
 
-          // Versão da app
-          Text(
-            'BadgeBoost v1.0.0',
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+  Widget _buildSeccaoPerfil() {
+    return CardSimples(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _label('Telefone'),
+          TextField(controller: _telefoneController, keyboardType: TextInputType.phone, decoration: _inputDecoration('+351 ...')),
+          const SizedBox(height: D.e3),
+
+          _label('LinkedIn'),
+          TextField(controller: _linkedinController, decoration: _inputDecoration('https://linkedin.com/in/...')),
+          const SizedBox(height: D.e3),
+
+          _label('Área'),
+          _buildAreaDropdown(),
+          const SizedBox(height: D.e3),
+
+          _label('Idioma'),
+          _buildIdiomaDropdown(),
+          const SizedBox(height: D.e4),
+
+          ElevatedButton(
+            onPressed: _aGuardarPerfil ? null : _guardarPerfil,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: D.azul600,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: D.fundoAlt,
+              padding: const EdgeInsets.symmetric(vertical: D.e3),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
+            ),
+            child: _aGuardarPerfil
+                ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Text('Guardar Alterações', style: TextStyle(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
     );
   }
 
-  // image_picker 
-  // Permite ao consultor tirar uma foto ou escolher da galeria para o perfil
-  Future<void> _alterarFotoPerfil() async {
-    final caminho = await Navigator.push<String>(
-      context,
-      MaterialPageRoute(builder: (_) => const CameraScreen()),
+  // ─── Secção Password ──────────────────────────────────────────────────────
+
+  Widget _buildSeccaoPassword() {
+    return CardSimples(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _label('Password Atual'),
+          TextField(controller: _passwordAtualController, obscureText: true, decoration: _inputDecoration('')),
+          const SizedBox(height: D.e3),
+
+          _label('Nova Password'),
+          TextField(controller: _novaPasswordController, obscureText: true, decoration: _inputDecoration('Mínimo 6 caracteres')),
+          const SizedBox(height: D.e3),
+
+          _label('Confirmar Nova Password'),
+          TextField(controller: _confirmarPasswordController, obscureText: true, decoration: _inputDecoration('')),
+          const SizedBox(height: D.e4),
+
+          ElevatedButton(
+            onPressed: _aGuardarPassword ? null : _guardarPassword,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: D.azul600,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: D.fundoAlt,
+              padding: const EdgeInsets.symmetric(vertical: D.e3),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
+            ),
+            child: _aGuardarPassword
+                ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Text('Alterar Password', style: TextStyle(fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
     );
-    if (caminho == null) return;
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Foto tirada com sucesso!'),
-          backgroundColor: AppConstants.corSucesso,
-        ),
-      );
-    }
   }
 
-  // ── Avatar circular com nome e cargo ──
-  Widget _buildAvatar() {
-    final nomeInicial = _consultor!.nome.isNotEmpty
-        ? _consultor!.nome[0].toUpperCase()
-        : '?';
+  // ─── Secção Privacidade ───────────────────────────────────────────────────
+
+  Widget _buildSeccaoPrivacidade() {
+    final aceitou = _consultor?.aceitouRgpd ?? true;
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Imagem ou iniciais
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppConstants.corPrimaria.withValues(alpha:0.15),
-            border: Border.all(
-              color: AppConstants.corPrimaria.withValues(alpha:0.3),
-              width: 2,
-            ),
-          ),
-          child: _consultor!.urlFoto != null
-              ? ClipOval(
-                  child: CachedNetworkImage(
-                    imageUrl: _consultor!.urlFoto!,
-                    fit: BoxFit.cover,
-                    placeholder: (ctx, url) => const CircularProgressIndicator(),
-                    errorWidget: (ctx, url, err) => Center(
-                      child: Text(
-                        nomeInicial,
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: AppConstants.corPrimaria,
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-              : Center(
-                  child: Text(
-                    nomeInicial,
-                    style: const TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: AppConstants.corPrimaria,
+        CardSimples(
+          child: _aCarregarPolitica
+              ? const Center(child: Padding(padding: EdgeInsets.all(D.e3), child: CircularProgressIndicator(color: D.azul600)))
+              : ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 260),
+                  child: SingleChildScrollView(
+                    child: Text(
+                      (_politica?.isNotEmpty ?? false) ? _politica! : 'Política de privacidade não disponível de momento.',
+                      style: D.corpo.copyWith(height: 1.7),
                     ),
                   ),
                 ),
         ),
-        const SizedBox(height: 8),
-        // Botão para alterar foto — image_picker (Aula 11)
-        GestureDetector(
-          onTap: _alterarFotoPerfil,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppConstants.corPrimaria.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.camera_alt_outlined, size: 14, color: AppConstants.corPrimaria),
-                SizedBox(width: 4),
-                Text('Alterar foto', style: TextStyle(fontSize: 12, color: AppConstants.corPrimaria)),
+        const SizedBox(height: D.e3),
+        CardSimples(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Icon(aceitou ? Icons.check_circle : Icons.warning_amber_rounded,
+                      color: aceitou ? D.ok : D.aviso, size: 20),
+                  const SizedBox(width: D.e2),
+                  Expanded(
+                    child: Text(
+                      aceitou ? 'Consentimento RGPD aceite' : 'Consentimento RGPD não aceite',
+                      style: D.tituloCard,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: D.e3),
+              OutlinedButton(
+                onPressed: _aAtualizarRgpd ? null : _alternarConsentimentoRgpd,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: aceitou ? D.erro : D.azul600,
+                  side: BorderSide(color: aceitou ? D.erro : D.azul600),
+                  padding: const EdgeInsets.symmetric(vertical: D.e3),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
+                ),
+                child: _aAtualizarRgpd
+                    ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: D.azul600))
+                    : Text(aceitou ? 'Revogar consentimento' : 'Aceitar agora',
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
+              ),
+              if (!aceitou) ...[
+                const SizedBox(height: D.e2),
+                Text('Terás de aceitar a Política de Privacidade no próximo login.',
+                    style: D.legenda.copyWith(fontSize: 12)),
               ],
-            ),
+            ],
           ),
-        ),
-        const SizedBox(height: 12),
-
-        // Nome
-        Text(
-          _consultor!.nome,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppConstants.corPrimaria,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 4),
-
-        // Área / nível
-        Text(
-          _nomeAreaSelecionada ?? _consultor!.nomeArea ?? '',
-          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-          textAlign: TextAlign.center,
         ),
       ],
     );
   }
 
-  // ── Label de secção ──
-  Widget _buildSectionLabel(String texto) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        texto,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Colors.grey.shade500,
-          letterSpacing: 0.5,
-        ),
-      ),
-    );
-  }
+  // ─── Auxiliares ───────────────────────────────────────────────────────────
 
-  // ── Dropdown de área ──
+  Widget _label(String texto) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text(texto, style: D.tituloCard.copyWith(fontSize: 13)),
+      );
+
+  InputDecoration _inputDecoration(String hint) => InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: D.tinta30, fontSize: 13),
+        filled: true,
+        fillColor: D.fundoAlt,
+        contentPadding: const EdgeInsets.symmetric(horizontal: D.e3, vertical: D.e3),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(D.rSm), borderSide: BorderSide.none),
+      );
+
   Widget _buildAreaDropdown() {
     if (_areas.isEmpty) {
-      // Sem áreas carregadas — mostra a atual como texto e um botão de guardar
-      return _buildDropdownShell(
-        child: Text(
-          _consultor!.nomeArea ?? '',
-          style: const TextStyle(fontSize: 15, color: Colors.black87),
-        ),
-        onTap: null,
-      );
+      return _dropdownShell(child: Text(_consultor!.nomeArea ?? '—', style: D.corpo));
     }
-
-    return _buildDropdownShell(
+    return _dropdownShell(
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int>(
           value: _idAreaSelecionada,
           isExpanded: true,
-          icon: const Icon(Icons.expand_more, color: AppConstants.corPrimaria),
-          style: const TextStyle(fontSize: 15, color: Colors.black87),
+          hint: const Text('— Sem área —', style: TextStyle(fontSize: 14, color: D.tinta30)),
+          icon: const Icon(Icons.expand_more, color: D.azul600),
+          style: const TextStyle(fontSize: 14, color: D.tinta),
           onChanged: (novoId) {
             if (novoId == null) return;
             final area = _areas.firstWhere((a) => a.id == novoId);
@@ -442,105 +681,36 @@ class _DefinicoesScreenState extends ConsumerState<DefinicoesScreen> {
               _idAreaSelecionada = novoId;
               _nomeAreaSelecionada = area.nome;
             });
-            _guardarArea();
           },
-          items: _areas
-              .map(
-                (a) => DropdownMenuItem(
-                  value: a.id,
-                  child: Text(a.nome),
-                ),
-              )
-              .toList(),
+          items: _areas.map((a) => DropdownMenuItem(value: a.id, child: Text(a.nome))).toList(),
         ),
       ),
-      onTap: null,
     );
   }
 
-  // ── Dropdown de idioma ──
   Widget _buildIdiomaDropdown() {
-    final linguaAtual = _linguas.firstWhere(
-      (l) => l.codigo == _linguaSelecionada,
-      orElse: () => _linguas.first,
-    );
-
-    return _buildDropdownShell(
+    final atual = _linguas.firstWhere((l) => l.codigo == _linguaSelecionada, orElse: () => _linguas.first);
+    return _dropdownShell(
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: linguaAtual.codigo,
+          value: atual.codigo,
           isExpanded: true,
-          icon: const Icon(Icons.expand_more, color: AppConstants.corPrimaria),
-          style: const TextStyle(fontSize: 15, color: Colors.black87),
+          icon: const Icon(Icons.expand_more, color: D.azul600),
+          style: const TextStyle(fontSize: 14, color: D.tinta),
           onChanged: (codigo) {
-            if (codigo == null) return;
-            _guardarIdioma(codigo);
+            if (codigo != null) _guardarIdioma(codigo);
           },
-          items: _linguas
-              .map(
-                (l) => DropdownMenuItem(
-                  value: l.codigo,
-                  child: Text('${l.bandeira}  ${l.nome}'),
-                ),
-              )
-              .toList(),
+          items: _linguas.map((l) => DropdownMenuItem(value: l.codigo, child: Text('${l.bandeira}  ${l.nome}'))).toList(),
         ),
       ),
-      onTap: null,
     );
   }
 
-  // ── Container partilhado para campos do tipo dropdown/row ──
-  Widget _buildDropdownShell({
-    required Widget child,
-    required VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
-          borderRadius: BorderRadius.circular(8),
-          color: Colors.grey.shade50,
-        ),
+  Widget _dropdownShell({required Widget child}) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: D.e3, vertical: 2),
+        decoration: BoxDecoration(color: D.fundoAlt, borderRadius: BorderRadius.circular(D.rSm)),
         child: child,
-      ),
-    );
-  }
-
-  // ── Item de lista (ex: Alterar Password) ──
-  Widget _buildListItem({
-    required IconData icone,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
-          borderRadius: BorderRadius.circular(8),
-          color: Colors.grey.shade50,
-        ),
-        child: Row(
-          children: [
-            Icon(icone, color: AppConstants.corPrimaria, size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(fontSize: 15, color: Colors.black87),
-              ),
-            ),
-            const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
+      );
 }
 
 // ── Modelos auxiliares internos ──
@@ -555,9 +725,5 @@ class _Lingua {
   final String codigo;
   final String nome;
   final String bandeira;
-  const _Lingua({
-    required this.codigo,
-    required this.nome,
-    required this.bandeira,
-  });
+  const _Lingua({required this.codigo, required this.nome, required this.bandeira});
 }

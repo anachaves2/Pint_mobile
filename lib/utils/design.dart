@@ -122,10 +122,12 @@ class D {
       TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: tinta);
   static const corpo = TextStyle(fontSize: 14, color: tinta70);
   static const legenda = TextStyle(fontSize: 13, color: tinta50);
+  // Usada nos subtítulos de secção (RESUMO, OBJETIVOS, BADGES...) — 11px era
+  // pequeno de mais para ler à distância normal no telemóvel.
   static const etiqueta = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0.66,
+    fontSize: 13,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 0.6,
     color: tinta50,
   );
 

@@ -33,15 +33,6 @@ class Perfil extends ConsumerStatefulWidget {
 
 class _PerfilState extends ConsumerState<Perfil> {
   _TabPerfil _tabAtiva = _TabPerfil.obtidos;
-  final TextEditingController _pesquisaController = TextEditingController();
-  String _queryPesquisa = '';
-
-  @override
-  void dispose() {
-    _pesquisaController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final consultorAsync = ref.watch(utilizadorProvider);
@@ -383,8 +374,6 @@ class _PerfilState extends ConsumerState<Perfil> {
         const SizedBox(height: D.e3),
         _buildTabsPills(),
         const SizedBox(height: D.e3),
-        _buildCampoPesquisa(),
-        const SizedBox(height: D.e3),
         _buildConteudoTab(badges, candidaturas),
       ],
     );
@@ -435,77 +424,26 @@ class _PerfilState extends ConsumerState<Perfil> {
     );
   }
 
-  Widget _buildCampoPesquisa() {
-    return Container(
-      decoration: BoxDecoration(
-        color: D.superficie,
-        borderRadius: BorderRadius.circular(D.rMd),
-        boxShadow: D.elev1,
-      ),
-      child: TextField(
-        controller: _pesquisaController,
-        onChanged: (v) => setState(() => _queryPesquisa = v),
-        decoration: InputDecoration(
-          hintText: 'Pesquisar badge...',
-          hintStyle: const TextStyle(fontSize: 13, color: D.tinta30),
-          prefixIcon: const Icon(Icons.search, size: 20, color: D.tinta30),
-          filled: true,
-          fillColor: D.superficie,
-          contentPadding: const EdgeInsets.symmetric(vertical: 0),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(D.rMd),
-            borderSide: BorderSide.none,
-          ),
-        ),
-        style: const TextStyle(fontSize: 13),
-      ),
-    );
-  }
-
-  List<BadgeUtilizador> _filtrarBadges(List<BadgeUtilizador> lista) {
-    if (_queryPesquisa.isEmpty) return lista;
-    final q = _queryPesquisa.toLowerCase();
-    return lista.where((b) {
-      return b.nomeBadge.toLowerCase().contains(q) ||
-          (b.nomeNivel?.toLowerCase().contains(q) ?? false) ||
-          (b.nomeArea?.toLowerCase().contains(q) ?? false);
-    }).toList();
-  }
-
-  List<CandidaturaBadge> _filtrarCandidaturas(List<CandidaturaBadge> lista) {
-    if (_queryPesquisa.isEmpty) return lista;
-    final q = _queryPesquisa.toLowerCase();
-    return lista.where((c) => c.nomeBadge.toLowerCase().contains(q)).toList();
-  }
-
   Widget _buildConteudoTab(List<BadgeUtilizador> badges, List<CandidaturaBadge> candidaturas) {
     switch (_tabAtiva) {
       case _TabPerfil.obtidos:
-        final lista = _filtrarBadges(
-          badges.where((b) => b.valido && b.idBadgeEspecial == null).toList()
-            ..sort((a, b) => b.dataAtribuicao.compareTo(a.dataAtribuicao)),
-        );
+        final lista = badges.where((b) => b.valido && b.idBadgeEspecial == null).toList()
+            ..sort((a, b) => b.dataAtribuicao.compareTo(a.dataAtribuicao));
         return _buildListaBadges(lista, vazio: 'Ainda não tens badges obtidos.');
 
       case _TabPerfil.especiais:
-        final lista = _filtrarBadges(
-          badges.where((b) => b.valido && b.idBadgeEspecial != null).toList()
-            ..sort((a, b) => b.dataAtribuicao.compareTo(a.dataAtribuicao)),
-        );
+        final lista = badges.where((b) => b.valido && b.idBadgeEspecial != null).toList()
+            ..sort((a, b) => b.dataAtribuicao.compareTo(a.dataAtribuicao));
         return _buildListaBadges(lista, vazio: 'Ainda não tens badges especiais.');
 
       case _TabPerfil.progresso:
-        final lista = _filtrarCandidaturas(
-          candidaturas.where((c) => !c.estaConcluida).toList()
-            ..sort((a, b) => b.dataCriacao.compareTo(a.dataCriacao)),
-        );
+        final lista = candidaturas.where((c) => !c.estaConcluida).toList()
+            ..sort((a, b) => b.dataCriacao.compareTo(a.dataCriacao));
         return _buildListaCandidaturas(lista, vazio: 'Sem candidaturas em progresso.');
 
       case _TabPerfil.historico:
-        final lista = _filtrarCandidaturas(
-          candidaturas.where((c) => c.estaConcluida).toList()
-            ..sort((a, b) => b.dataCriacao.compareTo(a.dataCriacao)),
-        );
+        final lista = candidaturas.where((c) => c.estaConcluida).toList()
+            ..sort((a, b) => b.dataCriacao.compareTo(a.dataCriacao));
         return _buildListaCandidaturas(lista, vazio: 'Ainda sem histórico.');
     }
   }
@@ -521,6 +459,16 @@ class _PerfilState extends ConsumerState<Perfil> {
           subtitulo: subtitulo.isEmpty ? null : subtitulo,
           data: b.dataAtribuicao,
           pontos: b.pontos,
+          // Abre o detalhe do badge, tal como em "Os Meus Badges"
+          onTap: () {
+            if (b.idBadgeEspecial != null) {
+              context.push(AppConstants.routeDetalheBadgePremium, extra: b);
+            } else if (b.jaExpirou) {
+              context.push(AppConstants.routeDetalheBadgeExpirado, extra: b);
+            } else {
+              context.push(AppConstants.routeDetalheBadge, extra: b);
+            }
+          },
         );
       }).toList(),
     );
@@ -536,6 +484,7 @@ class _PerfilState extends ConsumerState<Perfil> {
           data: c.dataCriacao,
           aprovada: c.aprovada,
           rejeitada: c.rejeitada,
+          onTap: () => context.push(AppConstants.routeDetalheCandidatura, extra: c.numCandidatura),
         );
       }).toList(),
     );
@@ -548,6 +497,7 @@ class _PerfilState extends ConsumerState<Perfil> {
     int? pontos,
     bool aprovada = false,
     bool rejeitada = false,
+    VoidCallback? onTap,
   }) {
     final dataFormatada =
         '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
@@ -556,6 +506,7 @@ class _PerfilState extends ConsumerState<Perfil> {
       padding: const EdgeInsets.only(bottom: D.e2),
       child: CardSimples(
         padding: const EdgeInsets.symmetric(horizontal: D.e4, vertical: D.e3),
+        onTap: onTap,
         child: Row(
           children: [
             Expanded(
@@ -588,6 +539,7 @@ class _PerfilState extends ConsumerState<Perfil> {
                 ],
               ],
             ),
+            if (onTap != null) const Icon(Icons.chevron_right, color: D.tinta30, size: 18),
           ],
         ),
       ),

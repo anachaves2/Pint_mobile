@@ -61,8 +61,8 @@ dependencies:
 
   # --- PDF ---
   # Para gerar e fazer download de certificados em PDF
-  pdf: ^3.10.8
-  printing: ^5.13.1
+  pdf: ^3.13.0
+  printing: ^5.15.0
 
   # --- Partilha (LinkedIn, etc.) ---
   # Para abrir URLs externas como o perfil LinkedIn ou a página pública do badge

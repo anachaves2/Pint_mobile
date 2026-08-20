@@ -45,8 +45,7 @@ class PodioRanking extends StatelessWidget {
     final terceiro = _porPosicao(3);
 
     return Padding(
-      // espaço em cima para os círculos que sobressaem das barras
-      padding: const EdgeInsets.only(top: 32, left: D.e2, right: D.e2),
+      padding: const EdgeInsets.only(top: D.e2, left: D.e2, right: D.e2),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -110,7 +109,10 @@ class _Lugar extends StatelessWidget {
         const SizedBox(height: 2),
         Text('${entrada!.pontos} pts',
             style: D.legenda.copyWith(fontSize: 11)),
-        const SizedBox(height: D.e2),
+        // Espaço reservado para o círculo da foto, que flutua 24px (1º) /
+        // 20px acima do topo da barra. Sem isto, o círculo sobrepõe-se ao
+        // texto dos pontos.
+        SizedBox(height: ehPrimeiro ? 32 : 28),
 
         // Barra + círculo sobreposto
         // Clip.none deixa o círculo sair para fora dos limites da Stack

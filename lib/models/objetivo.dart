@@ -11,6 +11,11 @@ class Objetivo {
   final DateTime? dataConclusao;
   final bool alcancado; // true se atingido
   final String estado; //"Em Curso" ou "Concluido"
+  // Progresso calculado pelo servidor (vem no GET /objetivos)
+  final int? atual;
+  final int? meta;
+  final int? percentagem;
+  final String? formato; // 'contagem' ou 'posicao'
 
   //Construtor
   Objetivo({
@@ -24,22 +29,44 @@ class Objetivo {
     this.dataConclusao,
     required this.alcancado,
     required this.estado,
+    this.atual,
+    this.meta,
+    this.percentagem,
+    this.formato,
   });
 
   //fromJson - converto do formato json da API para o objeto
   //O método factory recebe o json (convertido em map de strings pelo package http) e traduz
+  // ATENÇÃO: os nomes têm de bater certo com o que a API devolve.
+  // GET /api/objetivos devolve: id, idTipoObjetivo, nomeTipo, descricaoTipo,
+  // dataInicio, dataFim, atual, meta, percentagem, formato — NÃO devolve
+  // idUtilizador, nomeTipoObjetivo, alcancado nem estado.
+  // Antes, estes 4 campos eram lidos com nomes que nunca existiam no JSON,
+  // o que atirava um erro de tipo em TODOS os objetivos. Como o erro era
+  // apanhado em silêncio no sincronizarObjetivos(), a lista ficava sempre
+  // vazia — mesmo com objetivos criados no servidor.
   factory Objetivo.fromJson(Map<String, dynamic> json) {
     return Objetivo(
       id: json['id'],
-      idUtilizador: json['idUtilizador'],
+      idUtilizador: json['idUtilizador'] ?? 0,
       idLearningPath: json['idLearningPath'],
       idTipoObjetivo: json['idTipoObjetivo'],
-      nomeTipoObjetivo: json['nomeTipoObjetivo'],
+      nomeTipoObjetivo: json['nomeTipo'] ?? json['nomeTipoObjetivo'] ?? 'Objetivo',
       dataInicio: DateTime.parse(json['dataInicio']),
       dataFim: DateTime.parse(json['dataFim']),
-      dataConclusao: json['dataConclusao'] != null? DateTime.parse(json['dataConclusao']): null, //verifica se é null antes de converter
-      alcancado: json['alcancado'] is bool? json['alcancado']: json['alcancado'] == 1, //converte para bool caso 0 ou 1 tenha sido passado com int
-      estado: json['estado'],
+      dataConclusao: json['dataConclusao'] != null ? DateTime.parse(json['dataConclusao']) : null,
+      alcancado: json['alcancado'] is bool
+          ? json['alcancado']
+          : (json['alcancado'] ?? 0) == 1,
+      // A rota de "em curso" não manda estado — se não vier, é "Em Curso".
+      // Na rota de histórico vem em 'resultado'.
+      estado: json['estado'] ?? json['resultado'] ?? 'Em Curso',
+      atual: json['atual'],
+      meta: json['meta'],
+      percentagem: json['percentagem'] is int
+          ? json['percentagem']
+          : (json['percentagem'] as num?)?.round(),
+      formato: json['formato'],
     );
   }
 

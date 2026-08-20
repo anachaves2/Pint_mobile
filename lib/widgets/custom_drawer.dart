@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pint_mobile/providers/badges_provider.dart';
 import 'package:pint_mobile/providers/candidatura_provider.dart';
 import 'package:pint_mobile/providers/objetivos_resumo_provider.dart';
+import 'package:pint_mobile/providers/badges_recomendados_provider.dart';
 
 // ConsumerWidget: padrão do Riverpod 
 class CustomDrawer extends ConsumerWidget {
@@ -70,6 +71,7 @@ class CustomDrawer extends ConsumerWidget {
       ref.read(candidaturasProvider.notifier).limpar();
       ref.read(badgesProvider.notifier).limpar();
       ref.read(objetivosResumoProvider.notifier).limpar();
+      ref.read(badgesRecomendadosProvider.notifier).limpar();
       await APIService.instance.logout();
       if (context.mounted) {
         context.go(AppConstants.routeLanding);

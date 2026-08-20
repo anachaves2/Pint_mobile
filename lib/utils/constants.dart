@@ -18,6 +18,18 @@ class AppConstants {
   // fim do baseUrl.
   static String get filesUrl => baseUrl.replaceFirst(RegExp(r'/api/?$'), '');
 
+  // URL do frontend web — usada para abrir a página pública de verificação
+  // de um badge. NÃO usar o campo url_publico da base de dados: os dados de
+  // exemplo têm lá 'https://badges.softinsa.pt/...', um domínio que não
+  // existe, e por isso a página nunca abria.
+  static const String frontendUrl = 'https://frontend-6mpw.onrender.com';
+
+  /// Página pública de verificação de um badge, a partir do token.
+  static String? urlVerificacaoBadge(String? tokenValidacao) {
+    if (tokenValidacao == null || tokenValidacao.isEmpty) return null;
+    return '$frontendUrl/badges/verify/$tokenValidacao';
+  }
+
   // Resolve um caminho de ficheiro vindo da API para uma URL completa.
   // Se já vier completo (começa por http) ou for nulo/vazio, devolve como está.
   static String? resolverUrlFicheiro(String? caminho) {

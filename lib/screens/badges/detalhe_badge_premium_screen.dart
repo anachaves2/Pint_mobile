@@ -5,6 +5,8 @@ import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:pint_mobile/utils/certificado_badge.dart';
+import 'package:pint_mobile/services/database_service.dart';
 
 // ECRÃ DETALHE BADGE PREMIUM
 // Mostra os detalhes de um badge especial. Segue os tokens D — o dourado
@@ -213,7 +215,22 @@ class DetalheBadgePremium extends StatelessWidget {
           ),
         ),
         const SizedBox(height: D.e2 + 2),
-        if (badge.urlPublico != null)
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => _descarregarCertificado(context),
+            icon: const Icon(Icons.download_outlined, size: 18),
+            label: const Text('Descarregar Certificado'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: D.azul600,
+              side: const BorderSide(color: D.azul600),
+              padding: const EdgeInsets.symmetric(vertical: D.e3),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
+            ),
+          ),
+        ),
+        const SizedBox(height: D.e2 + 2),
+        if (badge.tokenValidacao != null)
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -232,9 +249,29 @@ class DetalheBadgePremium extends StatelessWidget {
     );
   }
 
+  // Gera o certificado PDF e abre a folha de partilha do sistema
+  Future<void> _descarregarCertificado(BuildContext context) async {
+    final utilizador = await DatabaseService.instance.getUser();
+    if (!context.mounted) return;
+    try {
+      await gerarEPartilharCertificado(
+        nomeConsultor: utilizador?.nome ?? '',
+        badge: badge,
+        urlBase: AppConstants.filesUrl,
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Não foi possível gerar o certificado.')),
+        );
+      }
+    }
+  }
+
   Future<void> _partilharLinkedIn(BuildContext context) async {
-    final url = badge.urlPublico != null
-        ? 'https://www.linkedin.com/sharing/share-offsite/?url=${Uri.encodeComponent(badge.urlPublico!)}'
+    final urlPublica = AppConstants.urlVerificacaoBadge(badge.tokenValidacao);
+    final url = urlPublica != null
+        ? 'https://www.linkedin.com/sharing/share-offsite/?url=${Uri.encodeComponent(urlPublica)}'
         : 'https://www.linkedin.com';
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
@@ -247,7 +284,9 @@ class DetalheBadgePremium extends StatelessWidget {
   }
 
   Future<void> _abrirPaginaPublica(BuildContext context) async {
-    final uri = Uri.parse(badge.urlPublico!);
+    final urlPublica = AppConstants.urlVerificacaoBadge(badge.tokenValidacao);
+    if (urlPublica == null) return;
+    final uri = Uri.parse(urlPublica);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else if (context.mounted) {

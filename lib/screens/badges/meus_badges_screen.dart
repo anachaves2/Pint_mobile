@@ -145,18 +145,25 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
                   titulo: 'RECENTES',
                   badges: _badgesRecentes(todos),
                   rotaVerTodos: AppConstants.routeTodosBadges,
+                  vazioTitulo: 'Ainda não tens badges',
+                  vazioSubtitulo: 'Explora o catálogo e candidata-te ao teu primeiro badge.',
+                  vazioComBotao: true,
                 ),
                 const SizedBox(height: D.e5),
                 _buildSecao(
                   titulo: 'ESPECIAIS',
                   badges: _badgesEspeciais(todos),
                   rotaVerTodos: AppConstants.routeBadgesEspeciais,
+                  vazioTitulo: 'Sem badges especiais',
+                  vazioSubtitulo: 'São atribuídos automaticamente ao atingires certas conquistas.',
                 ),
                 const SizedBox(height: D.e5),
                 _buildSecao(
                   titulo: 'EXPIRADOS',
                   badges: _badgesExpirados(todos),
                   rotaVerTodos: AppConstants.routeBadgesExpirados,
+                  vazioTitulo: 'Nenhum badge expirado',
+                  vazioSubtitulo: 'Os teus badges estão todos dentro da validade.',
                 ),
               ],
             ),
@@ -272,6 +279,9 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
     required String titulo,
     required List<BadgeUtilizador> badges,
     required String rotaVerTodos,
+    required String vazioTitulo,
+    required String vazioSubtitulo,
+    bool vazioComBotao = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -279,28 +289,46 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
         Text(titulo, style: D.etiqueta),
         const SizedBox(height: D.e3),
         if (badges.isEmpty)
-          _buildEstadoVazio()
-        else
+          // Sem badges não faz sentido oferecer "VER TODOS" — mostra antes
+          // uma explicação e, quando aplicável, o caminho para o catálogo.
+          _buildEstadoVazio(titulo: vazioTitulo, subtitulo: vazioSubtitulo, comBotao: vazioComBotao)
+        else ...[
           ...badges.map((badge) => _buildBadgeCard(badge)),
-        const SizedBox(height: D.e2),
-        Center(
-          child: TextButton(
-            onPressed: () => context.push(rotaVerTodos),
-            child: const Text('VER TODOS',
-                style: TextStyle(color: D.azul600, fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+          const SizedBox(height: D.e2),
+          Center(
+            child: TextButton(
+              onPressed: () => context.push(rotaVerTodos),
+              child: const Text('VER TODOS',
+                  style: TextStyle(color: D.azul600, fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
 
-  Widget _buildEstadoVazio() {
+  Widget _buildEstadoVazio({required String titulo, required String subtitulo, bool comBotao = false}) {
     return CardSimples(
       child: Column(
         children: [
           Icon(Icons.workspace_premium_outlined, color: D.tinta30, size: 36),
           const SizedBox(height: D.e2),
-          Text('Sem badges', style: D.legenda),
+          Text(titulo, style: D.tituloCard, textAlign: TextAlign.center),
+          const SizedBox(height: 4),
+          Text(subtitulo, style: D.legenda, textAlign: TextAlign.center),
+          if (comBotao) ...[
+            const SizedBox(height: D.e3),
+            OutlinedButton.icon(
+              onPressed: () => context.push(AppConstants.routeCatalogo),
+              icon: const Icon(Icons.search, size: 16),
+              label: const Text('Ver badges disponíveis'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: D.azul600,
+                side: const BorderSide(color: D.azul600),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+            ),
+          ],
         ],
       ),
     );

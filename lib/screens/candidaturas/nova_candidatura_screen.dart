@@ -71,7 +71,15 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
   }
 
   Future<void> _carregarBadges() async {
-    final badges = await DatabaseService.instance.getCatalogoBadges();
+    var badges = await DatabaseService.instance.getCatalogoBadges();
+
+    // Se o catálogo local ainda está vazio, vai buscá-lo à API — senão a
+    // lista de badges a que te podes candidatar aparecia vazia.
+    if (badges.isEmpty) {
+      await APIService.instance.sincronizarCatalogo();
+      badges = await DatabaseService.instance.getCatalogoBadges();
+    }
+
     if (mounted) setState(() { _badges = badges; _isLoadingBadges = false; });
   }
 

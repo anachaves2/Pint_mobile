@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/models/badge_regular.dart';
 import 'package:pint_mobile/providers/badges_provider.dart';
 import 'package:pint_mobile/services/database_service.dart';
+import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/utils/badge_utils.dart';
@@ -39,6 +40,22 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
   }
 
   Future<void> _carregar() async {
+    var lista = await DatabaseService.instance.getCatalogoBadges();
+
+    // Se o SQLite ainda não tem catálogo (primeira utilização, ou a
+    // sincronização de arranque não chegou a correr/falhou), vai buscar à
+    // API antes de desistir — senão o ecrã ficava vazio para sempre.
+    if (lista.isEmpty) {
+      await APIService.instance.sincronizarCatalogo();
+      lista = await DatabaseService.instance.getCatalogoBadges();
+    }
+
+    if (mounted) setState(() => _catalogo = lista);
+  }
+
+  // Pull-to-refresh: força sempre ida à API
+  Future<void> _refrescar() async {
+    await APIService.instance.sincronizarCatalogo();
     final lista = await DatabaseService.instance.getCatalogoBadges();
     if (mounted) setState(() => _catalogo = lista);
   }
@@ -93,7 +110,7 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
 
     return RefreshIndicator(
       color: D.azul600,
-      onRefresh: _carregar,
+      onRefresh: _refrescar,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(D.e4, D.e2, D.e4, D.e5),
         children: [
@@ -120,9 +137,15 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       centerTitle: true,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
-        onPressed: () => context.pop(),
+      leading: Builder(
+        builder: (ctx) => IconButton(
+          icon: SvgPicture.asset(
+            'assets/icons/drawerprimario.svg',
+            height: 20,
+            colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn),
+          ),
+          onPressed: () => Scaffold.of(ctx).openDrawer(),
+        ),
       ),
       title: const Text('CATÁLOGO', style: D.tituloPagina),
       actions: [

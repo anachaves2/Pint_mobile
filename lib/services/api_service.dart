@@ -23,6 +23,7 @@ import 'package:pint_mobile/models/tipo_objetivo.dart';
 import 'package:pint_mobile/models/estados_candidatura.dart';
 import 'package:pint_mobile/models/ranking_entrada.dart';
 import 'package:pint_mobile/models/objetivos_resumo.dart';
+import 'package:pint_mobile/models/badge_recomendado.dart';
 
 // APIService -> Camada de comunicação com o servidor (PintWeb/backend)
 
@@ -132,13 +133,27 @@ class APIService {
         erro: json['error'] as String? ?? 'Erro ao fazer login',
       );
     } catch (e) {
-      // Sem internet ou servidor inacessível
+      // ATENÇÃO: aqui cai TUDO o que corra mal — não só falta de internet,
+      // mas também erros da base de dados local (ex.: coluna em falta por
+      // migração não aplicada) e erros a converter a resposta.
+      // Antes mostrava-se sempre "sem ligação", o que mandava investigar
+      // a rede quando o problema era outro. Agora a mensagem distingue.
+      debugPrint('[APIService] login falhou: $e');
+
+      final texto = e.toString();
+      final ehErroBaseDados = texto.contains('DatabaseException') ||
+          texto.contains('no such column') ||
+          texto.contains('no such table') ||
+          texto.contains('SqfliteFfiException');
+
       return (
         sucesso: false,
         configuracaoCompleta: false,
         primeiroAcesso: false,
         aceitouRgpd: true,
-        erro: 'Sem ligação ao servidor. Verifica a tua internet.',
+        erro: ehErroBaseDados
+            ? 'Erro na base de dados local. Desinstala a app e volta a instalar.'
+            : 'Não foi possível entrar: $texto',
       );
     }
   }
@@ -514,8 +529,56 @@ class APIService {
   //SINCRONIZAR TUDO
   // Chama todos os métodos de sincronização
 
+  // Vai buscar o perfil completo a GET /perfil/me e actualiza o utilizador
+  // local. É preciso porque a resposta do LOGIN não traz totalPontos,
+  // posicaoRanking nem nomeServiceLine — sem isto, o Perfil e as Definições
+  // mostravam sempre esses campos vazios.
+  Future<void> sincronizarPerfil() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AppConstants.baseUrl}/perfil/me'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        final atual = await DatabaseService.instance.getUser();
+        if (atual == null) return;
+
+        final atualizado = Consultor(
+          id: atual.id,
+          nome: json['nome'] ?? atual.nome,
+          email: json['email'] ?? atual.email,
+          telefone: json['telefone'] ?? atual.telefone,
+          urlLinkedin: json['urlLinkedin'] ?? atual.urlLinkedin,
+          urlFoto: json['urlFoto'] ?? atual.urlFoto,
+          dataMembro: atual.dataMembro,
+          linguaPadrao: json['linguaPadrao'] ?? atual.linguaPadrao,
+          idArea: json['idArea'] ?? atual.idArea,
+          nomeArea: json['nomeArea'] ?? atual.nomeArea,
+          nomeServiceLine: json['nomeServiceLine'] ?? atual.nomeServiceLine,
+          idLearningPath: atual.idLearningPath,
+          nomeLearningPath: json['nomeLearningPath'] ?? atual.nomeLearningPath,
+          totalPontos: json['totalPontos'] ?? atual.totalPontos,
+          posicaoRanking: json['posicaoRanking'] ?? atual.posicaoRanking,
+          aceitouRgpd: json['aceitouRgpd'] as bool? ?? atual.aceitouRgpd,
+          primeiroAcesso: atual.primeiroAcesso,
+        );
+
+        final token = await DatabaseService.instance.getToken();
+        if (token != null) {
+          await DatabaseService.instance.saveUser(atualizado, token);
+        }
+      }
+    } catch (e) {
+      debugPrint('[APIService] sincronizarPerfil: sem ligação ($e)');
+    }
+  }
+
   Future<void> sincronizarTodos() async {
     await Future.wait([
+      sincronizarPerfil(),
       sincronizarBadges(),
       sincronizarCatalogo(),
       sincronizarCandidaturas(),
@@ -714,6 +777,9 @@ class APIService {
 
       if (response.statusCode == 201) {
         await sincronizarObjetivos();
+        // Avisa a UI (Dashboard incluído) — sem isto, o resumo de objetivos
+        // do Dashboard ficava desactualizado até à próxima sincronização.
+        atualizadorDados.add(null);
         return (sucesso: true, erro: null);
       }
 
@@ -748,6 +814,7 @@ class APIService {
 
       if (response.statusCode == 200) {
         await sincronizarObjetivos();
+        atualizadorDados.add(null);
         return (sucesso: true, erro: null);
       }
 
@@ -775,6 +842,7 @@ class APIService {
       if (response.statusCode == 200) {
         // Apaga também do SQLite local imediatamente (sem esperar sync)
         await DatabaseService.instance.deleteObjetivo(idObjetivo);
+        atualizadorDados.add(null);
         return (sucesso: true, erro: null);
       }
 
@@ -873,13 +941,16 @@ class APIService {
   ) async {
     try {
       final headers = await _getHeaders();
+      // A rota correcta é /perfil/me — estava a apontar para /perfil, que não
+      // existe no backend, por isso as alterações de perfil nunca eram
+      // guardadas no servidor (falhava em silêncio).
       final response = await http.put(
-        Uri.parse('${AppConstants.baseUrl}/perfil'),
+        Uri.parse('${AppConstants.baseUrl}/perfil/me'),
         headers: headers,
         body: jsonEncode({
-          'nome': consultor.nome,
           'telefone': consultor.telefone,
           'urlLinkedin': consultor.urlLinkedin,
+          'idArea': consultor.idArea,
         }),
       );
 
@@ -896,6 +967,34 @@ class APIService {
       );
     } catch (e) {
       return (sucesso: false, erro: 'Sem ligação ao servidor.');
+    }
+  }
+
+  // UPLOAD DA FOTO DE PERFIL — Definições
+  // POST /api/perfil/foto (multipart). Antes, o ecrã de Definições abria a
+  // câmara mas nunca enviava nada — a foto era tirada e descartada.
+  Future<({bool sucesso, String? urlFoto, String? erro})> uploadFotoPerfil(String caminhoFicheiro) async {
+    try {
+      final token = await DatabaseService.instance.getToken();
+      final pedido = http.MultipartRequest(
+        'POST',
+        Uri.parse('${AppConstants.baseUrl}/perfil/foto'),
+      );
+      pedido.headers['Authorization'] = 'Bearer $token';
+      pedido.files.add(await http.MultipartFile.fromPath('foto', caminhoFicheiro));
+
+      final streamed = await pedido.send();
+      final response = await http.Response.fromStream(streamed);
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        return (sucesso: true, urlFoto: json['urlFoto'] as String?, erro: null);
+      }
+
+      final json = jsonDecode(response.body);
+      return (sucesso: false, urlFoto: null, erro: json['error'] as String? ?? 'Erro ao enviar a foto.');
+    } catch (e) {
+      return (sucesso: false, urlFoto: null, erro: 'Sem ligação ao servidor.');
     }
   }
 
@@ -1151,6 +1250,25 @@ class APIService {
     } catch (e) {
       return (sucesso: false, erro: 'Sem ligação ao servidor.');
     }
+  }
+
+  // BADGES RECOMENDADOS DO DASHBOARD
+  // GET /api/dashboard/badges-recomendados
+  // Até 4 badges que o consultor ainda não tem, já priorizados pela área
+  // dele — cálculo feito no servidor.
+  Future<List<BadgeRecomendado>> obterBadgesRecomendados() async {
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('${AppConstants.baseUrl}/dashboard/badges-recomendados'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> lista = jsonDecode(response.body);
+      return lista.map((j) => BadgeRecomendado.fromJson(j)).toList();
+    }
+
+    throw Exception('Não foi possível carregar os badges recomendados.');
   }
 
   Future<ObjetivosResumo> obterObjetivosResumo() async {

@@ -8,7 +8,7 @@ import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/podio_ranking.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/services/database_service.dart';
-import 'package:pint_mobile/models/badge_regular.dart';
+import 'package:pint_mobile/models/badge_recomendado.dart';
 import 'package:pint_mobile/models/notificacao.dart';
 import 'package:pint_mobile/models/ranking_entrada.dart';
 import 'package:pint_mobile/providers/utilizador_provider.dart';
@@ -16,6 +16,7 @@ import 'package:pint_mobile/providers/badges_provider.dart';
 import 'package:pint_mobile/providers/candidatura_provider.dart';
 import 'package:pint_mobile/providers/objetivos_provider.dart';
 import 'package:pint_mobile/providers/objetivos_resumo_provider.dart';
+import 'package:pint_mobile/providers/badges_recomendados_provider.dart';
 import 'package:pint_mobile/models/objetivos_resumo.dart';
 import 'package:pint_mobile/providers/ranking_provider.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
@@ -36,7 +37,6 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  List<BadgeRegular> _catalogoBadges = [];
   List<Notificacao> _notificacoes = [];
   String _pesquisa = '';
   StreamSubscription? _subDados;
@@ -52,6 +52,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       ref.invalidate(candidaturasProvider);
       ref.invalidate(objetivosProvider);
       ref.invalidate(objetivosResumoProvider);
+      ref.invalidate(badgesRecomendadosProvider);
       ref.invalidate(rankingProvider);
       _carregarExtras();
     });
@@ -63,16 +64,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     super.dispose();
   }
 
-  // Catálogo e notificações não têm provider: são carregados directamente do SQLite
+  // Notificações não têm provider: são carregadas directamente do SQLite
   Future<void> _carregarExtras() async {
-    final catalogo = await DatabaseService.instance.getCatalogoBadges();
     final notificacoes = await DatabaseService.instance.getNotificacoes();
-    if (mounted) {
-      setState(() {
-        _catalogoBadges = catalogo;
-        _notificacoes = notificacoes;
-      });
-    }
+    if (mounted) setState(() => _notificacoes = notificacoes);
   }
 
   int get _notificacoesNaoLidas => _notificacoes.where((n) => !n.lida).length;
@@ -92,6 +87,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final candidaturasAsync = ref.watch(candidaturasProvider);
     final objetivosAsync = ref.watch(objetivosProvider);
     final objetivosResumoAsync = ref.watch(objetivosResumoProvider);
+    final badgesRecomendadosAsync = ref.watch(badgesRecomendadosProvider);
     final rankingAsync = ref.watch(rankingProvider);
     final podio = ref.watch(podioProvider);
 
@@ -117,18 +113,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final primeiroNome = (consultor?.nome ?? '').split(' ').first;
     final meuDesempenho = ranking.where((r) => r.idUtilizador == consultor?.id).firstOrNull;
     final restoRanking = ranking.skip(3).take(3).toList();
-
-    // Badges recomendados: badges do catálogo que o utilizador ainda não conquistou
-    final idsConquistados = badges
-        .where((b) => b.idBadgeRegular != null)
-        .map((b) => b.idBadgeRegular!)
-        .toSet();
-    final badgesRecomendados = _catalogoBadges
-        .where((b) => !idsConquistados.contains(b.id))
-        .where((b) => _pesquisa.isEmpty ||
-            b.nome.toLowerCase().contains(_pesquisa.toLowerCase()))
-        .take(3)
-        .toList();
 
     return Scaffold(
       backgroundColor: D.fundo,
@@ -186,6 +170,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ref.invalidate(candidaturasProvider);
                 ref.invalidate(objetivosProvider);
                 ref.invalidate(objetivosResumoProvider);
+                ref.invalidate(badgesRecomendadosProvider);
                 ref.invalidate(rankingProvider);
                 await _carregarExtras();
               },
@@ -333,11 +318,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         ),
                       ],
                     ),
-                    ...badgesRecomendados.map((badge) => _buildBadgeRecomendadoItem(badge)),
-                    if (badgesRecomendados.isEmpty)
-                      CardSimples(
-                        child: Center(child: Text('Já conquistaste todos os badges!', style: D.legenda)),
+                    badgesRecomendadosAsync.when(
+                      loading: () => const CardSimples(
+                        child: Center(child: Padding(padding: EdgeInsets.all(D.e3), child: CircularProgressIndicator(color: D.azul600))),
                       ),
+                      error: (_, __) => CardSimples(
+                        child: Center(child: Text('Não foi possível carregar as recomendações.', style: D.legenda)),
+                      ),
+                      data: (recomendados) {
+                        final filtrados = _pesquisa.isEmpty
+                            ? recomendados
+                            : recomendados.where((b) => b.nome.toLowerCase().contains(_pesquisa.toLowerCase())).toList();
+                        if (filtrados.isEmpty) {
+                          return CardSimples(
+                            child: Center(child: Text('Já conquistaste todos os badges!', style: D.legenda)),
+                          );
+                        }
+                        return Column(
+                          children: [for (final b in filtrados.take(3)) _buildBadgeRecomendadoItem(b)],
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -379,19 +380,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           Row(
             children: [
               SizedBox(
-                width: 64,
-                height: 64,
+                width: 96,
+                height: 96,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    CircularProgressIndicator(
-                      value: resumo.progressoLearningPath / 100,
-                      strokeWidth: 7,
-                      backgroundColor: D.fundoAlt,
-                      color: D.azul600,
+                    SizedBox(
+                      width: 96,
+                      height: 96,
+                      child: CircularProgressIndicator(
+                        value: resumo.progressoLearningPath / 100,
+                        strokeWidth: 10,
+                        backgroundColor: D.fundoAlt,
+                        color: D.azul600,
+                      ),
                     ),
                     Text('${resumo.progressoLearningPath}%',
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: D.azul600)),
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: D.azul600)),
                   ],
                 ),
               ),
@@ -480,7 +485,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildBadgeRecomendadoItem(BadgeRegular badge) {
+  Widget _buildBadgeRecomendadoItem(BadgeRecomendado badge) {
     return Padding(
       padding: const EdgeInsets.only(bottom: D.e2),
       child: CardSimples(
@@ -498,15 +503,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(badge.nome, style: D.tituloCard),
-                  Text(badge.nomeNivel, style: D.legenda),
+                  if (badge.nomeNivel != null) Text(badge.nomeNivel!, style: D.legenda),
                 ],
               ),
             ),
             Column(
               children: [
-                Text('${badge.pontos ?? 0}',
+                Text('${badge.numRequisitos}',
                     style: const TextStyle(fontWeight: FontWeight.bold, color: D.azul600)),
-                Text('Requisitos', style: D.legenda.copyWith(fontSize: 10)),
+                Text('Requisitos', style: D.legenda.copyWith(fontSize: 11)),
               ],
             ),
             const SizedBox(width: D.e2),
