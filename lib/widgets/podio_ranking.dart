@@ -153,13 +153,26 @@ class _Lugar extends StatelessWidget {
                   border: Border.all(color: Colors.white, width: anel),
                   boxShadow: D.elev1,
                 ),
-                clipBehavior: Clip.antiAlias,
+                // ClipOval em vez de clipBehavior no Container: com um
+                // border definido, o clipBehavior não recorta a imagem de
+                // forma fiável e a foto aparecia quadrada, cortada nos
+                // cantos. O Padding do valor do anel impede que a imagem
+                // fique por cima da borda branca.
                 child: entrada!.urlFoto != null &&
                         entrada!.urlFoto!.isNotEmpty
-                    ? Image.network(
-                        entrada!.urlFoto!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _iniciais(),
+                    ? Padding(
+                        padding: EdgeInsets.all(anel),
+                        child: ClipOval(
+                          child: SizedBox(
+                            width: tamanhoCirculo,
+                            height: tamanhoCirculo,
+                            child: Image.network(
+                              entrada!.urlFoto!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => _iniciais(),
+                            ),
+                          ),
+                        ),
                       )
                     : _iniciais(),
               ),

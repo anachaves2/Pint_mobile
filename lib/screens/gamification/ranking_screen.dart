@@ -174,11 +174,16 @@ class _Linha extends StatelessWidget {
             color: D.podioCirculoBg,
             shape: BoxShape.circle,
           ),
-          clipBehavior: Clip.antiAlias,
           child: entrada.urlFoto != null && entrada.urlFoto!.isNotEmpty
-              ? Image.network(AppConstants.resolverUrlFicheiro(entrada.urlFoto)!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _iniciais())
+              ? ClipOval(
+                  child: Image.network(
+                    AppConstants.resolverUrlFicheiro(entrada.urlFoto)!,
+                    fit: BoxFit.cover,
+                    width: 36,
+                    height: 36,
+                    errorBuilder: (_, __, ___) => _iniciais(),
+                  ),
+                )
               : _iniciais(),
         ),
         const SizedBox(width: D.e3),
