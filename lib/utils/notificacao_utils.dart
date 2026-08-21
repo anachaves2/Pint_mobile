@@ -53,6 +53,14 @@ class NotificacaoUtils {
     'BADGE_EXPIRADO': NotificacaoConfig(
       icone: Icons.timer_off_outlined, cor: D.erro, corFundo: D.erroBg, titulo: 'Badge Expirado',
     ),
+    // Bónus: SLA ultrapassado — chega por push a partir do cron do backend.
+    // Sem esta entrada aparecia com o sino genérico e o título "Notificação".
+    'SLA_ULTRAPASSADO': NotificacaoConfig(
+      icone: Icons.alarm_outlined, cor: D.erro, corFundo: D.erroBg, titulo: 'SLA Ultrapassado',
+    ),
+    'BADGES_A_EXPIRAR_TM': NotificacaoConfig(
+      icone: Icons.timer_outlined, cor: D.aviso, corFundo: D.avisoBg, titulo: 'Badges a Expirar',
+    ),
     'OBJETIVO_PRAZO': NotificacaoConfig(
       icone: Icons.track_changes_outlined, cor: D.aviso, corFundo: D.avisoBg, titulo: 'Objetivo a Terminar',
     ),

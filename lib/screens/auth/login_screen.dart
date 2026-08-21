@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/custom_logo.dart'; // Import do nosso novo logo!
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -170,9 +171,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             : const Text('Entrar'),
                       ),
                     ),
-                    const SizedBox(height: 40),
-                    
-                    const Text('SOFTINSA', style: TextStyle(color: AppConstants.corPrimaria, fontWeight: FontWeight.bold))
+                    const SizedBox(height: D.e5),
                   ],
                 ),
               ),

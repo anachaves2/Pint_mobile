@@ -16,6 +16,8 @@ import 'package:pint_mobile/providers/badges_provider.dart';
 import 'package:pint_mobile/providers/candidatura_provider.dart';
 import 'package:pint_mobile/providers/objetivos_resumo_provider.dart';
 import 'package:pint_mobile/providers/badges_recomendados_provider.dart';
+import 'package:pint_mobile/widgets/saudacao_evento.dart';
+import 'package:pint_mobile/widgets/celebracao_marco.dart';
 
 // ============================================================================
 // DefinicoesScreen
@@ -107,6 +109,35 @@ class _DefinicoesScreenState extends ConsumerState<DefinicoesScreen> {
     });
   }
 
+  // Diálogo de confirmação reutilizável — usado antes de qualquer alteração
+  // que fique guardada (perfil, password, foto, idioma).
+  Future<bool> _confirmar({
+    required String titulo,
+    required String mensagem,
+    String textoConfirmar = 'Sim, guardar',
+    bool destrutivo = false,
+  }) async {
+    final resposta = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, color: D.azul600)),
+        content: Text(mensagem, style: const TextStyle(fontSize: 13)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar', style: TextStyle(color: D.tinta50)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(textoConfirmar,
+                style: TextStyle(color: destrutivo ? D.erro : D.azul600, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+    return resposta == true;
+  }
+
   void _limparMensagens() => setState(() {
         _erro = null;
         _sucesso = null;
@@ -148,6 +179,13 @@ class _DefinicoesScreenState extends ConsumerState<DefinicoesScreen> {
   // ── Guardar perfil (telefone, LinkedIn, área) ──
   Future<void> _guardarPerfil() async {
     _limparMensagens();
+
+    if (!await _confirmar(
+      titulo: 'Guardar alterações?',
+      mensagem: 'Os dados do teu perfil vão ser atualizados.',
+    )) return;
+    if (!mounted) return;
+
     setState(() => _aGuardarPerfil = true);
 
     final atualizado = _consultorComAlteracoes(
@@ -180,6 +218,14 @@ class _DefinicoesScreenState extends ConsumerState<DefinicoesScreen> {
     if (caminho == null || !mounted) return;
 
     _limparMensagens();
+
+    if (!await _confirmar(
+      titulo: 'Alterar foto de perfil?',
+      mensagem: 'Esta foto vai substituir a atual em toda a plataforma.',
+      textoConfirmar: 'Sim, alterar',
+    )) return;
+    if (!mounted) return;
+
     setState(() => _aEnviarFoto = true);
 
     final resultado = await APIService.instance.uploadFotoPerfil(caminho);
@@ -205,6 +251,15 @@ class _DefinicoesScreenState extends ConsumerState<DefinicoesScreen> {
 
   // ── Guardar idioma ──
   Future<void> _guardarIdioma(String codigo) async {
+    if (codigo == _linguaSelecionada) return;
+
+    if (!await _confirmar(
+      titulo: 'Alterar idioma?',
+      mensagem: 'O idioma preferido da tua conta vai ser atualizado.',
+      textoConfirmar: 'Sim, alterar',
+    )) return;
+    if (!mounted) return;
+
     setState(() => _linguaSelecionada = codigo);
     final atualizado = _consultorComAlteracoes(linguaPadrao: codigo);
     await DatabaseService.instance.updateUser(atualizado);
@@ -231,6 +286,13 @@ class _DefinicoesScreenState extends ConsumerState<DefinicoesScreen> {
       setState(() => _erro = 'A nova password deve ter pelo menos 6 caracteres.');
       return;
     }
+
+    if (!await _confirmar(
+      titulo: 'Alterar password?',
+      mensagem: 'Vais precisar da nova password no próximo início de sessão.',
+      textoConfirmar: 'Sim, alterar',
+    )) return;
+    if (!mounted) return;
 
     setState(() => _aGuardarPassword = true);
     final resultado = await APIService.instance.alterarPassword(
@@ -332,6 +394,8 @@ class _DefinicoesScreenState extends ConsumerState<DefinicoesScreen> {
       ref.read(candidaturasProvider.notifier).limpar();
       ref.read(objetivosResumoProvider.notifier).limpar();
       ref.read(badgesRecomendadosProvider.notifier).limpar();
+      SaudacaoEvento.limpar();
+      CelebracaoMarco.limpar();
       await APIService.instance.logout();
       if (mounted) context.go(AppConstants.routeLanding);
     }

@@ -20,6 +20,9 @@ import 'package:pint_mobile/providers/badges_recomendados_provider.dart';
 import 'package:pint_mobile/models/objetivos_resumo.dart';
 import 'package:pint_mobile/providers/ranking_provider.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:pint_mobile/widgets/saudacao_evento.dart';
+import 'package:pint_mobile/widgets/celebracao_marco.dart';
+import 'package:pint_mobile/services/preferencias_service.dart';
 import 'package:go_router/go_router.dart';
 
 // Ecrã do Dashboard — segue os tokens de D e os componentes partilhados
@@ -46,6 +49,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     super.initState();
     APIService.instance.sincronizarTodos();
     _carregarExtras();
+    _mostrarSaudacao();
     _subDados = atualizadorDados.stream.listen((_) {
       ref.invalidate(utilizadorProvider);
       ref.invalidate(badgesProvider);
@@ -68,6 +72,61 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Future<void> _carregarExtras() async {
     final notificacoes = await DatabaseService.instance.getNotificacoes();
     if (mounted) setState(() => _notificacoes = notificacoes);
+  }
+
+  // Modal de boas-vindas / regresso — só aparece uma vez por sessão
+  Future<void> _mostrarSaudacao() async {
+    final dados = await PreferenciasService().lerDadosSaudacao();
+    final utilizador = await DatabaseService.instance.getUser();
+    if (!mounted || utilizador == null) return;
+
+    await SaudacaoEvento.mostrarSeNecessario(
+      context,
+      nome: utilizador.nome,
+      primeiroAcesso: dados.primeiroAcesso,
+      ultimoLoginAnterior: dados.ultimoLoginAnterior,
+    );
+  }
+
+  // REQUISITO 16 — celebração de marcos.
+  // Corre depois de os dados estarem carregados: compara os totais atuais
+  // com os da última abertura e celebra o que subiu. A saudação tem
+  // prioridade, por isso só se mostra a celebração se não houve saudação.
+  bool _marcosVerificados = false;
+
+  Future<void> _verificarMarcos({
+    required int badges,
+    required int especiais,
+    required int objetivos,
+    required int pontos,
+  }) async {
+    if (_marcosVerificados) return;
+    _marcosVerificados = true;
+
+    final prefs = PreferenciasService();
+    final antes = await prefs.lerMarcosVistos();
+
+    final marcos = CelebracaoMarco.calcular(
+      badgesAgora: badges,
+      especiaisAgora: especiais,
+      objetivosAgora: objetivos,
+      pontosAgora: pontos,
+      badgesAntes: antes.badges,
+      especiaisAntes: antes.especiais,
+      objetivosAntes: antes.objetivos,
+      pontosAntes: antes.pontos,
+    );
+
+    // Grava sempre a nova linha de base, mesmo quando não há nada a celebrar
+    await prefs.guardarMarcosVistos(
+      badges: badges, especiais: especiais, objetivos: objetivos, pontos: pontos,
+    );
+
+    // Espera que a saudação (se houver) feche primeiro
+    await SaudacaoEvento.concluida;
+
+    if (!mounted) return;
+    await CelebracaoMarco.mostrar(context, marcos);
   }
 
   int get _notificacoesNaoLidas => _notificacoes.where((n) => !n.lida).length;
@@ -108,6 +167,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final badgesEspeciais =
         badges.where((b) => b.valido && b.idBadgeEspecial != null).length;
     final objetivosAlcancados = objetivos.where((o) => o.alcancado).length;
+
+    // Verifica marcos assim que os dados reais estiverem disponíveis
+    if (!isLoading && consultor != null) {
+      final pontosTotais = badges.fold<int>(0, (soma, b) => soma + (b.pontos ?? 0));
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _verificarMarcos(
+          badges: badgesConquistados,
+          especiais: badgesEspeciais,
+          objetivos: objetivosAlcancados,
+          pontos: pontosTotais,
+        );
+      });
+    }
 
     // ── Ranking: a minha posição + próximos 3 lugares para a mini-tabela ──
     final primeiroNome = (consultor?.nome ?? '').split(' ').first;

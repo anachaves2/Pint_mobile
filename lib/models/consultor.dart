@@ -24,6 +24,9 @@ class Consultor {
   //Estado da conta — controlam o fluxo pós-login (ver login_screen.dart)
   final bool aceitouRgpd;   // false => tem de passar pelo ecrã de aceitação do RGPD
   final bool primeiroAcesso; // true  => tem de trocar a password temporária
+  // Data do login ANTERIOR (não o atual) — usada para a saudação
+  // "Seja bem-vindo novamente" após 15+ dias sem entrar.
+  final DateTime? ultimoLoginAnterior;
 
   // Construtor
   Consultor({
@@ -44,6 +47,7 @@ class Consultor {
     this.posicaoRanking,
     this.aceitouRgpd = true,
     this.primeiroAcesso = false,
+    this.ultimoLoginAnterior,
   });
 
   //fromJson - converto do formato json da API para o objeto
@@ -69,6 +73,9 @@ class Consultor {
       posicaoRanking: json['posicaoRanking'],
       aceitouRgpd: json['aceitouRgpd'] as bool? ?? true,
       primeiroAcesso: json['primeiroAcesso'] as bool? ?? false,
+      ultimoLoginAnterior: json['ultimoLoginAnterior'] != null
+          ? DateTime.tryParse(json['ultimoLoginAnterior'].toString())
+          : null,
     );
   }
 
@@ -92,6 +99,7 @@ class Consultor {
       'nomeLearningPath': nomeLearningPath,
       'aceitouRgpd': aceitouRgpd,
       'primeiroAcesso': primeiroAcesso,
+      'ultimoLoginAnterior': ultimoLoginAnterior?.toIso8601String(),
     };
   }
 }

@@ -98,7 +98,17 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
       return;
     }
 
-    final badges = await DatabaseService.instance.getCatalogoBadges();
+    var badges = await DatabaseService.instance.getCatalogoBadges();
+
+    // Mesmo fallback do _carregarBadges: se o catálogo local ainda está
+    // vazio, vai buscá-lo à API. Sem isto, um rascunho válido falhava com
+    // "Não foi possível carregar este rascunho" só porque o catálogo não
+    // tinha sido sincronizado.
+    if (badges.isEmpty) {
+      await APIService.instance.sincronizarCatalogo();
+      badges = await DatabaseService.instance.getCatalogoBadges();
+    }
+
     BadgeRegular? badge;
     for (final b in badges) {
       if (b.id == idBadge) {
@@ -198,6 +208,35 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
   // Submete a candidatura — só disponível quando todos os requisitos têm evidência
   Future<void> _submeter() async {
     if (_numCandidatura == null) return;
+
+    // Confirmação antes de submeter — depois disto a candidatura segue para
+    // validação e as evidências deixam de poder ser alteradas.
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Submeter candidatura?',
+            style: TextStyle(fontWeight: FontWeight.bold, color: D.azul600)),
+        content: Text(
+          'Vais candidatar-te ao badge "${_badgeSelecionado?.nome ?? ''}".\n\n'
+          'Depois de submeteres, a candidatura segue para validação e já não poderás alterar as evidências.',
+          style: const TextStyle(fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar', style: TextStyle(color: D.tinta50)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sim, submeter',
+                style: TextStyle(color: D.azul600, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true || !mounted) return;
+
     setState(() => _isSubmitting = true);
     final resultado = await APIService.instance.submeterCandidatura(_numCandidatura!);
     if (!mounted) return;

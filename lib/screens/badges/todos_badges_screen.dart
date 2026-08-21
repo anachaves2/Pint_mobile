@@ -29,7 +29,7 @@ class TodosOsBadges extends ConsumerStatefulWidget {
 class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
   final TextEditingController _pesquisaController = TextEditingController();
   String _queryPesquisa = '';
-  String _nivelSelecionado = 'todos';
+  String _areaSelecionada = 'todos';
 
   List<BadgeRegular>? _catalogo;
 
@@ -69,8 +69,8 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
   List<BadgeRegular> _aplicarFiltro(List<BadgeRegular> catalogo) {
     var lista = catalogo;
 
-    if (_nivelSelecionado != 'todos') {
-      lista = lista.where((b) => b.nomeNivel == _nivelSelecionado).toList();
+    if (_areaSelecionada != 'todos') {
+      lista = lista.where((b) => b.nomeArea == _areaSelecionada).toList();
     }
 
     if (_queryPesquisa.isNotEmpty) {
@@ -105,7 +105,7 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
   }
 
   Widget _buildConteudo(Set<int> idsObtidos) {
-    final niveis = {for (final b in _catalogo!) b.nomeNivel}.toList()..sort();
+    final areas = {for (final b in _catalogo!) b.nomeArea}.toList()..sort();
     final filtrados = _aplicarFiltro(_catalogo!);
 
     return RefreshIndicator(
@@ -116,7 +116,7 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
         children: [
           _buildBarraPesquisa(),
           const SizedBox(height: D.e3),
-          _buildFiltroNivel(niveis),
+          _buildFiltroArea(areas),
           const SizedBox(height: D.e2),
           Text('${filtrados.length} badge${filtrados.length == 1 ? '' : 's'} disponíve${filtrados.length == 1 ? 'l' : 'is'}',
               style: D.legenda),
@@ -192,17 +192,18 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
     );
   }
 
-  Widget _buildFiltroNivel(List<String> niveis) {
-    final opcoes = ['todos', ...niveis];
+  // Filtro por área — mostra todos os badges dessa área, seja qual for o nível
+  Widget _buildFiltroArea(List<String> areas) {
+    final opcoes = ['todos', ...areas];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: opcoes.map((nivel) {
-          final ativo = _nivelSelecionado == nivel;
+        children: opcoes.map((area) {
+          final ativo = _areaSelecionada == area;
           return Padding(
             padding: const EdgeInsets.only(right: D.e2),
             child: GestureDetector(
-              onTap: () => setState(() => _nivelSelecionado = nivel),
+              onTap: () => setState(() => _areaSelecionada = area),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: D.e3, vertical: 6),
                 decoration: BoxDecoration(
@@ -211,7 +212,7 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
                   boxShadow: ativo ? null : D.elev1,
                 ),
                 child: Text(
-                  nivel == 'todos' ? 'Todos' : nivel,
+                  area == 'todos' ? 'Todas as áreas' : area,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,

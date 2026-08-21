@@ -97,6 +97,7 @@ class APIService {
         final dadosUtilizador = json['utilizador'] as Map<String, dynamic>?;
         if (dadosUtilizador != null) {
           dadosConsultor['primeiroAcesso'] = dadosUtilizador['primeiroAcesso'];
+          dadosConsultor['ultimoLoginAnterior'] = dadosUtilizador['ultimoLoginAnterior'];
           dadosConsultor['aceitouRgpd'] ??= dadosUtilizador['aceitouRgpd'];
         }
 
@@ -106,6 +107,13 @@ class APIService {
 
         // Guarda o consultor e o token no SQLite
         await DatabaseService.instance.saveUser(consultor, token);
+
+        // Guarda o contexto da saudação (bónus): é agora que sabemos se é o
+        // primeiro acesso e há quanto tempo não entrava.
+        await PreferenciasService().guardarDadosSaudacao(
+          primeiroAcesso: consultor.primeiroAcesso,
+          ultimoLoginAnterior: consultor.ultimoLoginAnterior,
+        );
 
         // Guarda o token e email também nas preferências para acesso fácil e rápido
         if (manterSessao) {

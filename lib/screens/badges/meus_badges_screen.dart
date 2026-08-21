@@ -310,6 +310,9 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
   Widget _buildEstadoVazio({required String titulo, required String subtitulo, bool comBotao = false}) {
     return CardSimples(
       child: Column(
+        // stretch: sem isto a Column encolhia à largura do texto e o cartão
+        // ficava mais estreito do que os cartões de badge das outras secções.
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Icon(Icons.workspace_premium_outlined, color: D.tinta30, size: 36),
           const SizedBox(height: D.e2),
