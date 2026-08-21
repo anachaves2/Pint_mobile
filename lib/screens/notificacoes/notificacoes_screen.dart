@@ -57,6 +57,34 @@ class _NotificacoesScreenState extends State<NotificacoesScreen>
     }
   }
 
+  // Devolve true se o utilizador confirmar a eliminação
+  Future<bool> _confirmarEliminar(Notificacao n) async {
+    final resposta = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: D.superficie,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rLg)),
+        title: const Text('Eliminar notificação', style: D.tituloSeccao),
+        content: const Text(
+          'Queres mesmo eliminar esta notificação? Esta ação não pode ser desfeita.',
+          style: D.corpo,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Não', style: TextStyle(color: D.tinta50)),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: D.erro),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sim, eliminar'),
+          ),
+        ],
+      ),
+    );
+    return resposta == true;
+  }
+
   Future<void> _eliminar(Notificacao n) async {
     final resultado = await APIService.instance.eliminarNotificacao(n.id);
     if (resultado.sucesso && mounted) {
@@ -134,6 +162,11 @@ class _NotificacoesScreenState extends State<NotificacoesScreen>
         decoration: BoxDecoration(color: D.erro, borderRadius: BorderRadius.circular(D.rMd)),
         child: const Icon(Icons.delete_outline, color: Colors.white),
       ),
+      // Pede confirmação ANTES de apagar. Ao contrário do onDismissed, o
+      // confirmDismiss deixa cancelar: se responder Não, o cartão volta ao
+      // lugar e nada é apagado. Sem isto, um deslize acidental eliminava a
+      // notificação sem aviso e sem forma de recuperar.
+      confirmDismiss: (_) => _confirmarEliminar(n),
       onDismissed: (_) => _eliminar(n),
       child: Padding(
         padding: const EdgeInsets.only(bottom: D.e2),
