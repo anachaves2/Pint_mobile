@@ -53,6 +53,16 @@ class NotificacaoUtils {
     'BADGE_EXPIRADO': NotificacaoConfig(
       icone: Icons.timer_off_outlined, cor: D.erro, corFundo: D.erroBg, titulo: 'Badge Expirado',
     ),
+    // Avisos gerais difundidos pelo Admin / Service Line / Talent Manager
+    // (bónus "Informações/Avisos" do enunciado). São criados com
+    // tipoNotificacao: 'aviso' e ligados a todos os utilizadores ativos.
+    'aviso': NotificacaoConfig(
+      icone: Icons.campaign_outlined, cor: D.azul600, corFundo: D.azul100, titulo: 'Aviso',
+    ),
+    // Celebração de marcos alcançados (requisito 16)
+    'marco': NotificacaoConfig(
+      icone: Icons.celebration_outlined, cor: D.aviso, corFundo: D.avisoBg, titulo: 'Marco alcançado',
+    ),
     // Bónus: SLA ultrapassado — chega por push a partir do cron do backend.
     // Sem esta entrada aparecia com o sino genérico e o título "Notificação".
     'SLA_ULTRAPASSADO': NotificacaoConfig(
