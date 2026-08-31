@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:pint_mobile/services/api_service.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // O Firebase Cloud Messaging permite enviar notificações do servidor
@@ -109,8 +110,19 @@ class NotificacoesService {
     // FASE 6: Obter o token FCM único deste dispositivo.
     // Este token identifica o dispositivo no Firebase e pode ser enviado
     // ao backend para notificações direcionadas a um utilizador específico.
+    // O envio em si acontece no login_screen.dart (só depois de autenticado,
+    // que é quando o endpoint /perfil/fcm-token aceita o pedido).
     final token = await _firebaseMessaging.getToken();
     debugPrint('FCM Token: $token');
+
+    // FASE 6b: O Firebase pode gerar um token novo a qualquer momento (ex.:
+    // reinstalação da app, limpeza de dados). Quando isso acontece, reenvia
+    // logo o token novo ao backend — "best effort", falha em silêncio se o
+    // utilizador ainda não tiver sessão iniciada.
+    _firebaseMessaging.onTokenRefresh.listen((novoToken) {
+      debugPrint('FCM Token renovado: $novoToken');
+      APIService.instance.enviarTokenFcm(novoToken);
+    });
 
     // FASE 7: Subscrever o tópico 'todos'.
     // Os tópicos permitem enviar uma notificação para TODOS os dispositivos

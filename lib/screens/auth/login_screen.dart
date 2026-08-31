@@ -6,6 +6,7 @@ import 'package:pint_mobile/widgets/custom_logo.dart'; // Import do nosso novo l
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/providers/utilizador_provider.dart';
+import 'package:pint_mobile/services/notificacoes_service.dart';
 
 //Utiliza Riverpod - ConsumerStatefulWidget
 class LoginScreen extends ConsumerStatefulWidget {
@@ -63,6 +64,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     // Força o provider a recarregar os dados do novo utilizador autenticado
     ref.invalidate(utilizadorProvider);
+
+    // Regista o token FCM deste dispositivo no backend — "best effort", não
+    // bloqueia nem afeta o resto do login se falhar (ex.: sem permissão de
+    // notificações, ou Firebase ainda não inicializado neste dispositivo).
+    final fcmToken = await NotificacoesService.instance.getToken();
+    if (fcmToken != null) {
+      APIService.instance.enviarTokenFcm(fcmToken);
+    }
 
     if (resultado.primeiroAcesso) {
       context.go(AppConstants.routeTrocarPasswordPrimeiroAcesso);

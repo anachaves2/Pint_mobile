@@ -1059,6 +1059,26 @@ class APIService {
       return (sucesso: false, erro: 'Sem ligação ao servidor.');
     }
   }
+
+  //=============================================================
+  // ENVIAR TOKEN FCM — chamado após o login e sempre que o Firebase gerar
+  // um token novo (onTokenRefresh), para o backend saber para onde mandar
+  // as push notifications deste utilizador (bónus SLA ultrapassado).
+  // "Best effort": nunca deve bloquear nem mostrar erro ao utilizador —
+  // se falhar, a app continua a funcionar normalmente, só sem push.
+
+  Future<void> enviarTokenFcm(String fcmToken) async {
+    try {
+      final headers = await _getHeaders();
+      await http.put(
+        Uri.parse('${AppConstants.baseUrl}/perfil/fcm-token'),
+        headers: headers,
+        body: jsonEncode({'fcmToken': fcmToken}),
+      );
+    } catch (e) {
+      // Silencioso de propósito — ver nota acima.
+    }
+  }
   //=============================================================
   // OBTER POLÍTICA DE PRIVACIDAD - Para ecrã login_screen
 

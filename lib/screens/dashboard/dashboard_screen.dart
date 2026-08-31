@@ -47,7 +47,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    APIService.instance.sincronizarTodos();
+    // A verificação de marcos tem de esperar pela sincronização: os
+    // providers leem do SQLite, e uma lista vazia não é "a carregar" — é
+    // "carregado e vazio". Sem esta espera, a app gravava a linha de base a
+    // zeros antes de os dados chegarem e, na abertura seguinte, celebrava
+    // badges que já eram antigos.
+    APIService.instance.sincronizarTodos().then((_) {
+      if (mounted) _verificarMarcos();
+    });
     _carregarExtras();
     _mostrarSaudacao();
     _subDados = atualizadorDados.stream.listen((_) {
@@ -94,14 +101,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   // prioridade, por isso só se mostra a celebração se não houve saudação.
   bool _marcosVerificados = false;
 
-  Future<void> _verificarMarcos({
-    required int badges,
-    required int especiais,
-    required int objetivos,
-    required int pontos,
-  }) async {
+  Future<void> _verificarMarcos() async {
     if (_marcosVerificados) return;
     _marcosVerificados = true;
+
+    // Lê as contagens directamente da base de dados, já depois da
+    // sincronização — não do build, que podia estar a mostrar dados
+    // incompletos.
+    final listaBadges = await DatabaseService.instance.getBadges();
+    final listaObjetivos = await DatabaseService.instance.getObjetivos();
+
+    final badges = listaBadges.where((b) => b.valido && b.idBadgeRegular != null).length;
+    final especiais = listaBadges.where((b) => b.valido && b.idBadgeEspecial != null).length;
+    final objetivos = listaObjetivos.where((o) => o.alcancado).length;
+    final pontos = listaBadges.fold<int>(0, (soma, b) => soma + (b.pontos ?? 0));
+
+    // Salvaguarda: se não há badges NEM objetivos, é quase certo que a
+    // sincronização falhou (sem rede) em vez de o consultor não ter mesmo
+    // nada. Nesse caso não gravamos linha de base a zeros — senão a
+    // próxima abertura celebraria tudo outra vez como se fosse novo.
+    if (listaBadges.isEmpty && listaObjetivos.isEmpty) {
+      _marcosVerificados = false; // permite tentar de novo mais tarde
+      return;
+    }
 
     final prefs = PreferenciasService();
     final antes = await prefs.lerMarcosVistos();
@@ -167,19 +189,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final badgesEspeciais =
         badges.where((b) => b.valido && b.idBadgeEspecial != null).length;
     final objetivosAlcancados = objetivos.where((o) => o.alcancado).length;
-
-    // Verifica marcos assim que os dados reais estiverem disponíveis
-    if (!isLoading && consultor != null) {
-      final pontosTotais = badges.fold<int>(0, (soma, b) => soma + (b.pontos ?? 0));
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _verificarMarcos(
-          badges: badgesConquistados,
-          especiais: badgesEspeciais,
-          objetivos: objetivosAlcancados,
-          pontos: pontosTotais,
-        );
-      });
-    }
 
     // ── Ranking: a minha posição + próximos 3 lugares para a mini-tabela ──
     final primeiroNome = (consultor?.nome ?? '').split(' ').first;
