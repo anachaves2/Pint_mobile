@@ -727,29 +727,10 @@ class _DefinicoesScreenState extends ConsumerState<DefinicoesScreen> {
       );
 
   Widget _buildAreaDropdown() {
-    if (_areas.isEmpty) {
-      return _dropdownShell(child: Text(_consultor!.nomeArea ?? '—', style: D.corpo));
-    }
-    return _dropdownShell(
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
-          value: _idAreaSelecionada,
-          isExpanded: true,
-          hint: const Text('— Sem área —', style: TextStyle(fontSize: 14, color: D.tinta30)),
-          icon: const Icon(Icons.expand_more, color: D.azul600),
-          style: const TextStyle(fontSize: 14, color: D.tinta),
-          onChanged: (novoId) {
-            if (novoId == null) return;
-            final area = _areas.firstWhere((a) => a.id == novoId);
-            setState(() {
-              _idAreaSelecionada = novoId;
-              _nomeAreaSelecionada = area.nome;
-            });
-          },
-          items: _areas.map((a) => DropdownMenuItem(value: a.id, child: Text(a.nome))).toList(),
-        ),
-      ),
-    );
+    // A área é definida no registo (ou pelo Admin/TM depois) — o consultor só
+    // a consulta, não a edita. O Web já fazia isto assim (Perfil.jsx mostra
+    // só texto); o mobile tinha ficado com um dropdown editável por engano.
+    return _dropdownShell(child: Text(_consultor?.nomeArea ?? '—', style: D.corpo));
   }
 
   Widget _buildIdiomaDropdown() {

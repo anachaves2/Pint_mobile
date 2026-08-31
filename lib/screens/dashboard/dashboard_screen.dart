@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
+import 'package:pint_mobile/utils/badge_utils.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/podio_ranking.dart';
 import 'package:pint_mobile/services/api_service.dart';
@@ -294,17 +295,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     const SizedBox(height: D.e3),
                     Row(
                       children: [
-                        Expanded(child: _buildCartaoResumo(icon: Icons.description_outlined, valor: pedidosEmCurso, label: 'Pedidos\nPendentes')),
+                        Expanded(child: _buildCartaoResumo(icon: Icons.description_outlined, valor: pedidosEmCurso, label: 'Pedidos\nPendentes', onTap: () => context.push(AppConstants.routeCandidaturasDecorrentes))),
                         const SizedBox(width: D.e2),
-                        Expanded(child: _buildCartaoResumo(icon: Icons.military_tech_outlined, valor: badgesConquistados, label: 'Badges\nConquistados')),
+                        Expanded(child: _buildCartaoResumo(icon: Icons.military_tech_outlined, valor: badgesConquistados, label: 'Badges\nConquistados', onTap: () => context.push(AppConstants.routeMeusBadges))),
                       ],
                     ),
                     const SizedBox(height: D.e2),
                     Row(
                       children: [
-                        Expanded(child: _buildCartaoResumo(icon: Icons.star_outline, valor: badgesEspeciais, label: 'Badges\nEspeciais')),
+                        Expanded(child: _buildCartaoResumo(icon: Icons.star_outline, valor: badgesEspeciais, label: 'Badges\nEspeciais', onTap: () => context.push(AppConstants.routeBadgesEspeciais))),
                         const SizedBox(width: D.e2),
-                        Expanded(child: _buildCartaoResumo(icon: Icons.track_changes_outlined, valor: objetivosAlcancados, label: 'Objetivos\nAlcançados')),
+                        Expanded(child: _buildCartaoResumo(icon: Icons.track_changes_outlined, valor: objetivosAlcancados, label: 'Objetivos\nAlcançados', onTap: () => context.push(AppConstants.routeObjetivos))),
                       ],
                     ),
                     const SizedBox(height: D.e5),
@@ -428,8 +429,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   // ─── Cartão de resumo (Pedidos/Badges/Especiais/Objetivos) ────────────────
-  Widget _buildCartaoResumo({required IconData icon, required int valor, required String label}) {
+  Widget _buildCartaoResumo({required IconData icon, required int valor, required String label, VoidCallback? onTap}) {
     return CardSimples(
+      onTap: onTap,
       child: Row(
         children: [
           Container(
@@ -567,6 +569,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildBadgeRecomendadoItem(BadgeRecomendado badge) {
+    final cor = BadgeUtils.corDoNivel(badge.nomeNivel);
+    final letra = (badge.nomeNivel?.isNotEmpty ?? false) ? badge.nomeNivel![0].toUpperCase() : '?';
+
     return Padding(
       padding: const EdgeInsets.only(bottom: D.e2),
       child: CardSimples(
@@ -575,8 +580,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(color: D.avisoBg, borderRadius: BorderRadius.circular(D.rSm)),
-              child: const Icon(Icons.military_tech, color: D.aviso, size: 24),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: cor.withValues(alpha: 0.15),
+                border: Border.all(color: cor, width: 2),
+              ),
+              child: badge.urlImagem != null
+                  ? ClipOval(
+                      child: Image.network(
+                        AppConstants.resolverUrlFicheiro(badge.urlImagem)!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Center(
+                          child: Text(letra, style: TextStyle(color: cor, fontWeight: FontWeight.bold, fontSize: 14)),
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Text(letra, style: TextStyle(color: cor, fontWeight: FontWeight.bold, fontSize: 14)),
+                    ),
             ),
             const SizedBox(width: D.e3),
             Expanded(
