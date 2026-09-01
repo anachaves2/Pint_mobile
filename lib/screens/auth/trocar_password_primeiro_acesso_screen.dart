@@ -6,6 +6,7 @@ import 'package:pint_mobile/providers/utilizador_provider.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/custom_logo.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:go_router/go_router.dart';
 
 // ECRÃ TROCAR PASSWORD — PRIMEIRO ACESSO
@@ -49,7 +50,7 @@ class _TrocarPasswordPrimeiroAcessoState extends ConsumerState<TrocarPasswordPri
     setState(() => _isLoading = false);
 
     if (!resultado.sucesso) {
-      setState(() => _erro = resultado.erro ?? 'Erro ao alterar a password.');
+      setState(() => _erro = resultado.erro ?? ref.tr('mobile_trocar_pass_erro'));
       return;
     }
 
@@ -85,11 +86,11 @@ class _TrocarPasswordPrimeiroAcessoState extends ConsumerState<TrocarPasswordPri
                   const CustomLogo(),
                   const SizedBox(height: D.e6),
 
-                  Text('Define a tua nova palavra-passe',
+                  Text(ref.t('mobile_trocar_pass_titulo'),
                       style: D.tituloSeccao.copyWith(fontSize: 20, color: D.azul600)),
                   const SizedBox(height: D.e2),
                   Text(
-                    'Por razões de segurança, tens de trocar a password temporária antes de continuar.',
+                    ref.t('mobile_trocar_pass_subtitulo'),
                     style: D.legenda.copyWith(height: 1.5),
                   ),
                   const SizedBox(height: D.e5),
@@ -98,16 +99,16 @@ class _TrocarPasswordPrimeiroAcessoState extends ConsumerState<TrocarPasswordPri
                     controller: _novaController,
                     obscureText: _obscureNova,
                     decoration: InputDecoration(
-                      labelText: 'Nova palavra-passe*',
-                      hintText: 'Mínimo 8 caracteres',
+                      labelText: ref.t('mobile_trocar_pass_nova_label'),
+                      hintText: ref.t('mobile_trocar_pass_nova_hint'),
                       suffixIcon: IconButton(
                         icon: Icon(_obscureNova ? Icons.visibility : Icons.visibility_off, color: D.tinta30),
                         onPressed: () => setState(() => _obscureNova = !_obscureNova),
                       ),
                     ),
                     validator: (v) {
-                      if (v == null || v.isEmpty) return 'Insere a nova palavra-passe';
-                      if (v.length < 8) return 'A password deve ter pelo menos 8 caracteres.';
+                      if (v == null || v.isEmpty) return ref.tr('mobile_trocar_pass_nova_obrigatoria');
+                      if (v.length < 8) return ref.tr('mobile_trocar_pass_min_caracteres');
                       return null;
                     },
                   ),
@@ -117,15 +118,15 @@ class _TrocarPasswordPrimeiroAcessoState extends ConsumerState<TrocarPasswordPri
                     controller: _confirmarController,
                     obscureText: _obscureConfirmar,
                     decoration: InputDecoration(
-                      labelText: 'Repete a palavra-passe*',
+                      labelText: ref.t('mobile_trocar_pass_repetir_label'),
                       suffixIcon: IconButton(
                         icon: Icon(_obscureConfirmar ? Icons.visibility : Icons.visibility_off, color: D.tinta30),
                         onPressed: () => setState(() => _obscureConfirmar = !_obscureConfirmar),
                       ),
                     ),
                     validator: (v) {
-                      if (v == null || v.isEmpty) return 'Repete a palavra-passe';
-                      if (v != _novaController.text) return 'As passwords não coincidem.';
+                      if (v == null || v.isEmpty) return ref.tr('mobile_trocar_pass_repetir_obrigatoria');
+                      if (v != _novaController.text) return ref.tr('mobile_trocar_pass_nao_coincidem');
                       return null;
                     },
                   ),
@@ -150,7 +151,7 @@ class _TrocarPasswordPrimeiroAcessoState extends ConsumerState<TrocarPasswordPri
                     ),
                     child: _isLoading
                         ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Trocar password', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                        : Text(ref.t('mobile_trocar_pass_botao'), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                   ),
                 ],
               ),

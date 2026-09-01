@@ -9,6 +9,7 @@ import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:go_router/go_router.dart';
 
 // ECRÃ CANDIDATURAS A DECORRER
@@ -91,7 +92,7 @@ class _CandidaturasADecorrerState extends ConsumerState<CandidaturasADecorrer> {
                 _buildTabsPills(),
                 const SizedBox(height: D.e3),
                 if (filtradas.isEmpty)
-                  CardSimples(child: Center(child: Text('Sem candidaturas encontradas.', style: D.legenda)))
+                  CardSimples(child: Center(child: Text(ref.t('mobile_cand_sem_encontradas'), style: D.legenda)))
                 else
                   for (final c in filtradas)
                     Padding(
@@ -120,7 +121,7 @@ class _CandidaturasADecorrerState extends ConsumerState<CandidaturasADecorrer> {
         icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
         onPressed: () => context.pop(),
       ),
-      title: const Text('A DECORRER', style: D.tituloPagina),
+      title: Text(ref.t('mobile_cand_decorrer_titulo'), style: D.tituloPagina),
       actions: [
         IconButton(
           icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
@@ -138,7 +139,7 @@ class _CandidaturasADecorrerState extends ConsumerState<CandidaturasADecorrer> {
         controller: _pesquisaController,
         onChanged: (v) => setState(() => _query = v),
         decoration: InputDecoration(
-          hintText: 'Pesquisar badge...',
+          hintText: ref.t('mobile_cand_pesquisar_badge_hint'),
           hintStyle: const TextStyle(color: D.tinta30, fontSize: 14),
           prefixIcon: const Icon(Icons.search, color: D.tinta30, size: 20),
           border: InputBorder.none,
@@ -166,7 +167,7 @@ class _CandidaturasADecorrerState extends ConsumerState<CandidaturasADecorrer> {
                   borderRadius: BorderRadius.circular(999),
                   boxShadow: ativo ? null : D.elev1,
                 ),
-                child: Text(n == 'todos' ? 'Nível: Todos' : n,
+                child: Text(n == 'todos' ? ref.t('mobile_cand_nivel_todos') : n,
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: ativo ? Colors.white : D.tinta30)),
               ),
             ),
@@ -178,9 +179,9 @@ class _CandidaturasADecorrerState extends ConsumerState<CandidaturasADecorrer> {
 
   Widget _buildTabsPills() {
     final tabs = {
-      _TabPendentes.todos: 'Todos',
-      _TabPendentes.aguardar: 'A Aguardar',
-      _TabPendentes.corrigir: 'A Corrigir',
+      _TabPendentes.todos: ref.t('mobile_cand_tab_todos'),
+      _TabPendentes.aguardar: ref.t('mobile_cand_tab_aguardar'),
+      _TabPendentes.corrigir: ref.t('mobile_cand_tab_corrigir'),
     };
     return Container(
       padding: const EdgeInsets.all(4),

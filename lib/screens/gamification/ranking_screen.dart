@@ -8,6 +8,7 @@ import 'package:pint_mobile/providers/utilizador_provider.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 
 /// Ecrã 45 do protótipo (GamificationRanking).
 /// Lista completa, com pesquisa por nome e a linha do próprio destacada.
@@ -43,7 +44,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
           icon: const Icon(Icons.chevron_left, color: AppConstants.corPrimaria),
           onPressed: () => context.pop(),
         ),
-        title: const Text('RANKING', style: D.tituloPagina),
+        title: Text(ref.t('mobile_ranking_titulo'), style: D.tituloPagina),
         actions: [
           IconButton(
             icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg',
@@ -57,10 +58,10 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
       body: estado.when(
         loading: () => const Center(
             child: CircularProgressIndicator(color: AppConstants.corPrimaria)),
-        error: (err, _) => const Center(
+        error: (err, _) => Center(
           child: Padding(
             padding: EdgeInsets.all(D.e6),
-            child: Text('Não foi possível carregar o ranking.',
+            child: Text(ref.t('mobile_ranking_erro'),
                 style: D.legenda, textAlign: TextAlign.center),
           ),
         ),
@@ -88,7 +89,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                     onChanged: (v) => setState(() => _pesquisa = v),
                     style: D.corpo.copyWith(color: D.tinta),
                     decoration: InputDecoration(
-                      hintText: 'Procurar consultor',
+                      hintText: ref.t('mobile_ranking_pesquisar_hint'),
                       hintStyle: D.corpo.copyWith(color: D.tinta30),
                       prefixIcon: const Icon(Icons.search,
                           size: 20, color: D.tinta30),
@@ -112,8 +113,8 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
 
               Expanded(
                 child: filtrado.isEmpty
-                    ? const Center(
-                        child: Text('Nenhum consultor encontrado.',
+                    ? Center(
+                        child: Text(ref.t('mobile_ranking_vazio'),
                             style: D.legenda))
                     : RefreshIndicator(
                         color: AppConstants.corPrimaria,
@@ -141,14 +142,14 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
   }
 }
 
-class _Linha extends StatelessWidget {
+class _Linha extends ConsumerWidget {
   const _Linha({required this.entrada, required this.euMesmo});
 
   final RankingEntrada entrada;
   final bool euMesmo;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final conteudo = Row(
       children: [
         // Posição
@@ -210,7 +211,7 @@ class _Linha extends StatelessWidget {
             style: const TextStyle(
                 fontSize: 15, fontWeight: FontWeight.bold, color: D.azul600)),
         const SizedBox(width: 2),
-        Text('pts', style: D.legenda.copyWith(fontSize: 11)),
+        Text(ref.t('mobile_ranking_pts'), style: D.legenda.copyWith(fontSize: 11)),
       ],
     );
 

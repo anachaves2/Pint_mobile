@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pint_mobile/screens/camera/camera_screen.dart';
 import 'package:pint_mobile/providers/utilizador_provider.dart';
 import 'package:pint_mobile/providers/badges_provider.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:pint_mobile/providers/candidatura_provider.dart';
 import 'package:pint_mobile/providers/objetivos_resumo_provider.dart';
 import 'package:pint_mobile/providers/badges_recomendados_provider.dart';
@@ -51,7 +52,6 @@ class _DefinicoesScreenState extends ConsumerState<DefinicoesScreen> {
   String _linguaSelecionada = 'pt';
   int? _idAreaSelecionada;
   String? _nomeAreaSelecionada;
-  List<_Area> _areas = [];
   bool _aGuardarPerfil = false;
   bool _aEnviarFoto = false;
 
@@ -93,8 +93,6 @@ class _DefinicoesScreenState extends ConsumerState<DefinicoesScreen> {
 
   Future<void> _carregarDados() async {
     final consultor = await DatabaseService.instance.getUser();
-    final areasRaw = await APIService.instance.getAreas();
-    final areas = areasRaw.map((m) => _Area(id: m['id'] as int, nome: m['nome'] as String)).toList();
 
     if (!mounted) return;
     setState(() {
@@ -104,7 +102,6 @@ class _DefinicoesScreenState extends ConsumerState<DefinicoesScreen> {
       _linguaSelecionada = consultor?.linguaPadrao ?? 'pt';
       _idAreaSelecionada = consultor?.idArea;
       _nomeAreaSelecionada = consultor?.nomeArea;
-      _areas = areas;
       _isLoading = false;
     });
   }
@@ -264,6 +261,10 @@ class _DefinicoesScreenState extends ConsumerState<DefinicoesScreen> {
     final atualizado = _consultorComAlteracoes(linguaPadrao: codigo);
     await DatabaseService.instance.updateUser(atualizado);
     if (mounted) setState(() => _consultor = atualizado);
+
+    // Aplica o idioma de facto em toda a app — antes disto só ficava
+    // guardado, sem mudar nenhum texto visível.
+    await ref.read(idiomaProvider.notifier).mudar(codigo);
   }
 
   // ── Alterar password ──
@@ -759,12 +760,6 @@ class _DefinicoesScreenState extends ConsumerState<DefinicoesScreen> {
 }
 
 // ── Modelos auxiliares internos ──
-
-class _Area {
-  final int id;
-  final String nome;
-  const _Area({required this.id, required this.nome});
-}
 
 class _Lingua {
   final String codigo;

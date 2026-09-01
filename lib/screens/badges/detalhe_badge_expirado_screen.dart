@@ -1,25 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/models/badge_utilizador.dart';
 import 'package:pint_mobile/utils/badge_utils.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:go_router/go_router.dart';
 
 // ECRÃ DETALHE BADGE EXPIRADO
 // Mostra os detalhes de um badge expirado. Segue os tokens D, mantendo o
 // tratamento a preto-e-branco/cinzento que já reforçava o estado inativo.
 
-class DetalheBadgeExpirado extends StatelessWidget {
+class DetalheBadgeExpirado extends ConsumerWidget {
   final BadgeUtilizador badge;
 
   const DetalheBadgeExpirado({super.key, required this.badge});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: D.fundo,
-      appBar: _buildAppBar(context),
+      appBar: _buildAppBar(context, ref),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: D.e5, vertical: D.e5),
         child: Column(
@@ -27,24 +29,24 @@ class DetalheBadgeExpirado extends StatelessWidget {
           children: [
             _buildIconeExpirado(),
             const SizedBox(height: D.e4),
-            _buildNomeEEstado(),
+            _buildNomeEEstado(ref),
             const SizedBox(height: D.e5),
-            _buildSecaoInfo(),
+            _buildSecaoInfo(ref),
             const SizedBox(height: D.e4),
             if (badge.descricao != null) ...[
               _buildDescricao(),
               const SizedBox(height: D.e4),
             ],
-            _buildDatas(),
+            _buildDatas(ref),
             const SizedBox(height: D.e6),
-            _buildBotaoRenovar(context),
+            _buildBotaoRenovar(context, ref),
           ],
         ),
       ),
     );
   }
 
-  AppBar _buildAppBar(BuildContext context) {
+  AppBar _buildAppBar(BuildContext context, WidgetRef ref) {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -53,7 +55,7 @@ class DetalheBadgeExpirado extends StatelessWidget {
         icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
         onPressed: () => context.pop(),
       ),
-      title: const Text('BADGES', style: D.tituloPagina),
+      title: Text(ref.t('mobile_badges_titulo'), style: D.tituloPagina),
       actions: [
         IconButton(
           icon: SvgPicture.asset(
@@ -115,7 +117,7 @@ class DetalheBadgeExpirado extends StatelessWidget {
     );
   }
 
-  Widget _buildNomeEEstado() {
+  Widget _buildNomeEEstado(WidgetRef ref) {
     return Column(
       children: [
         Text(
@@ -133,21 +135,21 @@ class DetalheBadgeExpirado extends StatelessWidget {
     );
   }
 
-  Widget _buildSecaoInfo() {
+  Widget _buildSecaoInfo(WidgetRef ref) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(D.e4),
       decoration: BoxDecoration(color: D.fundoAlt, borderRadius: BorderRadius.circular(D.rLg)),
       child: Column(
         children: [
-          if (badge.nomeServiceLine != null) _buildLinhaInfo('Service Line', badge.nomeServiceLine!),
+          if (badge.nomeServiceLine != null) _buildLinhaInfo(ref.t('mobile_badges_service_line'), badge.nomeServiceLine!),
           if (badge.nomeArea != null) ...[
             const SizedBox(height: D.e2),
-            _buildLinhaInfo('Área', badge.nomeArea!),
+            _buildLinhaInfo(ref.t('mobile_badges_area'), badge.nomeArea!),
           ],
           if (badge.pontos != null) ...[
             const SizedBox(height: D.e2),
-            _buildLinhaInfo('Gamification', '${badge.pontos} Pontos'),
+            _buildLinhaInfo(ref.t('mobile_dash_gamification_titulo'), '${badge.pontos} ${ref.t('mobile_ranking_pontos')}'),
           ],
         ],
       ),
@@ -173,12 +175,12 @@ class DetalheBadgeExpirado extends StatelessWidget {
     );
   }
 
-  Widget _buildDatas() {
+  Widget _buildDatas(WidgetRef ref) {
     return Row(
       children: [
         Expanded(
           child: _buildChipData(
-            label: 'Conquistado em:',
+            label: ref.t('mobile_badges_conquistado_em'),
             data: BadgeUtils.formatarData(badge.dataAtribuicao),
             cor: D.tinta30,
           ),
@@ -186,7 +188,7 @@ class DetalheBadgeExpirado extends StatelessWidget {
         const SizedBox(width: D.e3),
         Expanded(
           child: _buildChipData(
-            label: 'Expirou em:',
+            label: ref.t('mobile_badges_expirou_em'),
             data: BadgeUtils.formatarData(badge.dataExpiracao),
             cor: D.erro,
           ),
@@ -210,7 +212,7 @@ class DetalheBadgeExpirado extends StatelessWidget {
     );
   }
 
-  Widget _buildBotaoRenovar(BuildContext context) {
+  Widget _buildBotaoRenovar(BuildContext context, WidgetRef ref) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
@@ -219,7 +221,7 @@ class DetalheBadgeExpirado extends StatelessWidget {
           context.push(AppConstants.routeNovaCandidatura);
         },
         icon: const Icon(Icons.refresh, size: 18),
-        label: const Text('Renovar'),
+        label: Text(ref.t('mobile_badges_renovar')),
         style: ElevatedButton.styleFrom(
           backgroundColor: D.azul600,
           foregroundColor: Colors.white,
@@ -232,15 +234,15 @@ class DetalheBadgeExpirado extends StatelessWidget {
 }
 
 // Etiqueta "Expirado" — sem borda, fundo suave, tal como o resto do design.
-class ChipEstadoExpirado extends StatelessWidget {
+class ChipEstadoExpirado extends ConsumerWidget {
   const ChipEstadoExpirado({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: D.e3, vertical: 4),
       decoration: BoxDecoration(color: D.erroBg, borderRadius: BorderRadius.circular(999)),
-      child: const Text('Expirado', style: TextStyle(fontSize: 12, color: D.erro, fontWeight: FontWeight.w600)),
+      child: Text(ref.t('mobile_badges_expirado'), style: const TextStyle(fontSize: 12, color: D.erro, fontWeight: FontWeight.w600)),
     );
   }
 }

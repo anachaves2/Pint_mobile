@@ -5,6 +5,7 @@ import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/providers/utilizador_provider.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:go_router/go_router.dart';
 
 // ECRÃ ACEITAR RGPD
@@ -57,7 +58,7 @@ class _AceitarRgpdScreenState extends ConsumerState<AceitarRgpdScreen> {
     setState(() => _aGuardar = false);
 
     if (!resultado.sucesso) {
-      setState(() => _erro = resultado.erro ?? 'Não foi possível registar a aceitação.');
+      setState(() => _erro = resultado.erro ?? ref.tr('mobile_rgpd_erro_aceitar'));
       return;
     }
 
@@ -90,12 +91,12 @@ class _AceitarRgpdScreenState extends ConsumerState<AceitarRgpdScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                _primeiroNome.isEmpty ? 'Olá' : 'Olá, $_primeiroNome',
+                _primeiroNome.isEmpty ? ref.t('mobile_ola') : '${ref.t('mobile_ola')}, $_primeiroNome',
                 style: D.tituloSeccao.copyWith(fontSize: 22, color: D.azul600),
               ),
               const SizedBox(height: D.e2),
               Text(
-                'Antes de continuar, precisamos que confirmes que leste e aceitas a nossa Política de Privacidade.',
+                ref.t('mobile_rgpd_subtitulo'),
                 style: D.legenda.copyWith(height: 1.5),
               ),
               const SizedBox(height: D.e4),
@@ -109,7 +110,7 @@ class _AceitarRgpdScreenState extends ConsumerState<AceitarRgpdScreen> {
                       ? const Center(child: CircularProgressIndicator(color: D.azul600))
                       : SingleChildScrollView(
                           child: Text(
-                            _conteudo ?? 'Política de privacidade não disponível de momento.',
+                            _conteudo ?? ref.t('mobile_rgpd_indisponivel'),
                             style: D.corpo.copyWith(height: 1.7),
                           ),
                         ),
@@ -137,8 +138,8 @@ class _AceitarRgpdScreenState extends ConsumerState<AceitarRgpdScreen> {
                 ),
                 child: _aGuardar
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Li e aceito a Política de Privacidade',
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    : Text(ref.t('mobile_rgpd_aceitar_btn'),
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
               ),
               const SizedBox(height: D.e2),
               OutlinedButton(
@@ -149,7 +150,7 @@ class _AceitarRgpdScreenState extends ConsumerState<AceitarRgpdScreen> {
                   padding: const EdgeInsets.symmetric(vertical: D.e3 + 2),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
                 ),
-                child: const Text('Sair sem aceitar', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                child: Text(ref.t('mobile_rgpd_sair_btn'), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
               ),
             ],
           ),

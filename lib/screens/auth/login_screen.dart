@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/providers/utilizador_provider.dart';
 import 'package:pint_mobile/services/notificacoes_service.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 
 //Utiliza Riverpod - ConsumerStatefulWidget
 class LoginScreen extends ConsumerStatefulWidget {
@@ -55,7 +56,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!resultado.sucesso) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(resultado.erro ?? 'Erro desconhecido'),
+          content: Text(resultado.erro ?? ref.tr('mobile_geral_erro_desconhecido')),
           backgroundColor: AppConstants.corErro,
         ),
       );
@@ -120,13 +121,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        hintText: 'Insira o seu email',
+                      decoration: InputDecoration(
+                        labelText: ref.t('mobile_login_email_label'),
+                        hintText: ref.t('mobile_login_email_hint'),
                       ),
                       validator: (value) {
-                        if (value == null || value.isEmpty) return 'Por favor, insere o teu email';
-                        if (!value.contains('@')) return 'Por favor, insira um email válido';
+                        if (value == null || value.isEmpty) return ref.tr('mobile_login_email_obrigatorio');
+                        if (!value.contains('@')) return ref.tr('mobile_login_email_invalido');
                         return null;
                       },
                     ),
@@ -136,15 +137,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
-                        labelText: 'Password',
-                        hintText: 'Insira a sua password',
+                        labelText: ref.t('mobile_login_password_label'),
+                        hintText: ref.t('mobile_login_password_hint'),
                         suffixIcon: IconButton(
                           icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off, color: Colors.grey),
                           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
                       ),
                       validator: (value) {
-                        if (value == null || value.isEmpty) return 'Por favor, insira a sua password';
+                        if (value == null || value.isEmpty) return ref.tr('mobile_login_password_obrigatoria');
                         return null;
                       },
                     ),
@@ -158,7 +159,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onChanged: (value) => setState(() => _manterSessao = value!),
                           activeColor: AppConstants.corPrimaria,
                         ),
-                        const Expanded(child: Text('Manter sessão iniciada', style: TextStyle(fontSize: 12))),
+                        Expanded(child: Text(ref.t('mobile_login_manter_sessao'), style: const TextStyle(fontSize: 12))),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -167,7 +168,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       onPressed: () {
                         context.push(AppConstants.routeRecuperarPassword);
                       },
-                      child: const Text('Esqueci-me da password', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+                      child: Text(ref.t('mobile_login_esqueci_password'), style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
                     ),
                     const SizedBox(height: 16),
 
@@ -177,7 +178,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onPressed: _isLoading ? null : _fazerLogin,
                         child: _isLoading
                             ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                            : const Text('Entrar'),
+                            : Text(ref.t('mobile_login_entrar')),
                       ),
                     ),
                     const SizedBox(height: D.e5),

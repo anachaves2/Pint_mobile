@@ -18,6 +18,21 @@ class PreferenciasService {
   static const _chaveMarcoEspeciais = 'marco_especiais';
   static const _chaveMarcoObjetivos = 'marco_objetivos';
   static const _chaveMarcoPontos = 'marco_pontos';
+  // Idioma escolhido pelo utilizador — guardado localmente para aplicar-se
+  // logo ao abrir a app, sem depender de estar ligado ao servidor.
+  static const _chaveIdioma = 'idioma_preferido';
+
+  // Guardar o idioma escolhido
+  Future<void> guardarIdioma(String codigo) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_chaveIdioma, codigo);
+  }
+
+  // Ler o idioma guardado — null se o utilizador nunca escolheu nenhum
+  Future<String?> lerIdioma() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_chaveIdioma);
+  }
 
   // Guardar token e email após login
   Future<void> guardarSessao(String token, String email) async {

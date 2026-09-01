@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:go_router/go_router.dart';
 
-class RedefinirPassword1Screen extends StatefulWidget {
+class RedefinirPassword1Screen extends ConsumerStatefulWidget {
   const RedefinirPassword1Screen({super.key});
 
   @override
-  State<RedefinirPassword1Screen> createState() => _RedefinirPassword1ScreenState();
+  ConsumerState<RedefinirPassword1Screen> createState() => _RedefinirPassword1ScreenState();
 }
 
-class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
+class _RedefinirPassword1ScreenState extends ConsumerState<RedefinirPassword1Screen> {
   // Um controlador e um FocusNode por cada dígito do PIN
   final List<TextEditingController> _controllers = List.generate(5, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(5, (_) => FocusNode()); // Passa para o campo seguinte sem o utilizador clicar
@@ -27,7 +29,7 @@ class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
   Future<void> _verificarPin(String email) async {
     final codigo = _controllers.map((c) => c.text).join();
     if (codigo.length < 5) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Insira os 5 dígitos.'), backgroundColor: AppConstants.corErro));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ref.tr('mobile_pin_insira_5_digitos')), backgroundColor: AppConstants.corErro));
       return;
     }
 
@@ -46,7 +48,7 @@ class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
       );
 
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(resultado.erro ?? 'Erro'), backgroundColor: AppConstants.corErro));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(resultado.erro ?? ref.tr('mobile_geral_erro_desconhecido')), backgroundColor: AppConstants.corErro));
     }
   }
 
@@ -70,9 +72,9 @@ class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
           child: Column(
             children: [
               const Spacer(flex: 1),
-              const Text('Introduza o código:', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppConstants.corPrimaria)),
+              Text(ref.t('mobile_pin_titulo'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppConstants.corPrimaria)),
               const SizedBox(height: 16),
-              Text('Insira o código de 5 dígitos enviado para o seu email.', style: TextStyle(color: Colors.grey.shade700, fontSize: 14)),
+              Text(ref.t('mobile_pin_subtitulo'), style: TextStyle(color: Colors.grey.shade700, fontSize: 14)),
               const SizedBox(height: 32),
               
               // Alterado para 6 quadradinhos mais estreitos para caberem no ecrã
@@ -116,7 +118,7 @@ class _RedefinirPassword1ScreenState extends State<RedefinirPassword1Screen> {
                   style: ElevatedButton.styleFrom(backgroundColor: AppConstants.corPrimaria, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                   child: _isLoading
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Verificar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                      : Text(ref.t('mobile_pin_verificar'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
               ),
               const Spacer(flex: 2),

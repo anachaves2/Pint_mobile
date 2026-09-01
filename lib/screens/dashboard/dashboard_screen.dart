@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/utils/badge_utils.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/podio_ranking.dart';
 import 'package:pint_mobile/services/api_service.dart';
@@ -157,9 +158,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   // ── Saudação por hora, igual à web (components/Saudacao.jsx) ──────────────
   String _saudacaoPorHora() {
     final h = DateTime.now().hour;
-    if (h >= 6 && h < 13) return 'Bom dia';
-    if (h >= 13 && h < 20) return 'Boa tarde';
-    return 'Boa noite';
+    if (h >= 6 && h < 13) return ref.t('mobile_dash_bom_dia');
+    if (h >= 13 && h < 20) return ref.t('mobile_dash_boa_tarde');
+    return ref.t('mobile_dash_boa_noite');
   }
 
   @override
@@ -213,7 +214,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        title: const Text('DASHBOARD', style: D.tituloPagina),
+        title: Text(ref.t('mobile_dash_titulo'), style: D.tituloPagina),
         actions: [
           Stack(
             children: [
@@ -279,57 +280,57 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       ),
                       child: TextField(
                         onChanged: (value) => setState(() => _pesquisa = value),
-                        decoration: const InputDecoration(
-                          hintText: 'Procurar...',
-                          hintStyle: TextStyle(color: D.tinta30, fontSize: 14),
-                          prefixIcon: Icon(Icons.search, color: D.tinta30, size: 20),
+                        decoration: InputDecoration(
+                          hintText: ref.t('mobile_geral_procurar'),
+                          hintStyle: const TextStyle(color: D.tinta30, fontSize: 14),
+                          prefixIcon: const Icon(Icons.search, color: D.tinta30, size: 20),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: D.e4, vertical: D.e3),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: D.e4, vertical: D.e3),
                         ),
                       ),
                     ),
                     const SizedBox(height: D.e5),
 
                     // ─── Resumo — os mesmos 4 números da web ──────────────
-                    const Text('RESUMO DA MINHA ATIVIDADE', style: D.etiqueta),
+                    Text(ref.t('mobile_dash_resumo_atividade'), style: D.etiqueta),
                     const SizedBox(height: D.e3),
                     Row(
                       children: [
-                        Expanded(child: _buildCartaoResumo(icon: Icons.description_outlined, valor: pedidosEmCurso, label: 'Pedidos\nPendentes', onTap: () => context.push(AppConstants.routeCandidaturasDecorrentes))),
+                        Expanded(child: _buildCartaoResumo(icon: Icons.description_outlined, valor: pedidosEmCurso, label: ref.t('mobile_dash_pedidos_pendentes'), onTap: () => context.push(AppConstants.routeCandidaturasDecorrentes))),
                         const SizedBox(width: D.e2),
-                        Expanded(child: _buildCartaoResumo(icon: Icons.military_tech_outlined, valor: badgesConquistados, label: 'Badges\nConquistados', onTap: () => context.push(AppConstants.routeMeusBadges))),
+                        Expanded(child: _buildCartaoResumo(icon: Icons.military_tech_outlined, valor: badgesConquistados, label: ref.t('mobile_dash_badges_conquistados'), onTap: () => context.push(AppConstants.routeMeusBadges))),
                       ],
                     ),
                     const SizedBox(height: D.e2),
                     Row(
                       children: [
-                        Expanded(child: _buildCartaoResumo(icon: Icons.star_outline, valor: badgesEspeciais, label: 'Badges\nEspeciais', onTap: () => context.push(AppConstants.routeBadgesEspeciais))),
+                        Expanded(child: _buildCartaoResumo(icon: Icons.star_outline, valor: badgesEspeciais, label: ref.t('mobile_dash_badges_especiais'), onTap: () => context.push(AppConstants.routeBadgesEspeciais))),
                         const SizedBox(width: D.e2),
-                        Expanded(child: _buildCartaoResumo(icon: Icons.track_changes_outlined, valor: objetivosAlcancados, label: 'Objetivos\nAlcançados', onTap: () => context.push(AppConstants.routeObjetivos))),
+                        Expanded(child: _buildCartaoResumo(icon: Icons.track_changes_outlined, valor: objetivosAlcancados, label: ref.t('mobile_dash_objetivos_alcancados'), onTap: () => context.push(AppConstants.routeObjetivos))),
                       ],
                     ),
                     const SizedBox(height: D.e5),
 
                     // ─── Objetivos ─────────────────────────
-                    const Text('OBJETIVOS', style: D.etiqueta),
+                    Text(ref.t('mobile_dash_objetivos_titulo'), style: D.etiqueta),
                     const SizedBox(height: D.e3),
                     objetivosResumoAsync.when(
                       loading: () => const CardSimples(
                         child: Center(child: Padding(padding: EdgeInsets.all(D.e3), child: CircularProgressIndicator(color: D.azul600))),
                       ),
                       error: (_, __) => CardSimples(
-                        child: Center(child: Text('Não foi possível carregar os objetivos.', style: D.legenda)),
+                        child: Center(child: Text(ref.t('mobile_dash_objetivos_erro'), style: D.legenda)),
                       ),
                       data: (resumo) => _buildCardObjetivos(resumo, context),
                     ),
                     const SizedBox(height: D.e5),
 
                     // ─── Gamification — pódio ──────────────
-                    const Text('GAMIFICATION', style: D.etiqueta),
+                    Text(ref.t('mobile_dash_gamification_titulo'), style: D.etiqueta),
                     const SizedBox(height: D.e2),
                     podio.isEmpty
                         ? CardSimples(
-                            child: Center(child: Text('Ainda sem ranking disponível.', style: D.legenda)),
+                            child: Center(child: Text(ref.t('mobile_dash_ranking_vazio'), style: D.legenda)),
                           )
                         : GestureDetector(
                             onTap: () => context.push(AppConstants.routeRanking),
@@ -352,7 +353,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('O teu desempenho', style: D.tituloCard),
+                          Text(ref.t('mobile_dash_desempenho_titulo'), style: D.tituloCard),
                           const SizedBox(height: D.e2),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: D.e3, vertical: D.e2),
@@ -373,7 +374,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           ),
                           if (restoRanking.isNotEmpty) ...[
                             const SizedBox(height: D.e4),
-                            const Text('Ranking', style: D.tituloCard),
+                            Text(ref.t('mobile_dash_ranking_titulo'), style: D.tituloCard),
                             const SizedBox(height: D.e2),
                             for (final r in restoRanking) _buildLinhaRanking(r),
                           ],
@@ -381,7 +382,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           Center(
                             child: TextButton(
                               onPressed: () => context.push(AppConstants.routeGamification),
-                              child: const Text('Ver Tudo', style: TextStyle(color: D.azul600, fontWeight: FontWeight.w600)),
+                              child: Text(ref.t('mobile_geral_ver_tudo'), style: const TextStyle(color: D.azul600, fontWeight: FontWeight.w600)),
                             ),
                           ),
                         ],
@@ -393,10 +394,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('BADGES RECOMENDADOS', style: D.etiqueta),
+                        Text(ref.t('mobile_dash_badges_recomendados_titulo'), style: D.etiqueta),
                         TextButton(
                           onPressed: () => context.push(AppConstants.routeCatalogo),
-                          child: const Text('Ver Tudo', style: TextStyle(color: D.azul600, fontSize: 12, fontWeight: FontWeight.w600)),
+                          child: Text(ref.t('mobile_geral_ver_tudo'), style: const TextStyle(color: D.azul600, fontSize: 12, fontWeight: FontWeight.w600)),
                         ),
                       ],
                     ),
@@ -405,7 +406,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         child: Center(child: Padding(padding: EdgeInsets.all(D.e3), child: CircularProgressIndicator(color: D.azul600))),
                       ),
                       error: (_, __) => CardSimples(
-                        child: Center(child: Text('Não foi possível carregar as recomendações.', style: D.legenda)),
+                        child: Center(child: Text(ref.t('mobile_dash_badges_recomendados_erro'), style: D.legenda)),
                       ),
                       data: (recomendados) {
                         final filtrados = _pesquisa.isEmpty
@@ -413,7 +414,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             : recomendados.where((b) => b.nome.toLowerCase().contains(_pesquisa.toLowerCase())).toList();
                         if (filtrados.isEmpty) {
                           return CardSimples(
-                            child: Center(child: Text('Já conquistaste todos os badges!', style: D.legenda)),
+                            child: Center(child: Text(ref.t('mobile_dash_badges_recomendados_vazio'), style: D.legenda)),
                           );
                         }
                         return Column(
@@ -495,19 +496,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       style: D.corpo,
                     ),
                     const SizedBox(height: 2),
-                    Text('Progresso na Learning Path', style: D.legenda),
+                    Text(ref.t('mobile_dash_objetivos_progresso_lp'), style: D.legenda),
                   ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: D.e4),
-          const Text('Objetivos em progresso', style: D.tituloCard),
+          Text(ref.t('mobile_dash_objetivos_em_progresso'), style: D.tituloCard),
           const SizedBox(height: D.e2),
           if (resumo.objetivosEmProgresso.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: D.e2),
-              child: Text('Sem objetivos em curso.', style: D.legenda),
+              child: Text(ref.t('mobile_dash_objetivos_sem_curso'), style: D.legenda),
             )
           else
             for (final obj in resumo.objetivosEmProgresso) _buildLinhaObjetivoProgresso(obj),
@@ -515,7 +516,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           Center(
             child: TextButton(
               onPressed: () => context.push(AppConstants.routeObjetivos),
-              child: const Text('Ver Tudo', style: TextStyle(color: D.azul600, fontWeight: FontWeight.w600)),
+              child: Text(ref.t('mobile_geral_ver_tudo'), style: const TextStyle(color: D.azul600, fontWeight: FontWeight.w600)),
             ),
           ),
         ],
@@ -613,7 +614,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               children: [
                 Text('${badge.numRequisitos}',
                     style: const TextStyle(fontWeight: FontWeight.bold, color: D.azul600)),
-                Text('Requisitos', style: D.legenda.copyWith(fontSize: 11)),
+                Text(ref.t('mobile_geral_requisitos'), style: D.legenda.copyWith(fontSize: 11)),
               ],
             ),
             const SizedBox(width: D.e2),

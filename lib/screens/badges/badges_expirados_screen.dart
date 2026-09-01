@@ -6,6 +6,7 @@ import 'package:pint_mobile/providers/badges_provider.dart';
 import 'package:pint_mobile/utils/badge_utils.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
 
@@ -63,12 +64,12 @@ class _BadgesExpiradosState extends ConsumerState<BadgesExpirados> {
             children: [
               Icon(Icons.error_outline, color: D.tinta30, size: 64),
               const SizedBox(height: D.e4),
-              const Text('Erro ao carregar badges', style: D.corpo),
+              Text(ref.t('mobile_badges_erro_carregar'), style: D.corpo),
               const SizedBox(height: D.e4),
               OutlinedButton(
                 onPressed: () => ref.invalidate(badgesProvider),
                 style: OutlinedButton.styleFrom(foregroundColor: D.azul600),
-                child: const Text('Tentar novamente'),
+                child: Text(ref.t('mobile_geral_tentar_novamente')),
               ),
             ],
           ),
@@ -110,7 +111,7 @@ class _BadgesExpiradosState extends ConsumerState<BadgesExpirados> {
         icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
         onPressed: () => context.pop(),
       ),
-      title: const Text('BADGES', style: D.tituloPagina),
+      title: Text(ref.t('mobile_badges_titulo'), style: D.tituloPagina),
       actions: [
         IconButton(
           icon: SvgPicture.asset(
@@ -135,7 +136,7 @@ class _BadgesExpiradosState extends ConsumerState<BadgesExpirados> {
         controller: _pesquisaController,
         onChanged: (texto) => setState(() => _queryPesquisa = texto),
         decoration: InputDecoration(
-          hintText: 'Procura...',
+          hintText: ref.t('mobile_geral_procura_hint'),
           hintStyle: const TextStyle(color: D.tinta30, fontSize: 14),
           prefixIcon: const Icon(Icons.search, color: D.tinta30, size: 20),
           border: InputBorder.none,
@@ -162,7 +163,7 @@ class _BadgesExpiradosState extends ConsumerState<BadgesExpirados> {
           Icon(Icons.hourglass_disabled_outlined, color: D.tinta30, size: 64),
           const SizedBox(height: D.e4),
           Text(
-            _pesquisaController.text.isNotEmpty ? 'Nenhum badge encontrado' : 'Não tens badges expirados',
+            _pesquisaController.text.isNotEmpty ? ref.t('mobile_badges_nenhum_encontrado') : ref.t('mobile_badges_sem_expirados'),
             style: D.corpo,
           ),
         ],

@@ -10,6 +10,7 @@ import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/utils/badge_utils.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:go_router/go_router.dart';
 
 // ECRÃ CATÁLOGO DE BADGES
@@ -123,7 +124,7 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
           const SizedBox(height: D.e3),
           if (filtrados.isEmpty)
             CardSimples(
-              child: Center(child: Text('Nenhum badge encontrado.', style: D.legenda)),
+              child: Center(child: Text(ref.t('mobile_catalogo_vazio'), style: D.legenda)),
             )
           else
             for (final badge in filtrados) _buildCardCatalogo(badge, idsObtidos.contains(badge.id)),
@@ -147,7 +148,7 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
           onPressed: () => Scaffold.of(ctx).openDrawer(),
         ),
       ),
-      title: const Text('CATÁLOGO', style: D.tituloPagina),
+      title: Text(ref.t('mobile_catalogo_titulo'), style: D.tituloPagina),
       actions: [
         IconButton(
           icon: SvgPicture.asset(
@@ -173,7 +174,7 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
         controller: _pesquisaController,
         onChanged: (texto) => setState(() => _queryPesquisa = texto),
         decoration: InputDecoration(
-          hintText: 'Procura...',
+          hintText: ref.t('mobile_catalogo_procurar_hint'),
           hintStyle: const TextStyle(color: D.tinta30, fontSize: 14),
           prefixIcon: const Icon(Icons.search, color: D.tinta30, size: 20),
           border: InputBorder.none,
@@ -212,7 +213,7 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
                   boxShadow: ativo ? null : D.elev1,
                 ),
                 child: Text(
-                  area == 'todos' ? 'Todas as áreas' : area,
+                  area == 'todos' ? ref.t('mobile_catalogo_todas_areas') : area,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -250,7 +251,7 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
               ),
             ),
             if (jaObtido)
-              const ChipEstado(texto: 'Obtido', cor: D.ok, corFundo: D.okBg)
+              ChipEstado(texto: ref.t('mobile_catalogo_obtido'), cor: D.ok, corFundo: D.okBg)
             else
               Column(
                 children: [

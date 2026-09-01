@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:go_router/go_router.dart';
 
-class ConfiguracaoInicialScreen extends StatefulWidget {
+class ConfiguracaoInicialScreen extends ConsumerStatefulWidget {
   const ConfiguracaoInicialScreen({super.key});
 
   @override
-  State<ConfiguracaoInicialScreen> createState() =>
+  ConsumerState<ConfiguracaoInicialScreen> createState() =>
       _ConfiguracaoInicialScreenState();
 }
 
 class _ConfiguracaoInicialScreenState
-    extends State<ConfiguracaoInicialScreen> {
+    extends ConsumerState<ConfiguracaoInicialScreen> {
   List<Map<String, dynamic>> _areas = [];
   int? _areaSelecionada;
   String? _nomeAreaSelecionada;
@@ -35,7 +37,7 @@ class _ConfiguracaoInicialScreenState
   Future<void> _guardar() async {
     if (_areaSelecionada == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Seleciona a tua área para continuar.')),
+        SnackBar(content: Text(ref.tr('mobile_config_inicial_seleciona_area'))),
       );
       return;
     }
@@ -50,8 +52,8 @@ class _ConfiguracaoInicialScreenState
       context.go(AppConstants.routeDashboard);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Erro ao guardar. Tenta novamente.'),
+        SnackBar(
+          content: Text(ref.tr('mobile_config_inicial_erro_guardar')),
           backgroundColor: AppConstants.corErro,
         ),
       );
@@ -73,16 +75,16 @@ class _ConfiguracaoInicialScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Spacer(),
-                    const Text('Bem-vindo!',
-                        style: TextStyle(
+                    Text(ref.t('mobile_config_inicial_bemvindo'),
+                        style: const TextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.bold,
                             color: AppConstants.corPrimaria)),
                     const SizedBox(height: 8),
-                    const Text(
-                        'Escolhe a tua área para personalizarmos a tua experiência.',
+                    Text(
+                        ref.t('mobile_config_inicial_subtitulo'),
                         style:
-                            TextStyle(fontSize: 14, color: Colors.black54)),
+                            const TextStyle(fontSize: 14, color: Colors.black54)),
                     const SizedBox(height: 32),
                     Expanded(
                       child: ListView(
@@ -112,7 +114,7 @@ class _ConfiguracaoInicialScreenState
                                 width: 20,
                                 child: CircularProgressIndicator(
                                     color: Colors.white, strokeWidth: 2))
-                            : const Text('Continuar'),
+                            : Text(ref.t('mobile_config_inicial_continuar')),
                       ),
                     ),
                     const SizedBox(height: 24),

@@ -120,9 +120,9 @@ class CustomDrawer extends ConsumerWidget {
                 children: [
                   _buildMenuItem(context, 'Dashboard', AppConstants.routeDashboard),
                   _buildMenuItem(context, 'Os Meus Badges', AppConstants.routeMeusBadges),
-                  _buildMenuItem(context, 'Os Meus Objetivos', AppConstants.routeObjetivos),
-                  _buildMenuItem(context, 'Candidaturas', AppConstants.routeCandidaturas),
                   _buildMenuItem(context, 'Catálogo de Badges', AppConstants.routeCatalogo),
+                  _buildMenuItem(context, 'Candidaturas', AppConstants.routeCandidaturas),
+                  _buildMenuItem(context, 'Os Meus Objetivos', AppConstants.routeObjetivos),
                   _buildMenuItem(context, 'Gamification', AppConstants.routeGamification),
                   _buildMenuItem(context, 'O Meu Perfil', AppConstants.routePerfil),
                   _buildMenuItem(context, 'Terminar Sessão', '', onTapOverride: () => _terminarSessao(context, ref)),
