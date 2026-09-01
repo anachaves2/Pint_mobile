@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:go_router/go_router.dart';
 
-class RecuperarPasswordScreen extends StatefulWidget {
+class RecuperarPasswordScreen extends ConsumerStatefulWidget {
   const RecuperarPasswordScreen({super.key});
 
   @override
-  State<RecuperarPasswordScreen> createState() => _RecuperarPasswordScreenState();
+  ConsumerState<RecuperarPasswordScreen> createState() => _RecuperarPasswordScreenState();
 }
 
-class _RecuperarPasswordScreenState extends State<RecuperarPasswordScreen> {
+class _RecuperarPasswordScreenState extends ConsumerState<RecuperarPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
@@ -44,7 +46,7 @@ class _RecuperarPasswordScreenState extends State<RecuperarPasswordScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(resultado.erro ?? 'Erro ao enviar código.'),
+          content: Text(resultado.erro ?? ref.tr('mobile_recuperar_erro_enviar')),
           backgroundColor: AppConstants.corErro,
         ),
       );
@@ -75,9 +77,9 @@ class _RecuperarPasswordScreenState extends State<RecuperarPasswordScreen> {
                 const Spacer(flex: 1),
                 
                 // Título
-                const Text(
-                  'Introduza o seu email:',
-                  style: TextStyle(
+                Text(
+                  ref.t('mobile_recuperar_titulo'),
+                  style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: AppConstants.corPrimaria,
@@ -93,7 +95,7 @@ class _RecuperarPasswordScreenState extends State<RecuperarPasswordScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Iremos enviar-lhe um pin para a recuperação da password.',
+                        ref.t('mobile_recuperar_instrucao'),
                         style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
                       ),
                     ),
@@ -106,7 +108,7 @@ class _RecuperarPasswordScreenState extends State<RecuperarPasswordScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
-                    hintText: 'Email',
+                    hintText: ref.t('mobile_login_email_label'),
                     hintStyle: TextStyle(color: Colors.grey.shade400),
                     filled: true,
                     fillColor: Colors.white,
@@ -120,8 +122,8 @@ class _RecuperarPasswordScreenState extends State<RecuperarPasswordScreen> {
                     ),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) return 'Insira o seu email';
-                    if (!value.contains('@')) return 'Email inválido';
+                    if (value == null || value.isEmpty) return ref.tr('mobile_recuperar_email_obrigatorio');
+                    if (!value.contains('@')) return ref.tr('mobile_recuperar_email_invalido');
                     return null;
                   },
                 ),
@@ -145,9 +147,9 @@ class _RecuperarPasswordScreenState extends State<RecuperarPasswordScreen> {
                             height: 20,
                             child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                           )
-                        : const Text(
-                            'Enviar',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                        : Text(
+                            ref.t('mobile_recuperar_enviar'),
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                           ),
                   ),
                 ),

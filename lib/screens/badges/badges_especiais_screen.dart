@@ -7,6 +7,7 @@ import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:go_router/go_router.dart';
 
 // ECRÃ BADGES ESPECIAIS
@@ -58,10 +59,10 @@ class _BadgesEspeciaisState extends ConsumerState<BadgesEspeciais> {
 
   String _textoExpiracao(BadgeUtilizador b) {
     final diff = b.dataExpiracao.difference(DateTime.now());
-    if (diff.isNegative) return b.valido ? 'Sem data de expiração' : 'Badge inválida';
+    if (diff.isNegative) return b.valido ? ref.t('mobile_badges_sem_data_expiracao') : ref.t('mobile_badges_invalida');
     final horas = diff.inHours;
     final minutos = diff.inMinutes % 60;
-    return 'Expira em: ${horas}h e ${minutos}min';
+    return '${ref.t('mobile_badges_expira_em')} ${horas}h ${ref.t('mobile_badges_e')} ${minutos}min';
   }
 
   @override
@@ -80,12 +81,12 @@ class _BadgesEspeciaisState extends ConsumerState<BadgesEspeciais> {
             children: [
               Icon(Icons.error_outline, color: D.tinta30, size: 64),
               const SizedBox(height: D.e4),
-              const Text('Erro ao carregar badges', style: D.corpo),
+              Text(ref.t('mobile_badges_erro_carregar'), style: D.corpo),
               const SizedBox(height: D.e4),
               OutlinedButton(
                 onPressed: () => ref.invalidate(badgesProvider),
                 style: OutlinedButton.styleFrom(foregroundColor: D.azul600),
-                child: const Text('Tentar novamente'),
+                child: Text(ref.t('mobile_geral_tentar_novamente')),
               ),
             ],
           ),
@@ -127,7 +128,7 @@ class _BadgesEspeciaisState extends ConsumerState<BadgesEspeciais> {
         icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
         onPressed: () => context.pop(),
       ),
-      title: const Text('BADGES', style: D.tituloPagina),
+      title: Text(ref.t('mobile_badges_titulo'), style: D.tituloPagina),
       actions: [
         IconButton(
           icon: SvgPicture.asset(
@@ -152,7 +153,7 @@ class _BadgesEspeciaisState extends ConsumerState<BadgesEspeciais> {
         controller: _pesquisaController,
         onChanged: (texto) => setState(() => _queryPesquisa = texto),
         decoration: InputDecoration(
-          hintText: 'Procura...',
+          hintText: ref.t('mobile_geral_procura_hint'),
           hintStyle: const TextStyle(color: D.tinta30, fontSize: 14),
           prefixIcon: const Icon(Icons.search, color: D.tinta30, size: 20),
           border: InputBorder.none,
@@ -180,8 +181,8 @@ class _BadgesEspeciaisState extends ConsumerState<BadgesEspeciais> {
           const SizedBox(height: D.e4),
           Text(
             _pesquisaController.text.isNotEmpty
-                ? 'Nenhum badge encontrado'
-                : 'Ainda não tens badges especiais',
+                ? ref.t('mobile_badges_nenhum_encontrado')
+                : ref.t('mobile_badges_sem_especiais'),
             style: D.corpo,
           ),
         ],
@@ -205,7 +206,7 @@ class _BadgesEspeciaisState extends ConsumerState<BadgesEspeciais> {
                   Row(
                     children: [
                       Expanded(child: Text(badge.nomeBadge, style: D.tituloCard)),
-                      const ChipEstado(texto: '★ Premium', cor: D.aviso, corFundo: D.avisoBg),
+                      ChipEstado(texto: '★ ${ref.t('mobile_badges_premium')}', cor: D.aviso, corFundo: D.avisoBg),
                     ],
                   ),
                   if (badge.descricao != null) ...[

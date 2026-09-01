@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:go_router/go_router.dart';
 
-class RedefinirPassword2Screen extends StatefulWidget {
+class RedefinirPassword2Screen extends ConsumerStatefulWidget {
   const RedefinirPassword2Screen({super.key});
 
   @override
-  State<RedefinirPassword2Screen> createState() => _RedefinirPassword2ScreenState();
+  ConsumerState<RedefinirPassword2Screen> createState() => _RedefinirPassword2ScreenState();
 }
 
-class _RedefinirPassword2ScreenState extends State<RedefinirPassword2Screen> {
+class _RedefinirPassword2ScreenState extends ConsumerState<RedefinirPassword2Screen> {
   final _formKey = GlobalKey<FormState>();
   final _novaPasswordController = TextEditingController();
   final _confirmarPasswordController = TextEditingController();
@@ -47,14 +49,14 @@ class _RedefinirPassword2ScreenState extends State<RedefinirPassword2Screen> {
                 child: const Icon(Icons.check_circle, color: AppConstants.corSucesso, size: 48),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Sucesso!', 
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppConstants.corPrimaria),
+              Text(
+                ref.tr('mobile_redefinir_sucesso_titulo'),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppConstants.corPrimaria),
               ),
               const SizedBox(height: 8),
               Text(
-                'A sua password foi redefinida com sucesso.', 
-                textAlign: TextAlign.center, 
+                ref.tr('mobile_redefinir_sucesso_texto'),
+                textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey.shade600),
               ),
               const SizedBox(height: 24),
@@ -70,7 +72,7 @@ class _RedefinirPassword2ScreenState extends State<RedefinirPassword2Screen> {
                     backgroundColor: AppConstants.corPrimaria,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text('Voltar ao Login', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  child: Text(ref.tr('mobile_redefinir_voltar_login'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -95,7 +97,7 @@ class _RedefinirPassword2ScreenState extends State<RedefinirPassword2Screen> {
       // EM VEZ DE NAVEGAR, MOSTRA O POPUP!
       _mostrarPopupSucesso();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(resultado.erro ?? 'Erro'), backgroundColor: AppConstants.corErro));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(resultado.erro ?? ref.tr('mobile_geral_erro_desconhecido')), backgroundColor: AppConstants.corErro));
     }
   }
 
@@ -122,34 +124,34 @@ class _RedefinirPassword2ScreenState extends State<RedefinirPassword2Screen> {
             child: Column(
               children: [
                 const Spacer(flex: 1),
-                const Text('Redefinir password:', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppConstants.corPrimaria)),
+                Text(ref.t('mobile_redefinir_titulo'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppConstants.corPrimaria)),
                 const SizedBox(height: 32),
                 TextFormField(
                   controller: _novaPasswordController,
                   obscureText: !_verPassword,
                   decoration: InputDecoration(
-                    hintText: 'Nova password',
+                    hintText: ref.t('mobile_redefinir_nova_hint'),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                     suffixIcon: IconButton(
                       icon: Icon(_verPassword ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
                       onPressed: () => setState(() => _verPassword = !_verPassword),
                     ),
                   ),
-                  validator: (v) => v!.length < 8 ? 'Mínimo 8 caracteres' : null,
+                  validator: (v) => v!.length < 8 ? ref.tr('mobile_trocar_pass_min_caracteres') : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _confirmarPasswordController,
                   obscureText: !_verConfirmacao,
                   decoration: InputDecoration(
-                    hintText: 'Confirmar password',
+                    hintText: ref.t('mobile_redefinir_confirmar_hint'),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                     suffixIcon: IconButton(
                       icon: Icon(_verConfirmacao ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
                       onPressed: () => setState(() => _verConfirmacao = !_verConfirmacao),
                     ),
                   ),
-                  validator: (v) => v != _novaPasswordController.text ? 'As passwords não coincidem' : null,
+                  validator: (v) => v != _novaPasswordController.text ? ref.tr('mobile_trocar_pass_nao_coincidem') : null,
                 ),
                 const SizedBox(height: 40),
                 SizedBox(
@@ -160,7 +162,7 @@ class _RedefinirPassword2ScreenState extends State<RedefinirPassword2Screen> {
                     style: ElevatedButton.styleFrom(backgroundColor: AppConstants.corPrimaria, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                     child: _isLoading
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Redefinir', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                        : Text(ref.t('mobile_redefinir_botao'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                   ),
                 ),
                 const Spacer(flex: 2),
