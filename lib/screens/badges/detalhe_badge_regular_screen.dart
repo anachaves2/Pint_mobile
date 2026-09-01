@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/models/badge_utilizador.dart';
 import 'package:pint_mobile/utils/badge_utils.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:pint_mobile/utils/certificado_badge.dart';
@@ -13,16 +15,16 @@ import 'package:pint_mobile/services/database_service.dart';
 // Mostra os detalhes completos de um badge regular válido.
 // Segue os tokens D — blocos de informação em D.fundoAlt, sem bordas.
 
-class DetalheBadgeRegular extends StatelessWidget {
+class DetalheBadgeRegular extends ConsumerWidget {
   final BadgeUtilizador badge;
 
   const DetalheBadgeRegular({super.key, required this.badge});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: D.fundo,
-      appBar: _buildAppBar(context),
+      appBar: _buildAppBar(context, ref),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: D.e5, vertical: D.e5),
         child: Column(
@@ -32,22 +34,22 @@ class DetalheBadgeRegular extends StatelessWidget {
             const SizedBox(height: D.e4),
             _buildNomeENivel(),
             const SizedBox(height: D.e5),
-            _buildSecaoInfo(),
+            _buildSecaoInfo(ref),
             const SizedBox(height: D.e4),
             if (badge.descricao != null) ...[
               _buildDescricao(),
               const SizedBox(height: D.e4),
             ],
-            _buildDatas(),
+            _buildDatas(ref),
             const SizedBox(height: D.e6),
-            _buildBotoesPartilha(context),
+            _buildBotoesPartilha(context, ref),
           ],
         ),
       ),
     );
   }
 
-  AppBar _buildAppBar(BuildContext context) {
+  AppBar _buildAppBar(BuildContext context, WidgetRef ref) {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -56,7 +58,7 @@ class DetalheBadgeRegular extends StatelessWidget {
         icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
         onPressed: () => context.pop(),
       ),
-      title: const Text('BADGES', style: D.tituloPagina),
+      title: Text(ref.t('mobile_badges_titulo'), style: D.tituloPagina),
       actions: [
         IconButton(
           icon: SvgPicture.asset(
@@ -121,21 +123,21 @@ class DetalheBadgeRegular extends StatelessWidget {
   }
 
   // Secção com Service Line, Área e Pontos de Gamification
-  Widget _buildSecaoInfo() {
+  Widget _buildSecaoInfo(WidgetRef ref) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(D.e4),
       decoration: BoxDecoration(color: D.fundoAlt, borderRadius: BorderRadius.circular(D.rLg)),
       child: Column(
         children: [
-          if (badge.nomeServiceLine != null) _buildLinhaInfo('Service Line', badge.nomeServiceLine!),
+          if (badge.nomeServiceLine != null) _buildLinhaInfo(ref.t('mobile_badges_service_line'), badge.nomeServiceLine!),
           if (badge.nomeArea != null) ...[
             const SizedBox(height: D.e2),
-            _buildLinhaInfo('Área', badge.nomeArea!),
+            _buildLinhaInfo(ref.t('mobile_badges_area'), badge.nomeArea!),
           ],
           if (badge.pontos != null) ...[
             const SizedBox(height: D.e2),
-            _buildLinhaInfo('Gamification', '${badge.pontos} Pontos', destaque: true),
+            _buildLinhaInfo(ref.t('mobile_dash_gamification_titulo'), '${badge.pontos} ${ref.t('mobile_ranking_pontos')}', destaque: true),
           ],
         ],
       ),
@@ -165,12 +167,12 @@ class DetalheBadgeRegular extends StatelessWidget {
   }
 
   // Datas de conquista e validade com alerta visual se próximo de expirar
-  Widget _buildDatas() {
+  Widget _buildDatas(WidgetRef ref) {
     return Row(
       children: [
         Expanded(
           child: _buildChipData(
-            label: 'Conquistado em:',
+            label: ref.t('mobile_badges_conquistado_em'),
             data: BadgeUtils.formatarData(badge.dataAtribuicao),
             cor: D.azul600,
           ),
@@ -178,7 +180,7 @@ class DetalheBadgeRegular extends StatelessWidget {
         const SizedBox(width: D.e3),
         Expanded(
           child: _buildChipData(
-            label: 'Válido até:',
+            label: ref.t('mobile_badges_valido_ate'),
             data: BadgeUtils.formatarData(badge.dataExpiracao),
             cor: badge.estaProximoDeExpirar ? D.aviso : D.tinta50,
           ),
@@ -206,15 +208,15 @@ class DetalheBadgeRegular extends StatelessWidget {
   }
 
   // Botões de partilha: LinkedIn e página pública do badge
-  Widget _buildBotoesPartilha(BuildContext context) {
+  Widget _buildBotoesPartilha(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            onPressed: () => _partilharLinkedIn(context),
+            onPressed: () => _partilharLinkedIn(context, ref),
             icon: const Icon(Icons.share, size: 18),
-            label: const Text('Partilhar no LinkedIn'),
+            label: Text(ref.t('mobile_badges_partilhar_linkedin')),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF0077B5),
               side: const BorderSide(color: Color(0xFF0077B5)),
@@ -228,9 +230,9 @@ class DetalheBadgeRegular extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () => _abrirPaginaPublica(context),
+              onPressed: () => _abrirPaginaPublica(context, ref),
               icon: const Icon(Icons.open_in_new, size: 18),
-              label: const Text('Ver página pública'),
+              label: Text(ref.t('mobile_badges_ver_pagina_publica')),
               style: OutlinedButton.styleFrom(
                 foregroundColor: D.azul600,
                 side: const BorderSide(color: D.azul600),
@@ -243,9 +245,9 @@ class DetalheBadgeRegular extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            onPressed: () => _descarregarCertificado(context),
+            onPressed: () => _descarregarCertificado(context, ref),
             icon: const Icon(Icons.download_outlined, size: 18),
-            label: const Text('Descarregar Certificado'),
+            label: Text(ref.t('mobile_badges_descarregar_certificado')),
             style: OutlinedButton.styleFrom(
               foregroundColor: D.azul600,
               side: const BorderSide(color: D.azul600),
@@ -260,7 +262,7 @@ class DetalheBadgeRegular extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: () => context.push(AppConstants.routeDetalheBadgeRequisitos, extra: badge),
             icon: const Icon(Icons.checklist, size: 18),
-            label: const Text('Ver requisitos'),
+            label: Text(ref.t('mobile_badges_ver_requisitos')),
             style: OutlinedButton.styleFrom(
               foregroundColor: D.azul600,
               side: const BorderSide(color: D.azul600),
@@ -274,7 +276,7 @@ class DetalheBadgeRegular extends StatelessWidget {
   }
 
   // Gera o certificado PDF e abre a folha de partilha do sistema
-  Future<void> _descarregarCertificado(BuildContext context) async {
+  Future<void> _descarregarCertificado(BuildContext context, WidgetRef ref) async {
     final utilizador = await DatabaseService.instance.getUser();
     if (!context.mounted) return;
     try {
@@ -286,13 +288,13 @@ class DetalheBadgeRegular extends StatelessWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Não foi possível gerar o certificado.')),
+          SnackBar(content: Text(ref.tr('mobile_badges_erro_certificado'))),
         );
       }
     }
   }
 
-  Future<void> _partilharLinkedIn(BuildContext context) async {
+  Future<void> _partilharLinkedIn(BuildContext context, WidgetRef ref) async {
     final urlPublica = AppConstants.urlVerificacaoBadge(badge.tokenValidacao);
     final url = urlPublica != null
         ? 'https://www.linkedin.com/sharing/share-offsite/?url=${Uri.encodeComponent(urlPublica)}'
@@ -302,12 +304,12 @@ class DetalheBadgeRegular extends StatelessWidget {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível abrir o LinkedIn')),
+        SnackBar(content: Text(ref.tr('mobile_badges_erro_linkedin'))),
       );
     }
   }
 
-  Future<void> _abrirPaginaPublica(BuildContext context) async {
+  Future<void> _abrirPaginaPublica(BuildContext context, WidgetRef ref) async {
     final urlPublica = AppConstants.urlVerificacaoBadge(badge.tokenValidacao);
     if (urlPublica == null) return;
     final uri = Uri.parse(urlPublica);
@@ -315,7 +317,7 @@ class DetalheBadgeRegular extends StatelessWidget {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível abrir a página')),
+        SnackBar(content: Text(ref.tr('mobile_badges_erro_pagina'))),
       );
     }
   }

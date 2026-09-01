@@ -7,6 +7,7 @@ import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/utils/notificacao_utils.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/providers/badges_provider.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:go_router/go_router.dart';
 
 // ============================================================================
@@ -38,14 +39,14 @@ class _DetalheNotificacaoScreenState extends ConsumerState<DetalheNotificacaoScr
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar notificação'),
-        content: const Text('Tem a certeza que pretende eliminar esta notificação?'),
+        title: Text(ref.tr('mobile_notif_eliminar_titulo')),
+        content: Text(ref.tr('mobile_notifdet_eliminar_confirmar')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(ref.tr('mobile_geral_cancelar'))),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: D.erro),
-            child: const Text('Eliminar'),
+            child: Text(ref.tr('mobile_notifdet_eliminar_botao')),
           ),
         ],
       ),
@@ -59,7 +60,7 @@ class _DetalheNotificacaoScreenState extends ConsumerState<DetalheNotificacaoScr
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(resultado.erro ?? 'Erro ao eliminar notificação.'),
+              content: Text(resultado.erro ?? ref.tr('mobile_notif_erro_eliminar')),
               backgroundColor: D.erro,
             ),
           );
@@ -88,7 +89,7 @@ class _DetalheNotificacaoScreenState extends ConsumerState<DetalheNotificacaoScr
         elevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: AppConstants.corPrimaria),
-        title: const Text('NOTIFICAÇÃO', style: D.tituloPagina),
+        title: Text(ref.t('mobile_notifdet_titulo'), style: D.tituloPagina),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(D.e5),
@@ -107,7 +108,7 @@ class _DetalheNotificacaoScreenState extends ConsumerState<DetalheNotificacaoScr
                   child: Icon(config.icone, color: config.cor, size: 22),
                 ),
                 const SizedBox(width: D.e3),
-                Expanded(child: Text(config.titulo, style: D.tituloSeccao)),
+                Expanded(child: Text(ref.t(config.chaveTitulo), style: D.tituloSeccao)),
               ],
             ),
             const SizedBox(height: D.e5),
@@ -120,14 +121,14 @@ class _DetalheNotificacaoScreenState extends ConsumerState<DetalheNotificacaoScr
 
             if (notificacao.numCandidatura != null)
               _buildAcao(
-                label: 'Ver candidatura',
+                label: ref.t('mobile_notifdet_ver_candidatura'),
                 icone: Icons.assignment_outlined,
                 onTap: () => context.push(AppConstants.routeDetalheCandidatura, extra: notificacao.numCandidatura),
               ),
 
             if (notificacao.idBadgeUtilizador != null)
               _buildAcao(
-                label: 'Ver badge',
+                label: ref.t('mobile_notifdet_ver_badge'),
                 icone: Icons.workspace_premium_outlined,
                 onTap: () {
                   final badges = ref.read(badgesProvider).valueOrNull ?? [];
@@ -136,7 +137,7 @@ class _DetalheNotificacaoScreenState extends ConsumerState<DetalheNotificacaoScr
                     context.push(AppConstants.routeDetalheBadge, extra: badge);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Badge não encontrado.')),
+                      SnackBar(content: Text(ref.tr('mobile_notifdet_badge_nao_encontrado'))),
                     );
                   }
                 },
@@ -144,7 +145,7 @@ class _DetalheNotificacaoScreenState extends ConsumerState<DetalheNotificacaoScr
 
             if (notificacao.idObjetivo != null)
               _buildAcao(
-                label: 'Ver objetivos',
+                label: ref.t('mobile_notifdet_ver_objetivos'),
                 icone: Icons.track_changes_outlined,
                 onTap: () => context.push(AppConstants.routeObjetivos),
               ),
@@ -163,7 +164,7 @@ class _DetalheNotificacaoScreenState extends ConsumerState<DetalheNotificacaoScr
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
                     ),
                     icon: const Icon(Icons.delete_outline, size: 18),
-                    label: const Text('Eliminar', style: TextStyle(fontWeight: FontWeight.w600)),
+                    label: Text(ref.t('mobile_notifdet_eliminar_botao'), style: const TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ),
                 if (_lida) ...[
@@ -178,7 +179,7 @@ class _DetalheNotificacaoScreenState extends ConsumerState<DetalheNotificacaoScr
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
                       ),
                       icon: const Icon(Icons.markunread_outlined, size: 18),
-                      label: const Text('Não lida', style: TextStyle(fontWeight: FontWeight.w600)),
+                      label: Text(ref.t('mobile_notifdet_nao_lida'), style: const TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],

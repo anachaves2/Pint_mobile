@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/models/notificacao.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/services/database_service.dart';
@@ -7,6 +8,7 @@ import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/utils/notificacao_utils.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
@@ -20,14 +22,14 @@ import 'package:go_router/go_router.dart';
 // web não tem).
 // ============================================================================
 
-class NotificacoesScreen extends StatefulWidget {
+class NotificacoesScreen extends ConsumerStatefulWidget {
   const NotificacoesScreen({super.key});
 
   @override
-  State<NotificacoesScreen> createState() => _NotificacoesScreenState();
+  ConsumerState<NotificacoesScreen> createState() => _NotificacoesScreenState();
 }
 
-class _NotificacoesScreenState extends State<NotificacoesScreen>
+class _NotificacoesScreenState extends ConsumerState<NotificacoesScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<Notificacao> _todas = [];
@@ -64,20 +66,20 @@ class _NotificacoesScreenState extends State<NotificacoesScreen>
       builder: (ctx) => AlertDialog(
         backgroundColor: D.superficie,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rLg)),
-        title: const Text('Eliminar notificação', style: D.tituloSeccao),
-        content: const Text(
-          'Queres mesmo eliminar esta notificação? Esta ação não pode ser desfeita.',
+        title: Text(ref.tr('mobile_notif_eliminar_titulo'), style: D.tituloSeccao),
+        content: Text(
+          ref.tr('mobile_notif_eliminar_texto'),
           style: D.corpo,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Não', style: TextStyle(color: D.tinta50)),
+            child: Text(ref.tr('mobile_notif_nao'), style: const TextStyle(color: D.tinta50)),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: D.erro),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sim, eliminar'),
+            child: Text(ref.tr('mobile_notif_sim_eliminar')),
           ),
         ],
       ),
@@ -92,7 +94,7 @@ class _NotificacoesScreenState extends State<NotificacoesScreen>
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(resultado.erro ?? 'Erro ao eliminar notificação.'),
+          content: Text(resultado.erro ?? ref.tr('mobile_notif_erro_eliminar')),
           backgroundColor: D.erro,
         ),
       );
@@ -196,7 +198,7 @@ class _NotificacoesScreenState extends State<NotificacoesScreen>
                       children: [
                         Expanded(
                           child: Text(
-                            n.descricao ?? config.titulo,
+                            n.descricao ?? ref.t(config.chaveTitulo),
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: n.lida ? FontWeight.w400 : FontWeight.w600,
@@ -219,7 +221,7 @@ class _NotificacoesScreenState extends State<NotificacoesScreen>
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(NotificacaoUtils.tempoRelativo(n.data), style: D.legenda.copyWith(fontSize: 11)),
+                    Text(NotificacaoUtils.tempoRelativo(n.data, ref), style: D.legenda.copyWith(fontSize: 11)),
                   ],
                 ),
               ),
@@ -238,7 +240,7 @@ class _NotificacoesScreenState extends State<NotificacoesScreen>
           children: [
             Icon(Icons.notifications_off_outlined, size: 56, color: D.tinta30),
             const SizedBox(height: D.e3),
-            Text('Sem notificações', style: D.legenda),
+            Text(ref.t('mobile_notif_sem_notificacoes'), style: D.legenda),
           ],
         ),
       );
@@ -256,7 +258,7 @@ class _NotificacoesScreenState extends State<NotificacoesScreen>
             if (grupos[g]?.isNotEmpty ?? false) ...[
               Padding(
                 padding: const EdgeInsets.only(bottom: D.e2),
-                child: Text(g, style: D.etiqueta),
+                child: Text(ref.t(g), style: D.etiqueta),
               ),
               for (final n in grupos[g]!) _buildCard(n),
               const SizedBox(height: D.e2),
@@ -287,12 +289,12 @@ class _NotificacoesScreenState extends State<NotificacoesScreen>
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        title: const Text('NOTIFICAÇÕES', style: D.tituloPagina),
+        title: Text(ref.t('mobile_notif_titulo'), style: D.tituloPagina),
         actions: [
           if (naoLidas.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.done_all, color: AppConstants.corPrimaria),
-              tooltip: 'Marcar todas como lidas',
+              tooltip: ref.t('mobile_notif_marcar_todas_lidas'),
               onPressed: _marcarTodasComoLidas,
             ),
         ],
@@ -316,8 +318,8 @@ class _NotificacoesScreenState extends State<NotificacoesScreen>
                 unselectedLabelColor: D.tinta30,
                 labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                 tabs: [
-                  const Tab(text: 'Todas'),
-                  Tab(text: naoLidas.isEmpty ? 'Não Lidas' : 'Não Lidas (${naoLidas.length})'),
+                  Tab(text: ref.t('mobile_notif_tab_todas')),
+                  Tab(text: naoLidas.isEmpty ? ref.t('mobile_notif_tab_nao_lidas') : '${ref.t('mobile_notif_tab_nao_lidas')} (${naoLidas.length})'),
                 ],
               ),
             ),

@@ -8,6 +8,7 @@ import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 
 /// Ecrãs 22, 23 e 26 do protótipo (NovoObjetivoTipo / NovoObjetivoNormal /
 /// NovoObjetivoDefinido).
@@ -53,7 +54,7 @@ class _NovoObjetivoScreenState extends ConsumerState<NovoObjetivoScreen> {
             }
           },
         ),
-        title: const Text('NOVO OBJETIVO', style: D.tituloPagina),
+        title: Text(ref.t('mobile_novo_obj_titulo'), style: D.tituloPagina),
         actions: [
           IconButton(
             icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg',
@@ -67,10 +68,10 @@ class _NovoObjetivoScreenState extends ConsumerState<NovoObjetivoScreen> {
       body: tipos.when(
         loading: () => const Center(
             child: CircularProgressIndicator(color: AppConstants.corPrimaria)),
-        error: (err, _) => const Center(
+        error: (err, _) => Center(
           child: Padding(
-            padding: EdgeInsets.all(D.e6),
-            child: Text('Não foi possível carregar os tipos de objetivo.',
+            padding: const EdgeInsets.all(D.e6),
+            child: Text(ref.t('mobile_novo_obj_erro_tipos'),
                 style: D.legenda, textAlign: TextAlign.center),
           ),
         ),
@@ -86,10 +87,10 @@ class _NovoObjetivoScreenState extends ConsumerState<NovoObjetivoScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(D.e4, D.e2, D.e4, D.e6),
       children: [
-        const Padding(
-          padding: EdgeInsets.only(bottom: D.e4),
-          child: Text('Qual o tipo de objetivo?',
-              style: TextStyle(
+        Padding(
+          padding: const EdgeInsets.only(bottom: D.e4),
+          child: Text(ref.t('mobile_novo_obj_pergunta_tipo'),
+              style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: D.azul600)),
@@ -156,7 +157,7 @@ class _NovoObjetivoScreenState extends ConsumerState<NovoObjetivoScreen> {
           ),
         ),
         const SizedBox(height: D.e5),
-        const Text('ATÉ QUANDO PRETENDES CONQUISTAR?', style: D.etiqueta),
+        Text(ref.t('mobile_novo_obj_ate_quando'), style: D.etiqueta),
         const SizedBox(height: D.e2),
         CardSimples(
           onTap: _escolherData,
@@ -167,7 +168,7 @@ class _NovoObjetivoScreenState extends ConsumerState<NovoObjetivoScreen> {
               Expanded(
                 child: Text(
                   _dataFim == null
-                      ? 'DD - MM - AAAA'
+                      ? ref.t('mobile_novo_obj_data_placeholder')
                       : _formatar(_dataFim!),
                   style: _dataFim == null
                       ? D.corpo.copyWith(color: D.tinta30)
@@ -211,8 +212,8 @@ class _NovoObjetivoScreenState extends ConsumerState<NovoObjetivoScreen> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(D.rSm)),
                 ),
-                child: const Text('Cancelar',
-                    style: TextStyle(color: D.tinta50, fontSize: 14)),
+                child: Text(ref.t('mobile_geral_cancelar'),
+                    style: const TextStyle(color: D.tinta50, fontSize: 14)),
               ),
             ),
             const SizedBox(width: D.e3),
@@ -231,8 +232,8 @@ class _NovoObjetivoScreenState extends ConsumerState<NovoObjetivoScreen> {
                         width: 18,
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
-                    : const Text('Guardar',
-                        style: TextStyle(
+                    : Text(ref.t('mobile_geral_guardar'),
+                        style: const TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w600)),
               ),
             ),
@@ -251,7 +252,7 @@ class _NovoObjetivoScreenState extends ConsumerState<NovoObjetivoScreen> {
       initialDate: _dataFim ?? hoje.add(const Duration(days: 90)),
       firstDate: hoje.add(const Duration(days: 1)),
       lastDate: hoje.add(const Duration(days: 365 * 3)),
-      helpText: 'Data limite do objetivo',
+      helpText: ref.tr('mobile_novo_obj_data_help'),
     );
     if (escolhida != null) {
       setState(() {
@@ -263,7 +264,7 @@ class _NovoObjetivoScreenState extends ConsumerState<NovoObjetivoScreen> {
 
   Future<void> _guardar() async {
     if (_dataFim == null) {
-      setState(() => _erro = 'Escolhe uma data limite.');
+      setState(() => _erro = ref.tr('mobile_novo_obj_escolhe_data'));
       return;
     }
 
@@ -283,7 +284,7 @@ class _NovoObjetivoScreenState extends ConsumerState<NovoObjetivoScreen> {
     if (!r.sucesso) {
       setState(() {
         _aGuardar = false;
-        _erro = r.erro ?? 'Não foi possível criar o objetivo.';
+        _erro = r.erro ?? ref.tr('mobile_novo_obj_erro_criar');
       });
       return;
     }
@@ -313,10 +314,10 @@ class _NovoObjetivoScreenState extends ConsumerState<NovoObjetivoScreen> {
                 child: const Icon(Icons.check, size: 28, color: D.ok),
               ),
               const SizedBox(height: D.e4),
-              const Text('Novo objetivo definido!',
+              Text(ref.tr('mobile_novo_obj_sucesso_titulo'),
                   style: D.tituloSeccao, textAlign: TextAlign.center),
               const SizedBox(height: D.e2),
-              Text('Tens até ${_formatar(_dataFim!)} para o conquistares.',
+              Text('${ref.tr('mobile_novo_obj_sucesso_ate')} ${_formatar(_dataFim!)} ${ref.tr('mobile_novo_obj_sucesso_conquistar')}',
                   style: D.legenda, textAlign: TextAlign.center),
               const SizedBox(height: D.e5),
               SizedBox(
@@ -329,7 +330,7 @@ class _NovoObjetivoScreenState extends ConsumerState<NovoObjetivoScreen> {
                         borderRadius: BorderRadius.circular(D.rSm)),
                   ),
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Continuar'),
+                  child: Text(ref.tr('mobile_novo_obj_continuar')),
                 ),
               ),
             ],

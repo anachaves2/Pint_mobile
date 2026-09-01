@@ -10,6 +10,7 @@ import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:pint_mobile/widgets/podio_ranking.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 
 /// Ecrãs 44 e 46 do protótipo (Gamification / GamificationPerfil).
 ///
@@ -39,7 +40,7 @@ class GamificationScreen extends ConsumerWidget {
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: const Text('GAMIFICATION', style: D.tituloPagina),
+        title: Text(ref.t('mobile_dash_gamification_titulo'), style: D.tituloPagina),
         actions: [
           IconButton(
             icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg',
@@ -89,7 +90,7 @@ class GamificationScreen extends ConsumerWidget {
 
                 // ── O meu desempenho ──
                 if (meu != null) ...[
-                  const Text('O MEU DESEMPENHO', style: D.etiqueta),
+                  Text(ref.t('mobile_gamif_meu_desempenho'), style: D.etiqueta),
                   const SizedBox(height: D.e2),
                   _CardDesempenho(entrada: meu, totalConsultores: ranking.length),
                   const SizedBox(height: D.e5),
@@ -115,10 +116,10 @@ class GamificationScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Ranking completo',
+                            Text(ref.t('mobile_gamif_ranking_completo'),
                                 style: D.tituloCard),
                             const SizedBox(height: 2),
-                            Text('${ranking.length} consultores',
+                            Text('${ranking.length} ${ref.t('mobile_gamif_consultores')}',
                                 style: D.legenda),
                           ],
                         ),
@@ -148,7 +149,7 @@ class GamificationScreen extends ConsumerWidget {
 // Cartão do desempenho do próprio
 // ─────────────────────────────────────────────────────────
 
-class _CardDesempenho extends StatelessWidget {
+class _CardDesempenho extends ConsumerWidget {
   const _CardDesempenho(
       {required this.entrada, required this.totalConsultores});
 
@@ -156,7 +157,7 @@ class _CardDesempenho extends StatelessWidget {
   final int totalConsultores;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return CardGradiente(
       padding: const EdgeInsets.all(D.e5),
       child: Column(
@@ -166,13 +167,13 @@ class _CardDesempenho extends StatelessWidget {
             children: [
               _Metrica(
                 valor: '${entrada.posicao}º',
-                rotulo: 'POSIÇÃO',
-                sufixo: 'de $totalConsultores',
+                rotulo: ref.t('mobile_gamif_posicao'),
+                sufixo: '${ref.t('mobile_gamif_de')} $totalConsultores',
               ),
               Container(width: 1, height: 44, color: D.azul100),
               _Metrica(
                 valor: '${entrada.totalPontos}',
-                rotulo: 'PONTOS',
+                rotulo: ref.t('mobile_ranking_pontos_maiusc'),
               ),
               Container(width: 1, height: 44, color: D.azul100),
               _Evolucao(entrada: entrada),
@@ -210,13 +211,13 @@ class _Metrica extends StatelessWidget {
 }
 
 /// Evolução face a há 7 dias — vem calculada do backend.
-class _Evolucao extends StatelessWidget {
+class _Evolucao extends ConsumerWidget {
   const _Evolucao({required this.entrada});
 
   final RankingEntrada entrada;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final (icone, cor, texto) = switch (entrada) {
       _ when entrada.subiu => (
           Icons.arrow_upward,
@@ -244,7 +245,7 @@ class _Evolucao extends StatelessWidget {
           ],
         ),
         const SizedBox(height: D.e1),
-        const Text('7 DIAS', style: D.etiqueta),
+        Text(ref.t('mobile_gamif_7_dias'), style: D.etiqueta),
       ],
     );
   }
@@ -254,22 +255,22 @@ class _Evolucao extends StatelessWidget {
 // Estados
 // ─────────────────────────────────────────────────────────
 
-class _Vazio extends StatelessWidget {
+class _Vazio extends ConsumerWidget {
   const _Vazio();
 
   @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(D.e6),
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.all(D.e6),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.emoji_events_outlined, size: 44, color: D.tinta30),
-          SizedBox(height: D.e4),
-          Text('Ranking ainda vazio',
+          const Icon(Icons.emoji_events_outlined, size: 44, color: D.tinta30),
+          const SizedBox(height: D.e4),
+          Text(ref.t('mobile_gamif_ranking_vazio'),
               style: D.tituloCard, textAlign: TextAlign.center),
-          SizedBox(height: D.e2),
-          Text('Assim que houver badges atribuídos, o ranking aparece aqui.',
+          const SizedBox(height: D.e2),
+          Text(ref.t('mobile_gamif_ranking_vazio_texto'),
               style: D.legenda, textAlign: TextAlign.center),
         ],
       ),
@@ -278,13 +279,13 @@ class _Vazio extends StatelessWidget {
 }
 
 /// O ranking vem sempre da API — não há cópia local para mostrar offline.
-class _SemLigacao extends StatelessWidget {
+class _SemLigacao extends ConsumerWidget {
   const _SemLigacao({required this.aoTentar});
 
   final VoidCallback aoTentar;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(D.e6),
@@ -293,11 +294,11 @@ class _SemLigacao extends StatelessWidget {
           children: [
             const Icon(Icons.cloud_off_outlined, size: 44, color: D.tinta30),
             const SizedBox(height: D.e4),
-            const Text('Sem ligação',
+            Text(ref.t('mobile_gamif_sem_ligacao'),
                 style: D.tituloCard, textAlign: TextAlign.center),
             const SizedBox(height: D.e2),
-            const Text(
-                'O ranking precisa de ligação à internet para mostrar posições atualizadas.',
+            Text(
+                ref.t('mobile_gamif_sem_ligacao_texto'),
                 style: D.legenda,
                 textAlign: TextAlign.center),
             const SizedBox(height: D.e5),
@@ -310,7 +311,7 @@ class _SemLigacao extends StatelessWidget {
                     borderRadius: BorderRadius.circular(D.rSm)),
               ),
               onPressed: aoTentar,
-              child: const Text('Tentar novamente'),
+              child: Text(ref.t('mobile_geral_tentar_novamente')),
             ),
           ],
         ),

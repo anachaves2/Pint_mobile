@@ -8,6 +8,7 @@ import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:go_router/go_router.dart';
 
 // ECRÃ HISTÓRICO DE CANDIDATURAS
@@ -90,7 +91,7 @@ class _HistoricoCandidaturasState extends ConsumerState<HistoricoCandidaturas> {
                 _buildTabsPills(),
                 const SizedBox(height: D.e3),
                 if (filtradas.isEmpty)
-                  CardSimples(child: Center(child: Text('Sem candidaturas encontradas.', style: D.legenda)))
+                  CardSimples(child: Center(child: Text(ref.t('mobile_cand_sem_encontradas'), style: D.legenda)))
                 else
                   for (final c in filtradas) _buildCard(c),
               ],
@@ -110,7 +111,7 @@ class _HistoricoCandidaturasState extends ConsumerState<HistoricoCandidaturas> {
         icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
         onPressed: () => context.pop(),
       ),
-      title: const Text('HISTÓRICO', style: D.tituloPagina),
+      title: Text(ref.t('mobile_cand_historico_titulo'), style: D.tituloPagina),
       actions: [
         IconButton(
           icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
@@ -128,7 +129,7 @@ class _HistoricoCandidaturasState extends ConsumerState<HistoricoCandidaturas> {
         controller: _pesquisaController,
         onChanged: (v) => setState(() => _query = v),
         decoration: InputDecoration(
-          hintText: 'Pesquisar badge...',
+          hintText: ref.t('mobile_cand_pesquisar_badge_hint'),
           hintStyle: const TextStyle(color: D.tinta30, fontSize: 14),
           prefixIcon: const Icon(Icons.search, color: D.tinta30, size: 20),
           border: InputBorder.none,
@@ -156,7 +157,7 @@ class _HistoricoCandidaturasState extends ConsumerState<HistoricoCandidaturas> {
                   borderRadius: BorderRadius.circular(999),
                   boxShadow: ativo ? null : D.elev1,
                 ),
-                child: Text(n == 'todos' ? 'Nível: Todos' : n,
+                child: Text(n == 'todos' ? ref.t('mobile_cand_nivel_todos') : n,
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: ativo ? Colors.white : D.tinta30)),
               ),
             ),
@@ -168,9 +169,9 @@ class _HistoricoCandidaturasState extends ConsumerState<HistoricoCandidaturas> {
 
   Widget _buildTabsPills() {
     final tabs = {
-      _TabHistorico.todos: 'Todos',
-      _TabHistorico.aprovados: 'Aprovados',
-      _TabHistorico.rejeitados: 'Rejeitados',
+      _TabHistorico.todos: ref.t('mobile_cand_tab_todos'),
+      _TabHistorico.aprovados: ref.t('mobile_cand_tab_aprovados'),
+      _TabHistorico.rejeitados: ref.t('mobile_cand_tab_rejeitados'),
     };
     return Container(
       padding: const EdgeInsets.all(4),
@@ -198,7 +199,7 @@ class _HistoricoCandidaturasState extends ConsumerState<HistoricoCandidaturas> {
     final aprovada = c.aprovada;
     final cor = aprovada ? D.ok : D.erro;
     final corFundo = aprovada ? D.okBg : D.erroBg;
-    final texto = aprovada ? 'Aprovado' : 'Rejeitado';
+    final texto = aprovada ? ref.t('mobile_cand_tab_aprovados_singular') : ref.t('mobile_cand_tab_rejeitados_singular');
     final data = c.dataCriacao;
     final dataFmt = '${data.day.toString().padLeft(2, '0')}-${data.month.toString().padLeft(2, '0')}-${data.year.toString().substring(2)}';
 
@@ -212,13 +213,13 @@ class _HistoricoCandidaturasState extends ConsumerState<HistoricoCandidaturas> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(c.nomeBadge, style: D.tituloCard),
-            if (c.nomeNivel != null) Text('Nível ${c.nomeNivel!}', style: D.legenda),
+            if (c.nomeNivel != null) Text('${ref.t('mobile_cand_nivel_label')} ${c.nomeNivel!}', style: D.legenda),
             const SizedBox(height: D.e2),
             Row(
               children: [
                 const Icon(Icons.calendar_today_outlined, size: 12, color: D.tinta30),
                 const SizedBox(width: 4),
-                Text('Criado em: $dataFmt', style: D.legenda.copyWith(fontSize: 11)),
+                Text('${ref.t('mobile_cand_criado_em')} $dataFmt', style: D.legenda.copyWith(fontSize: 11)),
                 const Spacer(),
                 ChipEstado(texto: texto, cor: cor, corFundo: corFundo),
               ],

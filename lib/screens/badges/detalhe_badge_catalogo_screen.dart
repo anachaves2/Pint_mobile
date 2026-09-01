@@ -9,6 +9,7 @@ import 'package:pint_mobile/utils/badge_utils.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:go_router/go_router.dart';
 
 // ECRÃ DETALHE — BADGE DO CATÁLOGO
@@ -76,7 +77,7 @@ class _DetalheBadgeCatalogoState extends ConsumerState<DetalheBadgeCatalogo> {
             const SizedBox(height: D.e5),
             Align(
               alignment: Alignment.centerLeft,
-              child: Text('REQUISITOS', style: D.etiqueta),
+              child: Text(ref.t('mobile_geral_requisitos_maiusc'), style: D.etiqueta),
             ),
             const SizedBox(height: D.e3),
             _buildRequisitos(),
@@ -98,7 +99,7 @@ class _DetalheBadgeCatalogoState extends ConsumerState<DetalheBadgeCatalogo> {
         icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
         onPressed: () => context.pop(),
       ),
-      title: const Text('CATÁLOGO', style: D.tituloPagina),
+      title: Text(ref.t('mobile_catalogo_titulo'), style: D.tituloPagina),
       actions: [
         IconButton(
           icon: SvgPicture.asset(
@@ -157,14 +158,14 @@ class _DetalheBadgeCatalogoState extends ConsumerState<DetalheBadgeCatalogo> {
       decoration: BoxDecoration(color: D.fundoAlt, borderRadius: BorderRadius.circular(D.rLg)),
       child: Column(
         children: [
-          _buildLinhaInfo('Service Line', badge.nomeServiceLine),
+          _buildLinhaInfo(ref.t('mobile_badges_service_line'), badge.nomeServiceLine),
           const SizedBox(height: D.e2),
-          _buildLinhaInfo('Área', badge.nomeArea),
+          _buildLinhaInfo(ref.t('mobile_badges_area'), badge.nomeArea),
           const SizedBox(height: D.e2),
-          _buildLinhaInfo('Gamification', '${badge.pontos ?? 0} Pontos', destaque: true),
+          _buildLinhaInfo(ref.t('mobile_dash_gamification_titulo'), '${badge.pontos ?? 0} ${ref.t('mobile_ranking_pontos')}', destaque: true),
           if (badge.validadeDias != null) ...[
             const SizedBox(height: D.e2),
-            _buildLinhaInfo('Validade', '${badge.validadeDias} dias'),
+            _buildLinhaInfo(ref.t('mobile_catalogo_validade'), '${badge.validadeDias} ${ref.t('mobile_catalogo_dias')}'),
           ],
         ],
       ),
@@ -190,7 +191,7 @@ class _DetalheBadgeCatalogoState extends ConsumerState<DetalheBadgeCatalogo> {
     }
     if (_requisitos!.isEmpty) {
       return CardSimples(
-        child: Center(child: Text('Sem requisitos definidos para este badge.', style: D.legenda)),
+        child: Center(child: Text(ref.t('mobile_catalogo_sem_requisitos'), style: D.legenda)),
       );
     }
     return Column(
@@ -236,12 +237,12 @@ class _DetalheBadgeCatalogoState extends ConsumerState<DetalheBadgeCatalogo> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: D.e3),
         decoration: BoxDecoration(color: D.okBg, borderRadius: BorderRadius.circular(D.rSm)),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.check_circle, color: D.ok, size: 18),
-            SizedBox(width: D.e2),
-            Text('Já tens este badge', style: TextStyle(color: D.ok, fontWeight: FontWeight.w600)),
+            const Icon(Icons.check_circle, color: D.ok, size: 18),
+            const SizedBox(width: D.e2),
+            Text(ref.t('mobile_catalogo_ja_tens'), style: const TextStyle(color: D.ok, fontWeight: FontWeight.w600)),
           ],
         ),
       );
@@ -251,7 +252,7 @@ class _DetalheBadgeCatalogoState extends ConsumerState<DetalheBadgeCatalogo> {
       child: ElevatedButton.icon(
         onPressed: () => context.push(AppConstants.routeNovaCandidatura, extra: widget.badge),
         icon: const Icon(Icons.send_outlined, size: 18),
-        label: const Text('Candidatar-me'),
+        label: Text(ref.t('mobile_catalogo_candidatar')),
         style: ElevatedButton.styleFrom(
           backgroundColor: D.azul600,
           foregroundColor: Colors.white,

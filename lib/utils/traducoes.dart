@@ -163,6 +163,110 @@ class Traducoes {
       'mobile_redefinir_nova_hint': 'Nova password',
       'mobile_redefinir_confirmar_hint': 'Confirmar password',
       'mobile_redefinir_botao': 'Redefinir',
+
+      // ── Histórico de candidaturas ─────────────────────────────────
+      'mobile_cand_historico_titulo': 'HISTÓRICO',
+      'mobile_cand_tab_aprovados': 'Aprovados',
+      'mobile_cand_tab_rejeitados': 'Rejeitados',
+      'mobile_cand_tab_aprovados_singular': 'Aprovado',
+      'mobile_cand_tab_rejeitados_singular': 'Rejeitado',
+      'mobile_cand_nivel_label': 'Nível',
+      'mobile_cand_criado_em': 'Criado em:',
+
+      // ── Detalhe badge catálogo ───────────────────────────────────
+      'mobile_geral_requisitos_maiusc': 'REQUISITOS',
+      'mobile_catalogo_validade': 'Validade',
+      'mobile_catalogo_dias': 'dias',
+      'mobile_catalogo_sem_requisitos': 'Sem requisitos definidos para este badge.',
+      'mobile_catalogo_ja_tens': 'Já tens este badge',
+      'mobile_catalogo_candidatar': 'Candidatar-me',
+
+      // ── Gamification ───────────────────────────────────────────────
+      'mobile_gamif_meu_desempenho': 'O MEU DESEMPENHO',
+      'mobile_gamif_ranking_completo': 'Ranking completo',
+      'mobile_gamif_consultores': 'consultores',
+      'mobile_gamif_posicao': 'POSIÇÃO',
+      'mobile_gamif_de': 'de',
+      'mobile_ranking_pontos_maiusc': 'PONTOS',
+      'mobile_gamif_7_dias': '7 DIAS',
+      'mobile_gamif_ranking_vazio': 'Ranking ainda vazio',
+      'mobile_gamif_ranking_vazio_texto': 'Assim que houver badges atribuídos, o ranking aparece aqui.',
+      'mobile_gamif_sem_ligacao': 'Sem ligação',
+      'mobile_gamif_sem_ligacao_texto': 'O ranking precisa de ligação à internet para mostrar posições atualizadas.',
+
+      // ── Notificações (lista) ───────────────────────────────────────
+      'mobile_notif_eliminar_titulo': 'Eliminar notificação',
+      'mobile_notif_eliminar_texto': 'Queres mesmo eliminar esta notificação? Esta ação não pode ser desfeita.',
+      'mobile_notif_nao': 'Não',
+      'mobile_notif_sim_eliminar': 'Sim, eliminar',
+      'mobile_notif_erro_eliminar': 'Erro ao eliminar notificação.',
+      'mobile_notif_sem_notificacoes': 'Sem notificações',
+      'mobile_notif_titulo': 'NOTIFICAÇÕES',
+      'mobile_notif_marcar_todas_lidas': 'Marcar todas como lidas',
+      'mobile_notif_tab_todas': 'Todas',
+      'mobile_notif_tab_nao_lidas': 'Não Lidas',
+
+      // ── Tipos de notificação ────────────────────────────────────
+      'mobile_notiftipo_aprovacao': 'Aprovado',
+      'mobile_notiftipo_rejeicao': 'Rejeitado',
+      'mobile_notiftipo_retificacao': 'Candidatura Devolvida',
+      'mobile_notiftipo_candidatura_submetida': 'Candidatura Submetida',
+      'mobile_notiftipo_em_validacao': 'Em Validação',
+      'mobile_notiftipo_nova_candidatura': 'Nova Candidatura',
+      'mobile_notiftipo_nova_validacao': 'Nova Validação',
+      'mobile_notiftipo_badge_a_expirar': 'Badge a Expirar',
+      'mobile_notiftipo_badge_expirado': 'Badge Expirado',
+      'mobile_notiftipo_aviso': 'Aviso',
+      'mobile_notiftipo_marco': 'Marco alcançado',
+      'mobile_notiftipo_sla_ultrapassado': 'SLA Ultrapassado',
+      'mobile_notiftipo_badges_a_expirar_tm': 'Badges a Expirar',
+      'mobile_notiftipo_objetivo_prazo': 'Objetivo a Terminar',
+      'mobile_notiftipo_defeito': 'Notificação',
+
+      // ── Tempo relativo / agrupamento ─────────────────────────────
+      'mobile_notif_tempo_agora': 'agora mesmo',
+      'mobile_notif_tempo_ha': 'há',
+      'mobile_notif_tempo_min': 'min',
+      'mobile_notif_grupo_hoje': 'Hoje',
+      'mobile_notif_grupo_ontem': 'Ontem',
+      'mobile_notif_grupo_semana': 'Esta Semana',
+      'mobile_notif_grupo_antigas': 'Mais Antigas',
+
+      // ── Detalhe da notificação ───────────────────────────────────
+      'mobile_notifdet_titulo': 'NOTIFICAÇÃO',
+      'mobile_notifdet_eliminar_confirmar': 'Tem a certeza que pretende eliminar esta notificação?',
+      'mobile_notifdet_eliminar_botao': 'Eliminar',
+      'mobile_notifdet_ver_candidatura': 'Ver candidatura',
+      'mobile_notifdet_ver_badge': 'Ver badge',
+      'mobile_notifdet_badge_nao_encontrado': 'Badge não encontrado.',
+      'mobile_notifdet_ver_objetivos': 'Ver objetivos',
+      'mobile_notifdet_nao_lida': 'Não lida',
+
+      // ── Detalhe badge regular ────────────────────────────────────
+      'mobile_badges_ver_requisitos': 'Ver requisitos',
+
+      // ── Alterar password ──────────────────────────────────────────
+      'mobile_alterar_pass_sucesso': 'Password alterada com sucesso.',
+      'mobile_alterar_pass_erro': 'Erro ao alterar password.',
+      'mobile_alterar_pass_titulo': 'Alterar Password',
+      'mobile_alterar_pass_atual_label': 'Password atual',
+      'mobile_alterar_pass_campo_obrigatorio': 'Campo obrigatório',
+      'mobile_alterar_pass_nova_label': 'Nova password',
+      'mobile_alterar_pass_confirmar_label': 'Confirmar nova password',
+
+      // ── Novo objetivo ─────────────────────────────────────────────
+      'mobile_novo_obj_titulo': 'NOVO OBJETIVO',
+      'mobile_novo_obj_erro_tipos': 'Não foi possível carregar os tipos de objetivo.',
+      'mobile_novo_obj_pergunta_tipo': 'Qual o tipo de objetivo?',
+      'mobile_novo_obj_ate_quando': 'ATÉ QUANDO PRETENDES CONQUISTAR?',
+      'mobile_novo_obj_data_placeholder': 'DD - MM - AAAA',
+      'mobile_novo_obj_data_help': 'Data limite do objetivo',
+      'mobile_novo_obj_escolhe_data': 'Escolhe uma data limite.',
+      'mobile_novo_obj_erro_criar': 'Não foi possível criar o objetivo.',
+      'mobile_novo_obj_sucesso_titulo': 'Novo objetivo definido!',
+      'mobile_novo_obj_sucesso_ate': 'Tens até',
+      'mobile_novo_obj_sucesso_conquistar': 'para o conquistares.',
+      'mobile_novo_obj_continuar': 'Continuar',
     },
     'en': {
       // ── Geral / partilhado ──────────────────────────────────────
@@ -316,6 +420,110 @@ class Traducoes {
       'mobile_redefinir_nova_hint': 'New password',
       'mobile_redefinir_confirmar_hint': 'Confirm password',
       'mobile_redefinir_botao': 'Reset',
+
+      // ── Histórico de candidaturas ─────────────────────────────────
+      'mobile_cand_historico_titulo': 'HISTORY',
+      'mobile_cand_tab_aprovados': 'Approved',
+      'mobile_cand_tab_rejeitados': 'Rejected',
+      'mobile_cand_tab_aprovados_singular': 'Approved',
+      'mobile_cand_tab_rejeitados_singular': 'Rejected',
+      'mobile_cand_nivel_label': 'Level',
+      'mobile_cand_criado_em': 'Created on:',
+
+      // ── Detalhe badge catálogo ───────────────────────────────────
+      'mobile_geral_requisitos_maiusc': 'REQUIREMENTS',
+      'mobile_catalogo_validade': 'Validity',
+      'mobile_catalogo_dias': 'days',
+      'mobile_catalogo_sem_requisitos': 'No requirements defined for this badge.',
+      'mobile_catalogo_ja_tens': 'You already have this badge',
+      'mobile_catalogo_candidatar': 'Apply',
+
+      // ── Gamification ───────────────────────────────────────────────
+      'mobile_gamif_meu_desempenho': 'MY PERFORMANCE',
+      'mobile_gamif_ranking_completo': 'Full ranking',
+      'mobile_gamif_consultores': 'consultants',
+      'mobile_gamif_posicao': 'RANK',
+      'mobile_gamif_de': 'of',
+      'mobile_ranking_pontos_maiusc': 'POINTS',
+      'mobile_gamif_7_dias': '7 DAYS',
+      'mobile_gamif_ranking_vazio': 'Ranking still empty',
+      'mobile_gamif_ranking_vazio_texto': 'Once badges are awarded, the ranking will appear here.',
+      'mobile_gamif_sem_ligacao': 'No connection',
+      'mobile_gamif_sem_ligacao_texto': 'The ranking needs an internet connection to show updated positions.',
+
+      // ── Notificações (lista) ───────────────────────────────────────
+      'mobile_notif_eliminar_titulo': 'Delete notification',
+      'mobile_notif_eliminar_texto': 'Do you really want to delete this notification? This action cannot be undone.',
+      'mobile_notif_nao': 'No',
+      'mobile_notif_sim_eliminar': 'Yes, delete',
+      'mobile_notif_erro_eliminar': 'Error deleting notification.',
+      'mobile_notif_sem_notificacoes': 'No notifications',
+      'mobile_notif_titulo': 'NOTIFICATIONS',
+      'mobile_notif_marcar_todas_lidas': 'Mark all as read',
+      'mobile_notif_tab_todas': 'All',
+      'mobile_notif_tab_nao_lidas': 'Unread',
+
+      // ── Tipos de notificação ────────────────────────────────────
+      'mobile_notiftipo_aprovacao': 'Approved',
+      'mobile_notiftipo_rejeicao': 'Rejected',
+      'mobile_notiftipo_retificacao': 'Application Returned',
+      'mobile_notiftipo_candidatura_submetida': 'Application Submitted',
+      'mobile_notiftipo_em_validacao': 'Under Review',
+      'mobile_notiftipo_nova_candidatura': 'New Application',
+      'mobile_notiftipo_nova_validacao': 'New Review',
+      'mobile_notiftipo_badge_a_expirar': 'Badge Expiring',
+      'mobile_notiftipo_badge_expirado': 'Badge Expired',
+      'mobile_notiftipo_aviso': 'Notice',
+      'mobile_notiftipo_marco': 'Milestone reached',
+      'mobile_notiftipo_sla_ultrapassado': 'SLA Exceeded',
+      'mobile_notiftipo_badges_a_expirar_tm': 'Badges Expiring',
+      'mobile_notiftipo_objetivo_prazo': 'Goal Deadline Approaching',
+      'mobile_notiftipo_defeito': 'Notification',
+
+      // ── Tempo relativo / agrupamento ─────────────────────────────
+      'mobile_notif_tempo_agora': 'just now',
+      'mobile_notif_tempo_ha': '',
+      'mobile_notif_tempo_min': 'min ago',
+      'mobile_notif_grupo_hoje': 'Today',
+      'mobile_notif_grupo_ontem': 'Yesterday',
+      'mobile_notif_grupo_semana': 'This Week',
+      'mobile_notif_grupo_antigas': 'Older',
+
+      // ── Detalhe da notificação ───────────────────────────────────
+      'mobile_notifdet_titulo': 'NOTIFICATION',
+      'mobile_notifdet_eliminar_confirmar': 'Are you sure you want to delete this notification?',
+      'mobile_notifdet_eliminar_botao': 'Delete',
+      'mobile_notifdet_ver_candidatura': 'View application',
+      'mobile_notifdet_ver_badge': 'View badge',
+      'mobile_notifdet_badge_nao_encontrado': 'Badge not found.',
+      'mobile_notifdet_ver_objetivos': 'View goals',
+      'mobile_notifdet_nao_lida': 'Unread',
+
+      // ── Detalhe badge regular ────────────────────────────────────
+      'mobile_badges_ver_requisitos': 'View requirements',
+
+      // ── Alterar password ──────────────────────────────────────────
+      'mobile_alterar_pass_sucesso': 'Password changed successfully.',
+      'mobile_alterar_pass_erro': 'Error changing password.',
+      'mobile_alterar_pass_titulo': 'Change Password',
+      'mobile_alterar_pass_atual_label': 'Current password',
+      'mobile_alterar_pass_campo_obrigatorio': 'Required field',
+      'mobile_alterar_pass_nova_label': 'New password',
+      'mobile_alterar_pass_confirmar_label': 'Confirm new password',
+
+      // ── Novo objetivo ─────────────────────────────────────────────
+      'mobile_novo_obj_titulo': 'NEW GOAL',
+      'mobile_novo_obj_erro_tipos': 'Could not load goal types.',
+      'mobile_novo_obj_pergunta_tipo': 'What type of goal?',
+      'mobile_novo_obj_ate_quando': 'BY WHEN DO YOU WANT TO ACHIEVE IT?',
+      'mobile_novo_obj_data_placeholder': 'DD - MM - YYYY',
+      'mobile_novo_obj_data_help': 'Goal deadline',
+      'mobile_novo_obj_escolhe_data': 'Choose a deadline.',
+      'mobile_novo_obj_erro_criar': 'Could not create the goal.',
+      'mobile_novo_obj_sucesso_titulo': 'New goal set!',
+      'mobile_novo_obj_sucesso_ate': 'You have until',
+      'mobile_novo_obj_sucesso_conquistar': 'to achieve it.',
+      'mobile_novo_obj_continuar': 'Continue',
     },
     'es': {
       // ── Geral / partilhado ──────────────────────────────────────
@@ -469,6 +677,110 @@ class Traducoes {
       'mobile_redefinir_nova_hint': 'Nueva contraseña',
       'mobile_redefinir_confirmar_hint': 'Confirmar contraseña',
       'mobile_redefinir_botao': 'Restablecer',
+
+      // ── Historial de solicitudes ──────────────────────────────────
+      'mobile_cand_historico_titulo': 'HISTORIAL',
+      'mobile_cand_tab_aprovados': 'Aprobadas',
+      'mobile_cand_tab_rejeitados': 'Rechazadas',
+      'mobile_cand_tab_aprovados_singular': 'Aprobada',
+      'mobile_cand_tab_rejeitados_singular': 'Rechazada',
+      'mobile_cand_nivel_label': 'Nivel',
+      'mobile_cand_criado_em': 'Creado el:',
+
+      // ── Detalle badge catálogo ────────────────────────────────────
+      'mobile_geral_requisitos_maiusc': 'REQUISITOS',
+      'mobile_catalogo_validade': 'Validez',
+      'mobile_catalogo_dias': 'días',
+      'mobile_catalogo_sem_requisitos': 'Sin requisitos definidos para este badge.',
+      'mobile_catalogo_ja_tens': 'Ya tienes este badge',
+      'mobile_catalogo_candidatar': 'Postularme',
+
+      // ── Gamification ───────────────────────────────────────────────
+      'mobile_gamif_meu_desempenho': 'MI RENDIMIENTO',
+      'mobile_gamif_ranking_completo': 'Ranking completo',
+      'mobile_gamif_consultores': 'consultores',
+      'mobile_gamif_posicao': 'POSICIÓN',
+      'mobile_gamif_de': 'de',
+      'mobile_ranking_pontos_maiusc': 'PUNTOS',
+      'mobile_gamif_7_dias': '7 DÍAS',
+      'mobile_gamif_ranking_vazio': 'Ranking aún vacío',
+      'mobile_gamif_ranking_vazio_texto': 'En cuanto se otorguen badges, el ranking aparecerá aquí.',
+      'mobile_gamif_sem_ligacao': 'Sin conexión',
+      'mobile_gamif_sem_ligacao_texto': 'El ranking necesita conexión a internet para mostrar posiciones actualizadas.',
+
+      // ── Notificaciones (lista) ───────────────────────────────────
+      'mobile_notif_eliminar_titulo': 'Eliminar notificación',
+      'mobile_notif_eliminar_texto': '¿Seguro que quieres eliminar esta notificación? Esta acción no se puede deshacer.',
+      'mobile_notif_nao': 'No',
+      'mobile_notif_sim_eliminar': 'Sí, eliminar',
+      'mobile_notif_erro_eliminar': 'Error al eliminar la notificación.',
+      'mobile_notif_sem_notificacoes': 'Sin notificaciones',
+      'mobile_notif_titulo': 'NOTIFICACIONES',
+      'mobile_notif_marcar_todas_lidas': 'Marcar todas como leídas',
+      'mobile_notif_tab_todas': 'Todas',
+      'mobile_notif_tab_nao_lidas': 'No Leídas',
+
+      // ── Tipos de notificación ────────────────────────────────────
+      'mobile_notiftipo_aprovacao': 'Aprobada',
+      'mobile_notiftipo_rejeicao': 'Rechazada',
+      'mobile_notiftipo_retificacao': 'Solicitud Devuelta',
+      'mobile_notiftipo_candidatura_submetida': 'Solicitud Enviada',
+      'mobile_notiftipo_em_validacao': 'En Validación',
+      'mobile_notiftipo_nova_candidatura': 'Nueva Solicitud',
+      'mobile_notiftipo_nova_validacao': 'Nueva Validación',
+      'mobile_notiftipo_badge_a_expirar': 'Badge a Caducar',
+      'mobile_notiftipo_badge_expirado': 'Badge Caducado',
+      'mobile_notiftipo_aviso': 'Aviso',
+      'mobile_notiftipo_marco': 'Logro alcanzado',
+      'mobile_notiftipo_sla_ultrapassado': 'SLA Superado',
+      'mobile_notiftipo_badges_a_expirar_tm': 'Badges a Caducar',
+      'mobile_notiftipo_objetivo_prazo': 'Objetivo por Vencer',
+      'mobile_notiftipo_defeito': 'Notificación',
+
+      // ── Tiempo relativo / agrupación ──────────────────────────────
+      'mobile_notif_tempo_agora': 'ahora mismo',
+      'mobile_notif_tempo_ha': 'hace',
+      'mobile_notif_tempo_min': 'min',
+      'mobile_notif_grupo_hoje': 'Hoy',
+      'mobile_notif_grupo_ontem': 'Ayer',
+      'mobile_notif_grupo_semana': 'Esta Semana',
+      'mobile_notif_grupo_antigas': 'Más Antiguas',
+
+      // ── Detalle de la notificación ────────────────────────────────
+      'mobile_notifdet_titulo': 'NOTIFICACIÓN',
+      'mobile_notifdet_eliminar_confirmar': '¿Seguro que quieres eliminar esta notificación?',
+      'mobile_notifdet_eliminar_botao': 'Eliminar',
+      'mobile_notifdet_ver_candidatura': 'Ver solicitud',
+      'mobile_notifdet_ver_badge': 'Ver badge',
+      'mobile_notifdet_badge_nao_encontrado': 'Badge no encontrado.',
+      'mobile_notifdet_ver_objetivos': 'Ver objetivos',
+      'mobile_notifdet_nao_lida': 'No leída',
+
+      // ── Detalle badge regular ─────────────────────────────────────
+      'mobile_badges_ver_requisitos': 'Ver requisitos',
+
+      // ── Cambiar contraseña ──────────────────────────────────────
+      'mobile_alterar_pass_sucesso': 'Contraseña cambiada con éxito.',
+      'mobile_alterar_pass_erro': 'Error al cambiar la contraseña.',
+      'mobile_alterar_pass_titulo': 'Cambiar Contraseña',
+      'mobile_alterar_pass_atual_label': 'Contraseña actual',
+      'mobile_alterar_pass_campo_obrigatorio': 'Campo obligatorio',
+      'mobile_alterar_pass_nova_label': 'Nueva contraseña',
+      'mobile_alterar_pass_confirmar_label': 'Confirmar nueva contraseña',
+
+      // ── Nuevo objetivo ────────────────────────────────────────────
+      'mobile_novo_obj_titulo': 'NUEVO OBJETIVO',
+      'mobile_novo_obj_erro_tipos': 'No se pudieron cargar los tipos de objetivo.',
+      'mobile_novo_obj_pergunta_tipo': '¿Qué tipo de objetivo?',
+      'mobile_novo_obj_ate_quando': '¿PARA CUÁNDO QUIERES CONSEGUIRLO?',
+      'mobile_novo_obj_data_placeholder': 'DD - MM - AAAA',
+      'mobile_novo_obj_data_help': 'Fecha límite del objetivo',
+      'mobile_novo_obj_escolhe_data': 'Elige una fecha límite.',
+      'mobile_novo_obj_erro_criar': 'No se pudo crear el objetivo.',
+      'mobile_novo_obj_sucesso_titulo': '¡Nuevo objetivo definido!',
+      'mobile_novo_obj_sucesso_ate': 'Tienes hasta',
+      'mobile_novo_obj_sucesso_conquistar': 'para conseguirlo.',
+      'mobile_novo_obj_continuar': 'Continuar',
     },
   };
 

@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:go_router/go_router.dart';
 
-class AlterarPasswordScreen extends StatefulWidget {
+class AlterarPasswordScreen extends ConsumerStatefulWidget {
   const AlterarPasswordScreen({super.key});
 
   @override
-  State<AlterarPasswordScreen> createState() => _AlterarPasswordScreenState();
+  ConsumerState<AlterarPasswordScreen> createState() => _AlterarPasswordScreenState();
 }
 
-class _AlterarPasswordScreenState extends State<AlterarPasswordScreen> {
+class _AlterarPasswordScreenState extends ConsumerState<AlterarPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _passwordAtualController = TextEditingController();
   final _novaPasswordController = TextEditingController();
@@ -45,8 +47,8 @@ class _AlterarPasswordScreenState extends State<AlterarPasswordScreen> {
 
     if (resultado.sucesso) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password alterada com sucesso.'),
+        SnackBar(
+          content: Text(ref.tr('mobile_alterar_pass_sucesso')),
           backgroundColor: AppConstants.corSucesso,
         ),
       );
@@ -54,7 +56,7 @@ class _AlterarPasswordScreenState extends State<AlterarPasswordScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(resultado.erro ?? 'Erro ao alterar password.'),
+          content: Text(resultado.erro ?? ref.tr('mobile_alterar_pass_erro')),
           backgroundColor: AppConstants.corErro,
         ),
       );
@@ -68,9 +70,9 @@ class _AlterarPasswordScreenState extends State<AlterarPasswordScreen> {
       appBar: AppBar(
         backgroundColor: AppConstants.corPrimaria,
         foregroundColor: Colors.white,
-        title: const Text(
-          'Alterar Password',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        title: Text(
+          ref.t('mobile_alterar_pass_titulo'),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -86,12 +88,12 @@ class _AlterarPasswordScreenState extends State<AlterarPasswordScreen> {
               // Password atual
               _buildCampo(
                 controller: _passwordAtualController,
-                label: 'Password atual',
+                label: ref.t('mobile_alterar_pass_atual_label'),
                 verPassword: _verPasswordAtual,
                 onToggleVer: () =>
                     setState(() => _verPasswordAtual = !_verPasswordAtual),
                 validator: (v) {
-                  if (v == null || v.isEmpty) return 'Campo obrigatório';
+                  if (v == null || v.isEmpty) return ref.tr('mobile_alterar_pass_campo_obrigatorio');
                   return null;
                 },
               ),
@@ -100,13 +102,13 @@ class _AlterarPasswordScreenState extends State<AlterarPasswordScreen> {
               // Nova password
               _buildCampo(
                 controller: _novaPasswordController,
-                label: 'Nova password',
+                label: ref.t('mobile_alterar_pass_nova_label'),
                 verPassword: _verNovaPassword,
                 onToggleVer: () =>
                     setState(() => _verNovaPassword = !_verNovaPassword),
                 validator: (v) {
-                  if (v == null || v.isEmpty) return 'Campo obrigatório';
-                  if (v.length < 8) return 'Mínimo 8 caracteres';
+                  if (v == null || v.isEmpty) return ref.tr('mobile_alterar_pass_campo_obrigatorio');
+                  if (v.length < 8) return ref.tr('mobile_trocar_pass_min_caracteres');
                   return null;
                 },
               ),
@@ -115,14 +117,14 @@ class _AlterarPasswordScreenState extends State<AlterarPasswordScreen> {
               // Confirmar nova password
               _buildCampo(
                 controller: _confirmarPasswordController,
-                label: 'Confirmar nova password',
+                label: ref.t('mobile_alterar_pass_confirmar_label'),
                 verPassword: _verConfirmarPassword,
                 onToggleVer: () => setState(
                     () => _verConfirmarPassword = !_verConfirmarPassword),
                 validator: (v) {
-                  if (v == null || v.isEmpty) return 'Campo obrigatório';
+                  if (v == null || v.isEmpty) return ref.tr('mobile_alterar_pass_campo_obrigatorio');
                   if (v != _novaPasswordController.text) {
-                    return 'As passwords não coincidem';
+                    return ref.tr('mobile_trocar_pass_nao_coincidem');
                   }
                   return null;
                 },
@@ -151,9 +153,9 @@ class _AlterarPasswordScreenState extends State<AlterarPasswordScreen> {
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text(
-                          'Guardar',
-                          style: TextStyle(
+                      : Text(
+                          ref.t('mobile_geral_guardar'),
+                          style: const TextStyle(
                               fontSize: 15, fontWeight: FontWeight.w600),
                         ),
                 ),
