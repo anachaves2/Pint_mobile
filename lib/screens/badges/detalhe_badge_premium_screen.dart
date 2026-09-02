@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:pint_mobile/utils/certificado_badge.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/widgets/texto_traduzido.dart';
+import 'package:pint_mobile/providers/utilizador_provider.dart';
 
 // ECRÃ DETALHE BADGE PREMIUM
 // Mostra os detalhes de um badge especial. Segue os tokens D — o dourado
@@ -272,6 +273,14 @@ class DetalheBadgePremium extends ConsumerWidget {
   }
 
   Future<void> _partilharLinkedIn(BuildContext context, WidgetRef ref) async {
+    if (ref.read(utilizadorProvider).value?.aceitouRgpd != true) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ref.tr('mobile_badges_sem_rgpd'))),
+        );
+      }
+      return;
+    }
     final urlPublica = AppConstants.urlVerificacaoBadge(badge.tokenValidacao);
     final url = urlPublica != null
         ? 'https://www.linkedin.com/sharing/share-offsite/?url=${Uri.encodeComponent(urlPublica)}'
@@ -287,6 +296,14 @@ class DetalheBadgePremium extends ConsumerWidget {
   }
 
   Future<void> _abrirPaginaPublica(BuildContext context, WidgetRef ref) async {
+    if (ref.read(utilizadorProvider).value?.aceitouRgpd != true) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ref.tr('mobile_badges_sem_rgpd'))),
+        );
+      }
+      return;
+    }
     final urlPublica = AppConstants.urlVerificacaoBadge(badge.tokenValidacao);
     if (urlPublica == null) return;
     final uri = Uri.parse(urlPublica);

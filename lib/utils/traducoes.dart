@@ -147,6 +147,7 @@ class Traducoes {
       'mobile_badges_ver_pagina_publica': 'Ver página pública',
       'mobile_badges_erro_certificado': 'Não foi possível gerar o certificado.',
       'mobile_badges_erro_linkedin': 'Não foi possível abrir o LinkedIn',
+      'mobile_badges_sem_rgpd': 'Ainda não aceitaste os termos RGPD de publicação e partilha de badges. Aceita-os em Definições para poderes partilhar este badge.',
       'mobile_badges_erro_pagina': 'Não foi possível abrir a página',
 
       // ── Recuperar / redefinir password ────────────────────────────
@@ -603,6 +604,7 @@ class Traducoes {
       'mobile_badges_ver_pagina_publica': 'View public page',
       'mobile_badges_erro_certificado': 'Could not generate the certificate.',
       'mobile_badges_erro_linkedin': 'Could not open LinkedIn',
+      'mobile_badges_sem_rgpd': 'You have not accepted the GDPR terms for badge publication and sharing yet. Accept them in Settings to share this badge.',
       'mobile_badges_erro_pagina': 'Could not open the page',
 
       // ── Recuperar / redefinir password ────────────────────────────
@@ -1059,6 +1061,7 @@ class Traducoes {
       'mobile_badges_ver_pagina_publica': 'Ver página pública',
       'mobile_badges_erro_certificado': 'No se pudo generar el certificado.',
       'mobile_badges_erro_linkedin': 'No se pudo abrir LinkedIn',
+      'mobile_badges_sem_rgpd': 'Aún no has aceptado los términos RGPD de publicación y compartición de badges. Acéptalos en Ajustes para poder compartir este badge.',
       'mobile_badges_erro_pagina': 'No se pudo abrir la página',
 
       // ── Recuperar / restablecer contraseña ────────────────────────
