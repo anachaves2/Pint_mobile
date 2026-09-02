@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:pint_mobile/utils/certificado_badge.dart';
 import 'package:pint_mobile/services/database_service.dart';
+import 'package:pint_mobile/widgets/texto_traduzido.dart';
 
 // ECRÃ DETALHE BADGE PREMIUM
 // Mostra os detalhes de um badge especial. Segue os tokens D — o dourado
@@ -132,7 +133,7 @@ class DetalheBadgePremium extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(D.e4),
       decoration: BoxDecoration(color: D.fundoAlt, borderRadius: BorderRadius.circular(D.rLg)),
-      child: Text(badge.descricao!, style: D.corpo.copyWith(height: 1.5)),
+      child: TextoTraduzido(texto: badge.descricao, style: D.corpo.copyWith(height: 1.5)),
     );
   }
 

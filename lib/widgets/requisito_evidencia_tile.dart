@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pint_mobile/models/requisitos.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
+import 'package:pint_mobile/widgets/texto_traduzido.dart';
 
 // Cartão de requisito com upload de evidência (ficheiro ou câmara).
 // Partilhado entre nova_candidatura_screen.dart (candidatura nova) e o
@@ -36,7 +37,7 @@ class RequisitoEvidenciaTile extends StatelessWidget {
           Text(requisito.nome, style: D.tituloCard),
           if (requisito.descricao != null && requisito.descricao!.isNotEmpty) ...[
             const SizedBox(height: 2),
-            Text(requisito.descricao!, style: D.legenda),
+            TextoTraduzido(texto: requisito.descricao, style: D.legenda),
           ],
           const SizedBox(height: D.e3),
           Row(

@@ -8,6 +8,7 @@ import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:pint_mobile/providers/idioma_provider.dart';
+import 'package:pint_mobile/widgets/texto_traduzido.dart';
 import 'package:go_router/go_router.dart';
 
 // ECRÃ BADGES ESPECIAIS
@@ -211,7 +212,7 @@ class _BadgesEspeciaisState extends ConsumerState<BadgesEspeciais> {
                   ),
                   if (badge.descricao != null) ...[
                     const SizedBox(height: 2),
-                    Text(badge.descricao!, style: D.legenda, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    TextoTraduzido(texto: badge.descricao, style: D.legenda, maxLines: 1, overflow: TextOverflow.ellipsis),
                   ],
                   const SizedBox(height: D.e2),
                   Row(

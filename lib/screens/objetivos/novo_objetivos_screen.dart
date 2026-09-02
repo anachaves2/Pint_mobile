@@ -9,6 +9,7 @@ import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/providers/idioma_provider.dart';
+import 'package:pint_mobile/widgets/texto_traduzido.dart';
 
 /// Ecrãs 22, 23 e 26 do protótipo (NovoObjetivoTipo / NovoObjetivoNormal /
 /// NovoObjetivoDefinido).
@@ -151,7 +152,7 @@ class _NovoObjetivoScreenState extends ConsumerState<NovoObjetivoScreen> {
               ),
               if (t.descricao != null && t.descricao!.isNotEmpty) ...[
                 const SizedBox(height: D.e3),
-                Text(t.descricao!, style: D.legenda),
+                TextoTraduzido(texto: t.descricao, style: D.legenda),
               ],
             ],
           ),

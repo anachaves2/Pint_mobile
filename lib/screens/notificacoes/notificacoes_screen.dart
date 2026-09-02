@@ -9,6 +9,7 @@ import 'package:pint_mobile/utils/notificacao_utils.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:pint_mobile/providers/idioma_provider.dart';
+import 'package:pint_mobile/widgets/texto_traduzido.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
@@ -197,17 +198,29 @@ class _NotificacoesScreenState extends ConsumerState<NotificacoesScreen>
                     Row(
                       children: [
                         Expanded(
-                          child: Text(
-                            n.descricao ?? ref.t(config.chaveTitulo),
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: n.lida ? FontWeight.w400 : FontWeight.w600,
-                              color: D.tinta,
-                              height: 1.4,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          child: n.descricao != null
+                              ? TextoTraduzido(
+                                  texto: n.descricao,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: n.lida ? FontWeight.w400 : FontWeight.w600,
+                                    color: D.tinta,
+                                    height: 1.4,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                )
+                              : Text(
+                                  ref.t(config.chaveTitulo),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: n.lida ? FontWeight.w400 : FontWeight.w600,
+                                    color: D.tinta,
+                                    height: 1.4,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                         ),
                         if (!n.lida) ...[
                           const SizedBox(width: D.e2),

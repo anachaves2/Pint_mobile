@@ -17,6 +17,7 @@ import 'package:pint_mobile/widgets/requisito_evidencia_tile.dart';
 import 'package:pint_mobile/screens/camera/camera_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pint_mobile/providers/idioma_provider.dart';
+import 'package:pint_mobile/widgets/texto_traduzido.dart';
 
 // ECRÃ DETALHES DA CANDIDATURA
 // Segue os tokens D. Acrescentei o que faltava em relação à web: "Rever
@@ -406,7 +407,7 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
             ),
             if (req.descricao != null && req.descricao!.isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text(req.descricao!, style: D.legenda.copyWith(height: 1.4)),
+              TextoTraduzido(texto: req.descricao, style: D.legenda.copyWith(height: 1.4)),
             ],
             if (evidencia != null) ...[
               const SizedBox(height: 6),
@@ -517,9 +518,9 @@ class _ItemTimeline extends ConsumerWidget {
                       RichText(
                         text: TextSpan(style: D.legenda.copyWith(fontSize: 12), children: [
                           TextSpan(text: '${ref.t('mobile_detcand_comentario')} ', style: const TextStyle(color: D.tinta30)),
-                          TextSpan(text: entrada.comentario!, style: const TextStyle(color: D.tinta50)),
                         ]),
                       ),
+                      TextoTraduzido(texto: entrada.comentario, style: D.legenda.copyWith(fontSize: 12, color: D.tinta50)),
                     ],
                   ],
                 ),

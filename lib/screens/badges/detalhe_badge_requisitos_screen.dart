@@ -10,6 +10,7 @@ import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pint_mobile/providers/idioma_provider.dart';
+import 'package:pint_mobile/widgets/texto_traduzido.dart';
 
 // ECRÃ DETALHE — REQUISITOS DO BADGE
 // Faltava por completo: a rota (AppConstants.routeDetalheBadgeRequisitos)
@@ -123,7 +124,7 @@ class _DetalheBadgeRequisitosState extends ConsumerState<DetalheBadgeRequisitos>
                   Text(r.nome, style: D.tituloCard),
                   if (r.descricao != null && r.descricao!.isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    Text(r.descricao!, style: D.corpo.copyWith(height: 1.4)),
+                    TextoTraduzido(texto: r.descricao, style: D.corpo.copyWith(height: 1.4)),
                   ],
                 ],
               ),

@@ -6,6 +6,7 @@ import 'package:pint_mobile/utils/badge_utils.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/providers/idioma_provider.dart';
+import 'package:pint_mobile/widgets/texto_traduzido.dart';
 import 'package:go_router/go_router.dart';
 
 // ECRÃ DETALHE BADGE EXPIRADO
@@ -171,7 +172,7 @@ class DetalheBadgeExpirado extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(D.e4),
       decoration: BoxDecoration(color: D.fundoAlt, borderRadius: BorderRadius.circular(D.rLg)),
-      child: Text(badge.descricao!, style: D.corpo.copyWith(color: D.tinta50, height: 1.5)),
+      child: TextoTraduzido(texto: badge.descricao, style: D.corpo.copyWith(color: D.tinta50, height: 1.5)),
     );
   }
 

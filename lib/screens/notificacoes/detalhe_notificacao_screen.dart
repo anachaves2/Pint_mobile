@@ -8,6 +8,7 @@ import 'package:pint_mobile/utils/notificacao_utils.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/providers/badges_provider.dart';
 import 'package:pint_mobile/providers/idioma_provider.dart';
+import 'package:pint_mobile/widgets/texto_traduzido.dart';
 import 'package:go_router/go_router.dart';
 
 // ============================================================================
@@ -113,8 +114,8 @@ class _DetalheNotificacaoScreenState extends ConsumerState<DetalheNotificacaoScr
             ),
             const SizedBox(height: D.e5),
 
-            Text(
-              notificacao.descricao ?? '',
+            TextoTraduzido(
+              texto: notificacao.descricao,
               style: D.corpo.copyWith(fontSize: 15, color: D.tinta, height: 1.6),
             ),
             const SizedBox(height: D.e6),

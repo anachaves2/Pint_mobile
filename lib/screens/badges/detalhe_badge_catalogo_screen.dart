@@ -10,6 +10,7 @@ import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/providers/idioma_provider.dart';
+import 'package:pint_mobile/widgets/texto_traduzido.dart';
 import 'package:go_router/go_router.dart';
 
 // ECRÃ DETALHE — BADGE DO CATÁLOGO
@@ -70,7 +71,7 @@ class _DetalheBadgeCatalogoState extends ConsumerState<DetalheBadgeCatalogo> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(D.e4),
                 decoration: BoxDecoration(color: D.fundoAlt, borderRadius: BorderRadius.circular(D.rLg)),
-                child: Text(badge.descricao!, style: D.corpo.copyWith(height: 1.5)),
+                child: TextoTraduzido(texto: badge.descricao, style: D.corpo.copyWith(height: 1.5)),
               ),
             ],
 
@@ -220,7 +221,7 @@ class _DetalheBadgeCatalogoState extends ConsumerState<DetalheBadgeCatalogo> {
                   Text(r.nome, style: D.tituloCard),
                   if (r.descricao != null && r.descricao!.isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    Text(r.descricao!, style: D.corpo.copyWith(height: 1.4)),
+                    TextoTraduzido(texto: r.descricao, style: D.corpo.copyWith(height: 1.4)),
                   ],
                 ],
               ),
