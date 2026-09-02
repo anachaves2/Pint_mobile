@@ -404,6 +404,14 @@ class Traducoes {
       'mobile_perfil_vazio_historico': 'Ainda sem histórico.',
       'mobile_perfil_membro_desde': 'Membro desde:',
       'mobile_perfil_definicoes_botao': 'DEFINIÇÕES',
+
+      // ── Ecrãs que tinham ficado por identificar ────────────────────
+      'mobile_landing_inicio': 'Início',
+      'mobile_candsub_titulo': 'Novo pedido submetido!',
+      'mobile_candsub_texto': 'A tua candidatura foi submetida com sucesso e encontra-se agora em validação pelo Talent Manager.',
+      'mobile_candsub_numero': 'Candidatura Nº',
+      'mobile_candsub_ver_candidaturas': 'Ver Candidaturas',
+      'mobile_camera_titulo': 'Câmara',
     },
     'en': {
       // ── Geral / partilhado ──────────────────────────────────────
@@ -798,6 +806,14 @@ class Traducoes {
       'mobile_perfil_vazio_historico': 'No history yet.',
       'mobile_perfil_membro_desde': 'Member since:',
       'mobile_perfil_definicoes_botao': 'SETTINGS',
+
+      // ── Missing screens ─────────────────────────────────────────────
+      'mobile_landing_inicio': 'Start',
+      'mobile_candsub_titulo': 'New request submitted!',
+      'mobile_candsub_texto': 'Your application has been successfully submitted and is now under review by the Talent Manager.',
+      'mobile_candsub_numero': 'Application No.',
+      'mobile_candsub_ver_candidaturas': 'View Applications',
+      'mobile_camera_titulo': 'Camera',
     },
     'es': {
       // ── Geral / partilhado ──────────────────────────────────────
@@ -1192,6 +1208,14 @@ class Traducoes {
       'mobile_perfil_vazio_historico': 'Aún sin historial.',
       'mobile_perfil_membro_desde': 'Miembro desde:',
       'mobile_perfil_definicoes_botao': 'AJUSTES',
+
+      // ── Pantallas que faltaban por identificar ─────────────────────
+      'mobile_landing_inicio': 'Inicio',
+      'mobile_candsub_titulo': '¡Nueva solicitud enviada!',
+      'mobile_candsub_texto': 'Tu solicitud se ha enviado correctamente y está ahora en revisión por el Talent Manager.',
+      'mobile_candsub_numero': 'Solicitud Nº',
+      'mobile_candsub_ver_candidaturas': 'Ver Solicitudes',
+      'mobile_camera_titulo': 'Cámara',
     },
   };
 

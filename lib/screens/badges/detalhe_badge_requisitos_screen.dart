@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/models/badge_utilizador.dart';
 import 'package:pint_mobile/models/requisitos.dart';
 import 'package:pint_mobile/services/database_service.dart';
@@ -8,6 +9,7 @@ import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 
 // ECRÃ DETALHE — REQUISITOS DO BADGE
 // Faltava por completo: a rota (AppConstants.routeDetalheBadgeRequisitos)
@@ -15,16 +17,16 @@ import 'package:go_router/go_router.dart';
 // apontar para ela. Os dados já estavam prontos (Requisito, getRequisitos()
 // já sincronizado do catálogo) — só faltava esta página.
 
-class DetalheBadgeRequisitos extends StatefulWidget {
+class DetalheBadgeRequisitos extends ConsumerStatefulWidget {
   final BadgeUtilizador badge;
 
   const DetalheBadgeRequisitos({super.key, required this.badge});
 
   @override
-  State<DetalheBadgeRequisitos> createState() => _DetalheBadgeRequisitosState();
+  ConsumerState<DetalheBadgeRequisitos> createState() => _DetalheBadgeRequisitosState();
 }
 
-class _DetalheBadgeRequisitosState extends State<DetalheBadgeRequisitos> {
+class _DetalheBadgeRequisitosState extends ConsumerState<DetalheBadgeRequisitos> {
   List<Requisito>? _requisitos;
 
   @override
@@ -62,7 +64,7 @@ class _DetalheBadgeRequisitosState extends State<DetalheBadgeRequisitos> {
           icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const Text('REQUISITOS', style: D.tituloPagina),
+        title: Text(ref.t('mobile_geral_requisitos_maiusc'), style: D.tituloPagina),
         actions: [
           IconButton(
             icon: SvgPicture.asset(
@@ -90,7 +92,7 @@ class _DetalheBadgeRequisitosState extends State<DetalheBadgeRequisitos> {
                   const SizedBox(height: D.e5),
                   if (_requisitos!.isEmpty)
                     CardSimples(
-                      child: Center(child: Text('Sem requisitos definidos para este badge.', style: D.legenda)),
+                      child: Center(child: Text(ref.t('mobile_catalogo_sem_requisitos'), style: D.legenda)),
                     )
                   else
                     for (final r in _requisitos!) _buildCardRequisito(r),

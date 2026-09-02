@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 
-class CandidaturaSubmetida extends StatelessWidget {
+class CandidaturaSubmetida extends ConsumerWidget {
   const CandidaturaSubmetida({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final numCandidatura = GoRouterState.of(context).extra as int?;
 
     return Scaffold(
@@ -27,7 +29,7 @@ class CandidaturaSubmetida extends StatelessWidget {
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: const Text('CANDIDATURAS', style: D.tituloPagina),
+        title: Text(ref.t('mobile_cand_hub_titulo'), style: D.tituloPagina),
         actions: [
           IconButton(
             icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
@@ -48,10 +50,10 @@ class CandidaturaSubmetida extends StatelessWidget {
                 child: const Icon(Icons.check_circle_outline, size: 56, color: D.ok),
               ),
               const SizedBox(height: D.e5),
-              Text('Novo pedido submetido!', style: D.tituloSeccao.copyWith(fontSize: 22), textAlign: TextAlign.center),
+              Text(ref.t('mobile_candsub_titulo'), style: D.tituloSeccao.copyWith(fontSize: 22), textAlign: TextAlign.center),
               const SizedBox(height: D.e2),
               Text(
-                'A tua candidatura foi submetida com sucesso e encontra-se agora em validação pelo Talent Manager.',
+                ref.t('mobile_candsub_texto'),
                 style: D.corpo.copyWith(color: D.tinta30, height: 1.5),
                 textAlign: TextAlign.center,
               ),
@@ -65,7 +67,7 @@ class CandidaturaSubmetida extends StatelessWidget {
                     children: [
                       const Icon(Icons.confirmation_number_outlined, size: 16, color: D.tinta30),
                       const SizedBox(width: 6),
-                      Text('Candidatura Nº $numCandidatura', style: D.legenda.copyWith(fontWeight: FontWeight.w500)),
+                      Text('${ref.t('mobile_candsub_numero')} $numCandidatura', style: D.legenda.copyWith(fontWeight: FontWeight.w500)),
                     ],
                   ),
                 ),
@@ -81,7 +83,7 @@ class CandidaturaSubmetida extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: D.e3 + 2),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
                   ),
-                  child: const Text('Ver Candidaturas', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                  child: Text(ref.t('mobile_candsub_ver_candidaturas'), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                 ),
               ),
               const SizedBox(height: D.e2 + 2),
@@ -95,7 +97,7 @@ class CandidaturaSubmetida extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: D.e3 + 2),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
                   ),
-                  child: const Text('Nova Candidatura', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                  child: Text(ref.t('mobile_cand_nova'), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                 ),
               ),
             ],

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/widgets/custom_logo.dart';
-import 'package:go_router/go_router.dart'; 
+import 'package:go_router/go_router.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 
-class LandingPageScreen extends StatelessWidget {
+class LandingPageScreen extends ConsumerWidget {
   const LandingPageScreen({super.key});
 
   //Widget auxilicar para desenhar pontos decorativos
@@ -16,9 +18,9 @@ class LandingPageScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: Colors.white, 
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -47,7 +49,7 @@ class LandingPageScreen extends StatelessWidget {
                     // Navega corretamente para o ecrã de login
                     context.push(AppConstants.routeLogin);
                   },
-                  child: const Text('Início'),
+                  child: Text(ref.t('mobile_landing_inicio')),
                 ),
               ),
               const SizedBox(height: 20),

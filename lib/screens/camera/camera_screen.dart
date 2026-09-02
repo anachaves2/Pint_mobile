@@ -1,16 +1,18 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 
 // Fases: obter câmaras -> inicializar CameraController -> CameraPreview -> tirar foto
-class CameraScreen extends StatefulWidget {
+class CameraScreen extends ConsumerStatefulWidget {
   const CameraScreen({super.key});
 
   @override
-  State<CameraScreen> createState() => _CameraScreenState();
+  ConsumerState<CameraScreen> createState() => _CameraScreenState();
 }
 
-class _CameraScreenState extends State<CameraScreen> {
+class _CameraScreenState extends ConsumerState<CameraScreen> {
   //gere a câmera, só é incializado dentro do _inicializarCemra()
   late CameraController _controller;
   //Future que representa a inicialização da câmera, usado pelo FutureBuilder
@@ -75,8 +77,8 @@ class _CameraScreenState extends State<CameraScreen> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text('Câmara',
-            style: TextStyle(color: Colors.white, fontSize: 16)),
+        title: Text(ref.t('mobile_camera_titulo'),
+            style: const TextStyle(color: Colors.white, fontSize: 16)),
       ),
       // FutureBuilder
       // Aguarda a inicialização do CameraController antes de mostrar o preview
