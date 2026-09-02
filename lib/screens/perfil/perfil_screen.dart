@@ -13,6 +13,7 @@ import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 
 // Ecrã do Perfil
 // Mostra os dados pessoais do consultor autenticado, mais Learning Path,
@@ -106,7 +107,7 @@ class _PerfilState extends ConsumerState<Perfil> {
           onPressed: () => Scaffold.of(ctx).openDrawer(),
         ),
       ),
-      title: const Text('PERFIL', style: D.tituloPagina),
+      title: Text(ref.t('mobile_perfil_titulo'), style: D.tituloPagina),
       actions: [
         IconButton(
           icon: SvgPicture.asset(
@@ -132,12 +133,12 @@ class _PerfilState extends ConsumerState<Perfil> {
         children: [
           Icon(Icons.error_outline, color: D.tinta30, size: 64),
           const SizedBox(height: D.e4),
-          const Text('Erro ao carregar perfil', style: D.corpo),
+          Text(ref.t('mobile_perfil_erro_carregar'), style: D.corpo),
           const SizedBox(height: D.e4),
           OutlinedButton(
             onPressed: () => ref.invalidate(utilizadorProvider),
             style: OutlinedButton.styleFrom(foregroundColor: D.azul600),
-            child: const Text('Tentar novamente'),
+            child: Text(ref.t('mobile_geral_tentar_novamente')),
           ),
         ],
       ),
@@ -168,7 +169,7 @@ class _PerfilState extends ConsumerState<Perfil> {
             color: D.azul100,
             borderRadius: BorderRadius.circular(999),
           ),
-          child: const Text('CONSULTOR', style: D.etiqueta),
+          child: Text(ref.t('mobile_perfil_consultor'), style: D.etiqueta),
         ),
         const SizedBox(height: D.e4),
         Row(
@@ -177,15 +178,15 @@ class _PerfilState extends ConsumerState<Perfil> {
             ChipEstado(
               icone: Icons.emoji_events_outlined,
               texto: consultor.posicaoRanking != null
-                  ? '${consultor.posicaoRanking}ª Posição'
-                  : '-- Posição',
+                  ? '${consultor.posicaoRanking}${ref.t('mobile_perfil_posicao_sufixo')}'
+                  : ref.t('mobile_perfil_sem_posicao'),
               cor: D.azul600,
               corFundo: D.azul100,
             ),
             const SizedBox(width: D.e2),
             ChipEstado(
               icone: Icons.star_outline,
-              texto: '${consultor.totalPontos ?? 0} Pontos',
+              texto: '${consultor.totalPontos ?? 0} ${ref.t('mobile_ranking_pontos')}',
               cor: D.aviso,
               corFundo: D.avisoBg,
             ),
@@ -201,7 +202,7 @@ class _PerfilState extends ConsumerState<Perfil> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('INFORMAÇÕES', style: D.etiqueta),
+        Text(ref.t('mobile_perfil_informacoes'), style: D.etiqueta),
         const SizedBox(height: D.e3),
         CardSimples(
           padding: EdgeInsets.zero,
@@ -211,13 +212,13 @@ class _PerfilState extends ConsumerState<Perfil> {
               _buildDivisor(),
               _buildLinhaInfo(
                 icon: Icons.phone_outlined,
-                texto: consultor.telefone ?? 'Sem telefone',
+                texto: consultor.telefone ?? ref.t('mobile_perfil_sem_telefone'),
                 vazio: consultor.telefone == null,
               ),
               _buildDivisor(),
               _buildLinhaInfo(
                 icon: Icons.link,
-                texto: consultor.urlLinkedin ?? 'Sem LinkedIn',
+                texto: consultor.urlLinkedin ?? ref.t('mobile_perfil_sem_linkedin'),
                 vazio: consultor.urlLinkedin == null,
                 isLink: consultor.urlLinkedin != null,
               ),
@@ -231,18 +232,18 @@ class _PerfilState extends ConsumerState<Perfil> {
               _buildDivisor(),
               _buildLinhaInfo(
                 icon: Icons.work_outline,
-                texto: 'Área: ${consultor.nomeArea ?? '-'}',
+                texto: '${ref.t('mobile_perfil_area')} ${consultor.nomeArea ?? '-'}',
               ),
               _buildDivisor(),
               _buildLinhaInfo(
                 icon: Icons.account_tree_outlined,
-                texto: 'Service Line: ${consultor.nomeServiceLine ?? '-'}',
+                texto: '${ref.t('mobile_badges_service_line')} ${consultor.nomeServiceLine ?? '-'}',
                 vazio: consultor.nomeServiceLine == null,
               ),
               _buildDivisor(),
               _buildLinhaInfo(
                 icon: Icons.map_outlined,
-                texto: 'Learning Path: ${consultor.nomeLearningPath ?? '-'}',
+                texto: '${ref.t('mobile_perfil_learning_path')} ${consultor.nomeLearningPath ?? '-'}',
                 vazio: consultor.nomeLearningPath == null,
               ),
             ],
@@ -297,12 +298,12 @@ class _PerfilState extends ConsumerState<Perfil> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('EVOLUÇÃO PROFISSIONAL', style: D.etiqueta),
+        Text(ref.t('mobile_perfil_evolucao'), style: D.etiqueta),
         const SizedBox(height: D.e3),
         if (itens.isEmpty)
           CardSimples(
             child: Center(
-              child: Text('Ainda sem conquistas registadas.', style: D.legenda),
+              child: Text(ref.t('mobile_perfil_sem_conquistas'), style: D.legenda),
             ),
           )
         else
@@ -320,8 +321,8 @@ class _PerfilState extends ConsumerState<Perfil> {
 
   Widget _buildLinhaEvolucao({required BadgeUtilizador badge, required bool ultimo}) {
     final titulo = badge.idBadgeEspecial != null
-        ? 'Conquista Badge Especial: ${badge.nomeBadge}'
-        : 'Conquista ${badge.nomeBadge}';
+        ? '${ref.t('mobile_perfil_conquista_especial')} ${badge.nomeBadge}'
+        : '${ref.t('mobile_perfil_conquista')} ${badge.nomeBadge}';
     final data = badge.dataAtribuicao;
     final dataFormatada =
         '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
@@ -370,7 +371,7 @@ class _PerfilState extends ConsumerState<Perfil> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('BADGES', style: D.etiqueta),
+        Text(ref.t('mobile_perfil_badges_titulo'), style: D.etiqueta),
         const SizedBox(height: D.e3),
         _buildTabsPills(),
         const SizedBox(height: D.e3),
@@ -381,10 +382,10 @@ class _PerfilState extends ConsumerState<Perfil> {
 
   Widget _buildTabsPills() {
     final tabs = {
-      _TabPerfil.obtidos: 'Obtidos',
-      _TabPerfil.progresso: 'Em Progresso',
-      _TabPerfil.especiais: 'Especiais',
-      _TabPerfil.historico: 'Histórico',
+      _TabPerfil.obtidos: ref.t('mobile_perfil_tab_obtidos'),
+      _TabPerfil.progresso: ref.t('mobile_perfil_tab_progresso'),
+      _TabPerfil.especiais: ref.t('mobile_perfil_tab_especiais'),
+      _TabPerfil.historico: ref.t('mobile_perfil_tab_historico'),
     };
 
     return Container(
@@ -429,22 +430,22 @@ class _PerfilState extends ConsumerState<Perfil> {
       case _TabPerfil.obtidos:
         final lista = badges.where((b) => b.valido && b.idBadgeEspecial == null).toList()
             ..sort((a, b) => b.dataAtribuicao.compareTo(a.dataAtribuicao));
-        return _buildListaBadges(lista, vazio: 'Ainda não tens badges obtidos.');
+        return _buildListaBadges(lista, vazio: ref.t('mobile_perfil_vazio_obtidos'));
 
       case _TabPerfil.especiais:
         final lista = badges.where((b) => b.valido && b.idBadgeEspecial != null).toList()
             ..sort((a, b) => b.dataAtribuicao.compareTo(a.dataAtribuicao));
-        return _buildListaBadges(lista, vazio: 'Ainda não tens badges especiais.');
+        return _buildListaBadges(lista, vazio: ref.t('mobile_perfil_vazio_especiais'));
 
       case _TabPerfil.progresso:
         final lista = candidaturas.where((c) => !c.estaConcluida).toList()
             ..sort((a, b) => b.dataCriacao.compareTo(a.dataCriacao));
-        return _buildListaCandidaturas(lista, vazio: 'Sem candidaturas em progresso.');
+        return _buildListaCandidaturas(lista, vazio: ref.t('mobile_perfil_vazio_progresso'));
 
       case _TabPerfil.historico:
         final lista = candidaturas.where((c) => c.estaConcluida).toList()
             ..sort((a, b) => b.dataCriacao.compareTo(a.dataCriacao));
-        return _buildListaCandidaturas(lista, vazio: 'Ainda sem histórico.');
+        return _buildListaCandidaturas(lista, vazio: ref.t('mobile_perfil_vazio_historico'));
     }
   }
 
@@ -534,7 +535,7 @@ class _PerfilState extends ConsumerState<Perfil> {
                 Text(dataFormatada, style: D.legenda),
                 if (pontos != null) ...[
                   const SizedBox(height: 2),
-                  Text('$pontos pts',
+                  Text('$pontos ${ref.t('mobile_ranking_pts')}',
                       style: const TextStyle(fontSize: 11, color: D.azul600, fontWeight: FontWeight.w600)),
                 ],
               ],
@@ -555,7 +556,7 @@ class _PerfilState extends ConsumerState<Perfil> {
       children: [
         const Icon(Icons.calendar_today_outlined, size: 14, color: D.tinta30),
         const SizedBox(width: 6),
-        Text('Membro desde: $dataFormatada', style: D.legenda),
+        Text('${ref.t('mobile_perfil_membro_desde')} $dataFormatada', style: D.legenda),
       ],
     );
   }
@@ -569,9 +570,9 @@ class _PerfilState extends ConsumerState<Perfil> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
         padding: const EdgeInsets.symmetric(vertical: 14),
       ),
-      child: const Text(
-        'DEFINIÇÕES',
-        style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.1),
+      child: Text(
+        ref.t('mobile_perfil_definicoes_botao'),
+        style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.1),
       ),
     );
   }

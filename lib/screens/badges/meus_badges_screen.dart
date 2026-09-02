@@ -8,6 +8,7 @@ import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/utils/badge_utils.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:go_router/go_router.dart';
 
 // ECRÃ OS MEUS BADGES
@@ -96,10 +97,10 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
   // ── Texto de expiração — igual ao formatarTempoRestante da web ───────────
   String _textoExpiracao(BadgeUtilizador b) {
     final diff = b.dataExpiracao.difference(DateTime.now());
-    if (diff.isNegative) return b.valido ? 'Sem data de expiração' : 'Badge inválida';
+    if (diff.isNegative) return b.valido ? ref.t('mobile_badges_sem_data_expiracao') : ref.t('mobile_badges_invalida');
     final horas = diff.inHours;
     final minutos = diff.inMinutes % 60;
-    return 'Expira em: ${horas}h e ${minutos}min';
+    return '${ref.t('mobile_badges_expira_em')} ${horas}h ${ref.t('mobile_badges_e')} ${minutos}min';
   }
 
   @override
@@ -118,12 +119,12 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
             children: [
               Icon(Icons.error_outline, color: D.tinta30, size: 64),
               const SizedBox(height: D.e4),
-              const Text('Erro ao carregar badges', style: D.corpo),
+              Text(ref.t('mobile_badges_erro_carregar'), style: D.corpo),
               const SizedBox(height: D.e4),
               OutlinedButton(
                 onPressed: () => ref.invalidate(badgesProvider),
                 style: OutlinedButton.styleFrom(foregroundColor: D.azul600),
-                child: const Text('Tentar novamente'),
+                child: Text(ref.t('mobile_geral_tentar_novamente')),
               ),
             ],
           ),
@@ -142,28 +143,28 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
                 _buildFiltroEstado(),
                 const SizedBox(height: D.e5),
                 _buildSecao(
-                  titulo: 'RECENTES',
+                  titulo: ref.t('mobile_meusbadges_recentes'),
                   badges: _badgesRecentes(todos),
                   rotaVerTodos: AppConstants.routeTodosBadges,
-                  vazioTitulo: 'Ainda não tens badges',
-                  vazioSubtitulo: 'Explora o catálogo e candidata-te ao teu primeiro badge.',
+                  vazioTitulo: ref.t('mobile_meusbadges_vazio_titulo'),
+                  vazioSubtitulo: ref.t('mobile_meusbadges_vazio_subtitulo'),
                   vazioComBotao: true,
                 ),
                 const SizedBox(height: D.e5),
                 _buildSecao(
-                  titulo: 'ESPECIAIS',
+                  titulo: ref.t('mobile_badges_especiais_maiusc'),
                   badges: _badgesEspeciais(todos),
                   rotaVerTodos: AppConstants.routeBadgesEspeciais,
-                  vazioTitulo: 'Sem badges especiais',
-                  vazioSubtitulo: 'São atribuídos automaticamente ao atingires certas conquistas.',
+                  vazioTitulo: ref.t('mobile_meusbadges_especiais_vazio_titulo'),
+                  vazioSubtitulo: ref.t('mobile_meusbadges_especiais_vazio_subtitulo'),
                 ),
                 const SizedBox(height: D.e5),
                 _buildSecao(
-                  titulo: 'EXPIRADOS',
+                  titulo: ref.t('mobile_meusbadges_expirados_maiusc'),
                   badges: _badgesExpirados(todos),
                   rotaVerTodos: AppConstants.routeBadgesExpirados,
-                  vazioTitulo: 'Nenhum badge expirado',
-                  vazioSubtitulo: 'Os teus badges estão todos dentro da validade.',
+                  vazioTitulo: ref.t('mobile_meusbadges_expirados_vazio_titulo'),
+                  vazioSubtitulo: ref.t('mobile_meusbadges_expirados_vazio_subtitulo'),
                 ),
               ],
             ),
@@ -190,7 +191,7 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
           onPressed: () => Scaffold.of(ctx).openDrawer(),
         ),
       ),
-      title: const Text('BADGES', style: D.tituloPagina),
+      title: Text(ref.t('mobile_badges_titulo'), style: D.tituloPagina),
       actions: [
         IconButton(
           icon: SvgPicture.asset(
@@ -217,7 +218,7 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
         controller: _pesquisaController,
         onChanged: (texto) => setState(() => _queryPesquisa = texto),
         decoration: InputDecoration(
-          hintText: 'Procura...',
+          hintText: ref.t('mobile_geral_procura_hint'),
           hintStyle: const TextStyle(color: D.tinta30, fontSize: 14),
           prefixIcon: const Icon(Icons.search, color: D.tinta30, size: 20),
           border: InputBorder.none,
@@ -240,9 +241,9 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
 
   Widget _buildFiltroEstado() {
     final opcoes = {
-      _FiltroEstado.todos: 'Todos',
-      _FiltroEstado.validos: 'Válidos',
-      _FiltroEstado.expirados: 'Expirados',
+      _FiltroEstado.todos: ref.t('mobile_cand_tab_todos'),
+      _FiltroEstado.validos: ref.t('mobile_meusbadges_validos'),
+      _FiltroEstado.expirados: ref.t('mobile_meusbadges_expirados'),
     };
     return Row(
       children: opcoes.entries.map((entry) {
@@ -298,8 +299,8 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
           Center(
             child: TextButton(
               onPressed: () => context.push(rotaVerTodos),
-              child: const Text('VER TODOS',
-                  style: TextStyle(color: D.azul600, fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+              child: Text(ref.t('mobile_cand_ver_todos'),
+                  style: const TextStyle(color: D.azul600, fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
             ),
           ),
         ],
@@ -324,7 +325,7 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
             OutlinedButton.icon(
               onPressed: () => context.push(AppConstants.routeCatalogo),
               icon: const Icon(Icons.search, size: 16),
-              label: const Text('Ver badges disponíveis'),
+              label: Text(ref.t('mobile_meusbadges_ver_disponiveis')),
               style: OutlinedButton.styleFrom(
                 foregroundColor: D.azul600,
                 side: const BorderSide(color: D.azul600),

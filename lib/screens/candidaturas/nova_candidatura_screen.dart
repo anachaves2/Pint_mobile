@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:pint_mobile/models/badge_regular.dart';
 import 'package:pint_mobile/models/requisitos.dart';
@@ -13,11 +14,12 @@ import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:pint_mobile/widgets/requisito_evidencia_tile.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pint_mobile/screens/camera/camera_screen.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 
 // O ecrã tem 2 fases: seleccionar o badge e depois carregar as evidências
 enum _Fase { selecionarBadge, carregarEvidencias }
 
-class NovaCandidatura extends StatefulWidget {
+class NovaCandidatura extends ConsumerStatefulWidget {
   /// Quando não null, o ecrã abre directamente no modo "continuar rascunho".
   final Map<String, dynamic>? rascunho;
   /// Quando não null (e sem rascunho), o ecrã salta logo para a fase de
@@ -26,10 +28,10 @@ class NovaCandidatura extends StatefulWidget {
   final BadgeRegular? badgePreselecionado;
   const NovaCandidatura({super.key, this.rascunho, this.badgePreselecionado});
   @override
-  State<NovaCandidatura> createState() => _NovaCandidaturaState();
+  ConsumerState<NovaCandidatura> createState() => _NovaCandidaturaState();
 }
 
-class _NovaCandidaturaState extends State<NovaCandidatura> {
+class _NovaCandidaturaState extends ConsumerState<NovaCandidatura> {
   _Fase _fase = _Fase.selecionarBadge;
   List<BadgeRegular> _badges = [];
   BadgeRegular? _badgeSelecionado;
@@ -92,7 +94,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
 
     if (numCandidatura == null || idBadge == null) {
       if (mounted) {
-        _mostrarErro('Dados do rascunho inválidos (numCandidatura=$numCandidatura, idBadge=$idBadge).');
+        _mostrarErro('${ref.tr('mobile_novacand_rascunho_invalido')} (numCandidatura=$numCandidatura, idBadge=$idBadge).');
         setState(() => _isLoadingBadges = false);
       }
       return;
@@ -120,7 +122,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     if (!mounted) return;
 
     if (badge == null) {
-      _mostrarErro('Não foi possível carregar este rascunho.');
+      _mostrarErro(ref.tr('mobile_novacand_erro_carregar_rascunho'));
       setState(() => _isLoadingBadges = false);
       return;
     }
@@ -158,7 +160,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
       });
     } else {
       setState(() => _isLoadingBadges = false);
-      _mostrarErro(resultado.erro ?? 'Erro ao criar candidatura.');
+      _mostrarErro(resultado.erro ?? ref.tr('mobile_novacand_erro_criar'));
     }
   }
 
@@ -201,7 +203,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
       });
     } else {
       setState(() => _uploading[req.id] = false);
-      _mostrarErro(resultado.erro ?? 'Erro ao enviar evidência.');
+      _mostrarErro(resultado.erro ?? ref.tr('mobile_detcand_erro_enviar_evidencia'));
     }
   }
 
@@ -214,22 +216,22 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Submeter candidatura?',
-            style: TextStyle(fontWeight: FontWeight.bold, color: D.azul600)),
+        title: Text(ref.tr('mobile_novacand_submeter_titulo'),
+            style: const TextStyle(fontWeight: FontWeight.bold, color: D.azul600)),
         content: Text(
-          'Vais candidatar-te ao badge "${_badgeSelecionado?.nome ?? ''}".\n\n'
-          'Depois de submeteres, a candidatura segue para validação e já não poderás alterar as evidências.',
+          '${ref.tr('mobile_novacand_submeter_texto1')} "${_badgeSelecionado?.nome ?? ''}".\n\n'
+          '${ref.tr('mobile_novacand_submeter_texto2')}',
           style: const TextStyle(fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar', style: TextStyle(color: D.tinta50)),
+            child: Text(ref.tr('mobile_geral_cancelar'), style: const TextStyle(color: D.tinta50)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sim, submeter',
-                style: TextStyle(color: D.azul600, fontWeight: FontWeight.bold)),
+            child: Text(ref.tr('mobile_novacand_sim_submeter'),
+                style: const TextStyle(color: D.azul600, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -244,7 +246,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     if (resultado.sucesso) {
       context.go(AppConstants.routeCandidaturaSubmetida, extra: _numCandidatura);
     } else {
-      _mostrarErro(resultado.erro ?? 'Erro ao submeter candidatura.');
+      _mostrarErro(resultado.erro ?? ref.tr('mobile_novacand_erro_submeter'));
     }
   }
 
@@ -255,16 +257,16 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cancelar candidatura?', style: TextStyle(fontWeight: FontWeight.bold, color: D.azul600)),
-        content: const Text(
-          'Esta ação não pode ser desfeita. As evidências carregadas serão removidas.',
-          style: TextStyle(fontSize: 13),
+        title: Text(ref.tr('mobile_novacand_cancelar_titulo'), style: const TextStyle(fontWeight: FontWeight.bold, color: D.azul600)),
+        content: Text(
+          ref.tr('mobile_cand_apagar_rascunho_texto'),
+          style: const TextStyle(fontSize: 13),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Não', style: TextStyle(color: D.tinta50))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(ref.tr('mobile_notif_nao'), style: const TextStyle(color: D.tinta50))),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sim, cancelar', style: TextStyle(color: D.erro, fontWeight: FontWeight.bold)),
+            child: Text(ref.tr('mobile_novacand_sim_cancelar'), style: const TextStyle(color: D.erro, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -280,11 +282,11 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
 
     if (resultado.sucesso) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Candidatura cancelada.'), backgroundColor: D.ok),
+        SnackBar(content: Text(ref.tr('mobile_novacand_cancelada')), backgroundColor: D.ok),
       );
       context.go(AppConstants.routeCandidaturas);
     } else {
-      _mostrarErro(resultado.erro ?? 'Erro ao cancelar candidatura.');
+      _mostrarErro(resultado.erro ?? ref.tr('mobile_novacand_erro_cancelar'));
     }
   }
 
@@ -320,7 +322,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
           icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: Text(_modoRascunho ? 'CONTINUAR RASCUNHO' : 'NOVA CANDIDATURA', style: D.tituloPagina),
+        title: Text(_modoRascunho ? ref.t('mobile_novacand_continuar_titulo') : ref.t('mobile_novacand_nova_titulo'), style: D.tituloPagina),
         actions: [
           IconButton(
             icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
@@ -345,19 +347,19 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
             child: TextField(
               controller: _pesquisaController,
               onChanged: (v) => setState(() => _query = v),
-              decoration: const InputDecoration(
-                hintText: 'Procurar badge...',
-                hintStyle: TextStyle(color: D.tinta30, fontSize: 14),
-                prefixIcon: Icon(Icons.search, color: D.tinta30, size: 20),
+              decoration: InputDecoration(
+                hintText: ref.t('mobile_cand_pesquisar_badge_hint'),
+                hintStyle: const TextStyle(color: D.tinta30, fontSize: 14),
+                prefixIcon: const Icon(Icons.search, color: D.tinta30, size: 20),
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(vertical: D.e3),
+                contentPadding: const EdgeInsets.symmetric(vertical: D.e3),
               ),
             ),
           ),
         ),
         Expanded(
           child: _badgesFiltrados.isEmpty
-              ? Center(child: Text('Nenhum badge encontrado.', style: D.legenda))
+              ? Center(child: Text(ref.t('mobile_catalogo_vazio'), style: D.legenda))
               : ListView.builder(
                   padding: const EdgeInsets.fromLTRB(D.e4, D.e1, D.e4, D.e2),
                   itemCount: _badgesFiltrados.length,
@@ -416,7 +418,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
               ),
               child: _isLoadingBadges
                   ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('Continuar', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                  : Text(ref.t('mobile_cand_continuar_botao'), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
             ),
           ),
         ),
@@ -436,17 +438,17 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
               children: [
                 CardSimples(
                   child: Column(children: [
-                    _linhaInfo('Badge:', _badgeSelecionado!.nome),
-                    _linhaInfo('Service line:', _badgeSelecionado!.nomeServiceLine),
-                    _linhaInfo('Área:', _badgeSelecionado!.nomeArea),
-                    _linhaInfo('Nível:', _badgeSelecionado!.nomeNivel),
+                    _linhaInfo(ref.t('mobile_detcand_badge_label'), _badgeSelecionado!.nome),
+                    _linhaInfo(ref.t('mobile_novacand_service_line_label'), _badgeSelecionado!.nomeServiceLine),
+                    _linhaInfo(ref.t('mobile_novacand_area_label'), _badgeSelecionado!.nomeArea),
+                    _linhaInfo(ref.t('mobile_detcand_nivel_label'), _badgeSelecionado!.nomeNivel),
                   ]),
                 ),
                 const SizedBox(height: D.e4),
-                const Text('REQUISITOS', style: D.etiqueta),
+                Text(ref.t('mobile_geral_requisitos_maiusc'), style: D.etiqueta),
                 const SizedBox(height: D.e2),
                 if (_requisitos.isEmpty)
-                  CardSimples(child: Center(child: Text('Este badge não tem requisitos definidos.', style: D.legenda)))
+                  CardSimples(child: Center(child: Text(ref.t('mobile_novacand_sem_requisitos'), style: D.legenda)))
                 else
                   for (final req in _requisitos)
                     Padding(
@@ -480,7 +482,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
                   ),
                   child: _isCancelling
                       ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: D.erro))
-                      : const Text('Cancelar', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                      : Text(ref.t('mobile_geral_cancelar'), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                 ),
               ),
               const SizedBox(width: D.e3),
@@ -496,7 +498,7 @@ class _NovaCandidaturaState extends State<NovaCandidatura> {
                   ),
                   child: _isSubmitting
                       ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text('Submeter', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                      : Text(ref.t('mobile_detcand_submeter'), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                 ),
               ),
             ],

@@ -9,6 +9,7 @@ import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 
 /// Ecrãs 19 e 20 do protótipo (ObjetivosFinalizados / ObjetivosEmProgresso).
 ///
@@ -68,7 +69,7 @@ class _ObjetivosScreenState extends ConsumerState<ObjetivosScreen>
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: const Text('OBJETIVOS', style: D.tituloPagina),
+        title: Text(ref.t('mobile_dash_objetivos_titulo'), style: D.tituloPagina),
         actions: [
           IconButton(
             icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg',
@@ -100,8 +101,8 @@ class _ObjetivosScreenState extends ConsumerState<ObjetivosScreen>
               labelStyle:
                   const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
               tabs: [
-                Tab(text: 'EM PROGRESSO (${emProgresso.length})'),
-                Tab(text: 'FINALIZADOS (${finalizados.length})'),
+                Tab(text: '${ref.t('mobile_cand_em_progresso')} (${emProgresso.length})'),
+                Tab(text: '${ref.t('mobile_obj_finalizados')} (${finalizados.length})'),
               ],
             ),
           ),
@@ -111,8 +112,8 @@ class _ObjetivosScreenState extends ConsumerState<ObjetivosScreen>
         backgroundColor: D.azul600,
         onPressed: () => context.push('${AppConstants.routeObjetivos}/novo'),
         icon: const Icon(Icons.add, color: Colors.white, size: 20),
-        label: const Text('Definir objetivo',
-            style: TextStyle(
+        label: Text(ref.t('mobile_obj_definir'),
+            style: const TextStyle(
                 color: Colors.white,
                 fontSize: 13,
                 fontWeight: FontWeight.w600)),
@@ -122,8 +123,8 @@ class _ObjetivosScreenState extends ConsumerState<ObjetivosScreen>
             child: CircularProgressIndicator(color: AppConstants.corPrimaria)),
         error: (err, _) => _Vazio(
           icone: Icons.cloud_off_outlined,
-          titulo: 'Não foi possível carregar',
-          texto: 'Verifica a ligação e tenta novamente.',
+          titulo: ref.t('mobile_obj_erro_titulo'),
+          texto: ref.t('mobile_obj_erro_texto'),
         ),
         data: (_) => TabBarView(
           controller: _tabs,
@@ -131,20 +132,19 @@ class _ObjetivosScreenState extends ConsumerState<ObjetivosScreen>
             _Lista(
               objetivos: emProgresso,
               aoAtualizar: _sincronizar,
-              vazio: const _Vazio(
+              vazio: _Vazio(
                 icone: Icons.flag_outlined,
-                titulo: 'Ainda não tens objetivos',
-                texto:
-                    'Define um objetivo para acompanhares o teu progresso ao longo do tempo.',
+                titulo: ref.t('mobile_obj_vazio_progresso_titulo'),
+                texto: ref.t('mobile_obj_vazio_progresso_texto'),
               ),
             ),
             _Lista(
               objetivos: finalizados,
               aoAtualizar: _sincronizar,
-              vazio: const _Vazio(
+              vazio: _Vazio(
                 icone: Icons.emoji_events_outlined,
-                titulo: 'Sem objetivos finalizados',
-                texto: 'Os objetivos que concluíres aparecem aqui.',
+                titulo: ref.t('mobile_obj_vazio_finalizados_titulo'),
+                texto: ref.t('mobile_obj_vazio_finalizados_texto'),
               ),
             ),
           ],
@@ -225,7 +225,7 @@ class _CardObjetivo extends ConsumerWidget {
                     style: D.tituloCard, maxLines: 2),
               ),
               const SizedBox(width: D.e2),
-              _chipEstado(objetivo),
+              _chipEstado(objetivo, ref),
             ],
           ),
 
@@ -236,10 +236,10 @@ class _CardObjetivo extends ConsumerWidget {
             children: [
               const Icon(Icons.event_outlined, size: 15, color: D.tinta30),
               const SizedBox(width: D.e1 + 2),
-              Text('Definido em ${_data(objetivo.dataInicio)}',
+              Text('${ref.t('mobile_obj_definido_em')} ${_data(objetivo.dataInicio)}',
                   style: D.legenda),
               const Spacer(),
-              Text('Expira em ${_data(objetivo.dataFim)}', style: D.legenda),
+              Text('${ref.t('mobile_badges_expira_em')} ${_data(objetivo.dataFim)}', style: D.legenda),
             ],
           ),
 
@@ -252,7 +252,7 @@ class _CardObjetivo extends ConsumerWidget {
                 Expanded(
                   child: _BotaoSecundario(
                     icone: Icons.edit_outlined,
-                    texto: 'Editar',
+                    texto: ref.t('mobile_obj_editar'),
                     onTap: () => _abrirEditar(context, ref, objetivo),
                   ),
                 ),
@@ -260,7 +260,7 @@ class _CardObjetivo extends ConsumerWidget {
                 Expanded(
                   child: _BotaoSecundario(
                     icone: Icons.delete_outline,
-                    texto: 'Remover',
+                    texto: ref.t('mobile_obj_remover'),
                     cor: D.erro,
                     onTap: () => _confirmarRemover(context, ref, objetivo),
                   ),
@@ -274,7 +274,7 @@ class _CardObjetivo extends ConsumerWidget {
                 const Icon(Icons.check_circle_outline,
                     size: 15, color: D.tinta30),
                 const SizedBox(width: D.e1 + 2),
-                Text('Alcançado em ${_data(objetivo.dataConclusao!)}',
+                Text('${ref.t('mobile_obj_alcancado_em')} ${_data(objetivo.dataConclusao!)}',
                     style: D.legenda),
               ],
             ),
@@ -284,28 +284,28 @@ class _CardObjetivo extends ConsumerWidget {
     );
   }
 
-  Widget _chipEstado(Objetivo o) {
+  Widget _chipEstado(Objetivo o, WidgetRef ref) {
     if (o.estado == 'Em Curso') {
       if (o.ultrapassado) {
-        return const ChipEstado(
-            texto: 'Expirado', cor: D.erro, corFundo: D.erroBg);
+        return ChipEstado(
+            texto: ref.t('mobile_badges_expirado'), cor: D.erro, corFundo: D.erroBg);
       }
       if (o.proximoDoPrazo) {
         return ChipEstado(
             texto: '${o.diasRestantes}d', cor: D.aviso, corFundo: D.avisoBg);
       }
-      return const ChipEstado(
-          texto: 'Em curso', cor: D.azul600, corFundo: D.azul100);
+      return ChipEstado(
+          texto: ref.t('mobile_obj_em_curso'), cor: D.azul600, corFundo: D.azul100);
     }
     if (o.alcancado) {
-      return const ChipEstado(
-          texto: 'Alcançado',
+      return ChipEstado(
+          texto: ref.t('mobile_obj_alcancado'),
           cor: D.ok,
           corFundo: D.okBg,
           icone: Icons.check);
     }
-    return const ChipEstado(
-        texto: 'Não alcançado', cor: D.erro, corFundo: D.erroBg);
+    return ChipEstado(
+        texto: ref.t('mobile_obj_nao_alcancado'), cor: D.erro, corFundo: D.erroBg);
   }
 
   // ── Ações ──
@@ -316,7 +316,7 @@ class _CardObjetivo extends ConsumerWidget {
       initialDate: o.dataFim,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
-      helpText: 'Nova data limite',
+      helpText: ref.tr('mobile_obj_nova_data_limite'),
     );
     if (nova == null) return;
 
@@ -330,9 +330,9 @@ class _CardObjetivo extends ConsumerWidget {
     if (r.sucesso) {
       await APIService.instance.sincronizarObjetivos();
       ref.invalidate(objetivosProvider);
-      _aviso(context, 'Objetivo atualizado.', D.ok);
+      _aviso(context, ref.tr('mobile_obj_atualizado'), D.ok);
     } else {
-      _aviso(context, r.erro ?? 'Não foi possível editar.', D.erro);
+      _aviso(context, r.erro ?? ref.tr('mobile_obj_erro_editar'), D.erro);
     }
   }
 
@@ -344,18 +344,18 @@ class _CardObjetivo extends ConsumerWidget {
         backgroundColor: D.superficie,
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(D.rLg)),
-        title: const Text('Remover objetivo', style: D.tituloSeccao),
-        content: Text('Queres mesmo remover "${o.nomeTipoObjetivo}"?',
+        title: Text(ref.tr('mobile_obj_remover_titulo'), style: D.tituloSeccao),
+        content: Text('${ref.tr('mobile_obj_remover_confirmar')} "${o.nomeTipoObjetivo}"?',
             style: D.corpo),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Não', style: TextStyle(color: D.tinta50)),
+            child: Text(ref.tr('mobile_notif_nao'), style: const TextStyle(color: D.tinta50)),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: D.erro),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sim'),
+            child: Text(ref.tr('mobile_obj_sim')),
           ),
         ],
       ),
@@ -369,9 +369,9 @@ class _CardObjetivo extends ConsumerWidget {
     if (r.sucesso) {
       await APIService.instance.sincronizarObjetivos();
       ref.invalidate(objetivosProvider);
-      _aviso(context, 'Objetivo removido.', D.ok);
+      _aviso(context, ref.tr('mobile_obj_removido'), D.ok);
     } else {
-      _aviso(context, r.erro ?? 'Não foi possível remover.', D.erro);
+      _aviso(context, r.erro ?? ref.tr('mobile_obj_erro_remover'), D.erro);
     }
   }
 
@@ -392,13 +392,13 @@ class _CardObjetivo extends ConsumerWidget {
 
 /// Mostra quanto do prazo já passou (não o progresso real do objetivo,
 /// que o backend ainda não devolve). Fica claro no rótulo.
-class _BarraPrazo extends StatelessWidget {
+class _BarraPrazo extends ConsumerWidget {
   const _BarraPrazo({required this.objetivo});
 
   final Objetivo objetivo;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final total = objetivo.dataFim.difference(objetivo.dataInicio).inDays;
     final decorrido = DateTime.now().difference(objetivo.dataInicio).inDays;
     final fracao =
@@ -425,8 +425,8 @@ class _BarraPrazo extends StatelessWidget {
         const SizedBox(height: D.e1 + 2),
         Text(
           objetivo.ultrapassado
-              ? 'Prazo terminado'
-              : 'Termina em ${objetivo.diasRestantes} dia${objetivo.diasRestantes == 1 ? '' : 's'}',
+              ? ref.t('mobile_obj_prazo_terminado')
+              : '${ref.t('mobile_obj_termina_em')} ${objetivo.diasRestantes} ${objetivo.diasRestantes == 1 ? ref.t('mobile_obj_dia') : ref.t('mobile_obj_dias')}',
           style: D.legenda.copyWith(color: cor, fontWeight: FontWeight.w600),
         ),
       ],

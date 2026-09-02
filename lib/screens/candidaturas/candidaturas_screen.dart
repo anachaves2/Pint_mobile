@@ -9,6 +9,7 @@ import 'package:pint_mobile/utils/constants.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/custom_drawer.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 import 'package:go_router/go_router.dart';
 
 // ECRÃ CANDIDATURAS (hub)
@@ -53,16 +54,16 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Apagar rascunho?', style: TextStyle(fontWeight: FontWeight.bold, color: D.azul600)),
-        content: const Text(
-          'Esta ação não pode ser desfeita. As evidências carregadas serão removidas.',
-          style: TextStyle(fontSize: 13),
+        title: Text(ref.tr('mobile_cand_apagar_rascunho_titulo'), style: const TextStyle(fontWeight: FontWeight.bold, color: D.azul600)),
+        content: Text(
+          ref.tr('mobile_cand_apagar_rascunho_texto'),
+          style: const TextStyle(fontSize: 13),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Não', style: TextStyle(color: D.tinta50))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(ref.tr('mobile_notif_nao'), style: const TextStyle(color: D.tinta50))),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sim, apagar', style: TextStyle(color: D.erro, fontWeight: FontWeight.bold)),
+            child: Text(ref.tr('mobile_cand_sim_apagar'), style: const TextStyle(color: D.erro, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -76,12 +77,12 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
 
     if (resultado.sucesso) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Rascunho apagado.'), backgroundColor: D.ok),
+        SnackBar(content: Text(ref.tr('mobile_cand_rascunho_apagado')), backgroundColor: D.ok),
       );
       _carregarRascunhos();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(resultado.erro ?? 'Erro ao apagar'), backgroundColor: D.erro),
+        SnackBar(content: Text(resultado.erro ?? ref.tr('mobile_cand_erro_apagar')), backgroundColor: D.erro),
       );
     }
   }
@@ -102,7 +103,7 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: const Text('CANDIDATURAS', style: D.tituloPagina),
+        title: Text(ref.t('mobile_cand_hub_titulo'), style: D.tituloPagina),
         actions: [
           IconButton(
             icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
@@ -134,15 +135,15 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: D.e3),
                       child: Text(
-                        '${emProgresso.length} candidatura${emProgresso.length == 1 ? '' : 's'} a decorrer',
+                        '${emProgresso.length} ${emProgresso.length == 1 ? ref.t('mobile_cand_a_decorrer_singular') : ref.t('mobile_cand_a_decorrer_plural')}',
                         style: const TextStyle(color: D.azul600, fontWeight: FontWeight.w600, fontSize: 13),
                       ),
                     ),
                   _buildSecao(
-                    titulo: 'EM PROGRESSO',
+                    titulo: ref.t('mobile_cand_em_progresso'),
                     lista: emProgresso,
                     rotaVerTodos: AppConstants.routeCandidaturasDecorrentes,
-                    vazioMsg: 'Não tens candidaturas em curso.',
+                    vazioMsg: ref.t('mobile_cand_sem_curso'),
                   ),
                   const SizedBox(height: D.e5),
                   _buildSecaoRascunhos(),
@@ -154,7 +155,7 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
                         _carregarRascunhos();
                       }),
                       icon: const Icon(Icons.add, size: 18, color: D.azul600),
-                      label: const Text('Nova Candidatura', style: TextStyle(color: D.azul600, fontWeight: FontWeight.w600)),
+                      label: Text(ref.t('mobile_cand_nova'), style: const TextStyle(color: D.azul600, fontWeight: FontWeight.w600)),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: D.azul600),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -164,10 +165,10 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
                   ),
                   const SizedBox(height: D.e5),
                   _buildSecao(
-                    titulo: 'HISTÓRICO',
+                    titulo: ref.t('mobile_cand_historico_titulo'),
                     lista: historico,
                     rotaVerTodos: AppConstants.routeHistoricoCandidaturas,
-                    vazioMsg: 'Ainda não tens candidaturas concluídas.',
+                    vazioMsg: ref.t('mobile_cand_sem_concluidas'),
                   ),
                 ],
               ),
@@ -188,7 +189,7 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
       children: [
         Row(
           children: [
-            const Text('RASCUNHOS', style: D.etiqueta),
+            Text(ref.t('mobile_cand_rascunhos'), style: D.etiqueta),
             const SizedBox(width: D.e2),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: D.e2, vertical: 2),
@@ -229,7 +230,7 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
         Text(titulo, style: D.etiqueta),
         const SizedBox(height: D.e2),
         if (preview.isEmpty)
-          CardSimples(child: Center(child: Text(vazioMsg ?? 'Sem dados.', style: D.legenda)))
+          CardSimples(child: Center(child: Text(vazioMsg ?? ref.t('mobile_cand_sem_dados'), style: D.legenda)))
         else
           ...preview.map((c) => Padding(
                 padding: const EdgeInsets.only(bottom: D.e2),
@@ -244,7 +245,7 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
           Center(
             child: TextButton(
               onPressed: () => context.push(rotaVerTodos).then((_) => ref.invalidate(candidaturasProvider)),
-              child: const Text('VER TODOS', style: TextStyle(color: D.azul600, fontSize: 12, fontWeight: FontWeight.w600)),
+              child: Text(ref.t('mobile_cand_ver_todos'), style: const TextStyle(color: D.azul600, fontSize: 12, fontWeight: FontWeight.w600)),
             ),
           ),
       ],
@@ -253,7 +254,7 @@ class _CandidaturasState extends ConsumerState<Candidaturas> {
 }
 
 // ─── Card de candidatura ─────────────────────────────────────────────────────
-class CardCandidatura extends StatelessWidget {
+class CardCandidatura extends ConsumerWidget {
   final CandidaturaBadge candidatura;
   final VoidCallback onTap;
 
@@ -276,20 +277,20 @@ class CardCandidatura extends StatelessWidget {
   String _fmt(DateTime d) => '${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year.toString().substring(2)}';
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return CardSimples(
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(candidatura.nomeBadge, style: D.tituloCard),
-          if (candidatura.nomeNivel != null) Text('Nível ${candidatura.nomeNivel!}', style: D.legenda),
+          if (candidatura.nomeNivel != null) Text('${ref.t('mobile_cand_nivel_label')} ${candidatura.nomeNivel!}', style: D.legenda),
           const SizedBox(height: D.e2),
           Row(
             children: [
               const Icon(Icons.calendar_today_outlined, size: 12, color: D.tinta30),
               const SizedBox(width: 4),
-              Text('Criado em: ${_fmt(candidatura.dataCriacao)}', style: D.legenda.copyWith(fontSize: 11)),
+              Text('${ref.t('mobile_cand_criado_em')} ${_fmt(candidatura.dataCriacao)}', style: D.legenda.copyWith(fontSize: 11)),
               const Spacer(),
               ChipEstado(texto: candidatura.nomeEstadoAtual, cor: _corEstado, corFundo: _corEstadoFundo),
             ],
@@ -301,7 +302,7 @@ class CardCandidatura extends StatelessWidget {
 }
 
 // ─── Card de rascunho ────────────────────────────────────────────────────────
-class CardRascunho extends StatelessWidget {
+class CardRascunho extends ConsumerWidget {
   final Map<String, dynamic> rascunho;
   final VoidCallback onContinuar;
   final VoidCallback onApagar;
@@ -311,7 +312,7 @@ class CardRascunho extends StatelessWidget {
   String _fmt(DateTime d) => '${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year.toString().substring(2)}';
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final numEvidencias = rascunho['numEvidencias'] as int? ?? 0;
     final numRequisitos = rascunho['numRequisitos'] as int? ?? 0;
     final dataStr = rascunho['dataCriacao'] as String? ?? '';
@@ -329,8 +330,8 @@ class CardRascunho extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(rascunho['nomeBadge'] as String? ?? 'Sem nome', style: D.tituloCard),
-                    if (rascunho['nomeNivel'] != null) Text('Nível ${rascunho['nomeNivel']}', style: D.legenda),
+                    Text(rascunho['nomeBadge'] as String? ?? ref.t('mobile_cand_sem_nome'), style: D.tituloCard),
+                    if (rascunho['nomeNivel'] != null) Text('${ref.t('mobile_cand_nivel_label')} ${rascunho['nomeNivel']}', style: D.legenda),
                   ],
                 ),
               ),
@@ -349,9 +350,9 @@ class CardRascunho extends StatelessWidget {
             children: [
               const Icon(Icons.calendar_today_outlined, size: 12, color: D.tinta30),
               const SizedBox(width: 4),
-              Text('Criado em: $dataFormatada', style: D.legenda.copyWith(fontSize: 11)),
+              Text('${ref.t('mobile_cand_criado_em')} $dataFormatada', style: D.legenda.copyWith(fontSize: 11)),
               const Spacer(),
-              const ChipEstado(texto: 'Rascunho', cor: D.azul600, corFundo: D.azul100),
+              ChipEstado(texto: ref.t('mobile_cand_rascunho_chip'), cor: D.azul600, corFundo: D.azul100),
             ],
           ),
           const SizedBox(height: D.e3),
@@ -369,7 +370,7 @@ class CardRascunho extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: D.e3),
-              Text('$numEvidencias / $numRequisitos evidências', style: D.legenda.copyWith(fontWeight: FontWeight.w600)),
+              Text('$numEvidencias / $numRequisitos ${ref.t('mobile_cand_evidencias')}', style: D.legenda.copyWith(fontWeight: FontWeight.w600)),
             ],
           ),
           const SizedBox(height: D.e3),
@@ -378,7 +379,7 @@ class CardRascunho extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: onContinuar,
               icon: const Icon(Icons.arrow_forward, size: 16, color: Colors.white),
-              label: const Text('Continuar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
+              label: Text(ref.t('mobile_cand_continuar_botao'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: D.azul600,
                 padding: const EdgeInsets.symmetric(vertical: 10),

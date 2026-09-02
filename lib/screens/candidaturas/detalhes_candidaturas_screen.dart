@@ -16,6 +16,7 @@ import 'package:pint_mobile/widgets/custom_drawer.dart';
 import 'package:pint_mobile/widgets/requisito_evidencia_tile.dart';
 import 'package:pint_mobile/screens/camera/camera_screen.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 
 // ECRÃ DETALHES DA CANDIDATURA
 // Segue os tokens D. Acrescentei o que faltava em relação à web: "Rever
@@ -132,7 +133,7 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
       });
     } else {
       setState(() => _uploading[req.id] = false);
-      _mostrarErro(resultado.erro ?? 'Erro ao enviar evidência.');
+      _mostrarErro(resultado.erro ?? ref.tr('mobile_detcand_erro_enviar_evidencia'));
     }
   }
 
@@ -143,12 +144,12 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
     setState(() => _isSubmitting = false);
     if (resultado.sucesso) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Candidatura reenviada com sucesso!'), backgroundColor: D.ok),
+        SnackBar(content: Text(ref.tr('mobile_detcand_reenviada_sucesso')), backgroundColor: D.ok),
       );
       setState(() => _modoRevisao = false);
       await _refresh();
     } else {
-      _mostrarErro(resultado.erro ?? 'Erro ao reenviar candidatura.');
+      _mostrarErro(resultado.erro ?? ref.tr('mobile_detcand_erro_reenviar'));
     }
   }
 
@@ -170,7 +171,7 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: D.azul600))
           : _candidatura == null
-              ? const Center(child: Text('Candidatura não encontrada.', style: D.corpo))
+              ? Center(child: Text(ref.t('mobile_detcand_nao_encontrada'), style: D.corpo))
               : RefreshIndicator(
                   color: D.azul600,
                   onRefresh: _refresh,
@@ -191,13 +192,13 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
                         ] else ...[
                           if (_requisitos.isNotEmpty) ...[
                             const SizedBox(height: D.e5),
-                            const Text('REQUISITOS SUBMETIDOS', style: D.etiqueta),
+                            Text(ref.t('mobile_detcand_requisitos_submetidos'), style: D.etiqueta),
                             const SizedBox(height: D.e3),
                             ..._requisitos.map((req) => _buildCardRequisito(req)),
                           ],
                         ],
                         const SizedBox(height: D.e5),
-                        const Text('TIMELINE', style: D.etiqueta),
+                        Text(ref.t('mobile_detcand_timeline'), style: D.etiqueta),
                         const SizedBox(height: D.e3),
                         _buildTimeline(),
                       ],
@@ -216,7 +217,7 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
         icon: const Icon(Icons.arrow_back_ios, color: AppConstants.corPrimaria, size: 20),
         onPressed: () => context.pop(),
       ),
-      title: const Text('CANDIDATURA', style: D.tituloPagina),
+      title: Text(ref.t('mobile_detcand_titulo'), style: D.tituloPagina),
       actions: [
         IconButton(
           icon: SvgPicture.asset('assets/icons/notificacoesprimaria.svg', height: 24,
@@ -233,19 +234,19 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
     final rejeitada = c.rejeitada;
     final cor = aprovada ? D.ok : (rejeitada ? D.erro : D.tinta30);
     final corFundo = aprovada ? D.okBg : (rejeitada ? D.erroBg : D.fundoAlt);
-    final texto = aprovada ? 'Aprovado' : (rejeitada ? 'Rejeitado' : '—');
+    final texto = aprovada ? ref.t('mobile_cand_tab_aprovados_singular') : (rejeitada ? ref.t('mobile_cand_tab_rejeitados_singular') : '—');
 
     return CardSimples(
       child: Column(
         children: [
-          _linhaInfo('Badge:', c.nomeBadge),
-          if (c.nomeNivel != null) _linhaInfo('Nível:', c.nomeNivel!),
+          _linhaInfo(ref.t('mobile_detcand_badge_label'), c.nomeBadge),
+          if (c.nomeNivel != null) _linhaInfo(ref.t('mobile_detcand_nivel_label'), c.nomeNivel!),
           if (c.estaConcluida)
             Padding(
               padding: const EdgeInsets.only(top: D.e2),
               child: Row(
                 children: [
-                  const SizedBox(width: 100, child: Text('Decisão final:', style: D.legenda)),
+                  SizedBox(width: 100, child: Text(ref.t('mobile_detcand_decisao_final'), style: D.legenda)),
                   ChipEstado(texto: texto, cor: cor, corFundo: corFundo),
                 ],
               ),
@@ -276,14 +277,14 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.info_outline, color: D.aviso, size: 18),
-              SizedBox(width: D.e2),
+              const Icon(Icons.info_outline, color: D.aviso, size: 18),
+              const SizedBox(width: D.e2),
               Expanded(
                 child: Text(
-                  'Esta candidatura foi devolvida e precisa da tua ação.',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: D.aviso),
+                  ref.t('mobile_detcand_aviso_devolvida'),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: D.aviso),
                 ),
               ),
             ],
@@ -295,7 +296,7 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
               child: OutlinedButton.icon(
                 onPressed: () => setState(() => _modoRevisao = true),
                 icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Rever Candidatura'),
+                label: Text(ref.t('mobile_detcand_rever_candidatura')),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: D.aviso,
                   side: const BorderSide(color: D.aviso),
@@ -317,17 +318,17 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
       children: [
         Row(
           children: [
-            const Text('REQUISITOS', style: D.etiqueta),
+            Text(ref.t('mobile_geral_requisitos_maiusc'), style: D.etiqueta),
             const Spacer(),
             TextButton(
               onPressed: () => setState(() => _modoRevisao = false),
-              child: const Text('Cancelar', style: TextStyle(color: D.tinta30, fontSize: 12)),
+              child: Text(ref.t('mobile_geral_cancelar'), style: const TextStyle(color: D.tinta30, fontSize: 12)),
             ),
           ],
         ),
         const SizedBox(height: D.e2),
         if (_requisitos.isEmpty)
-          CardSimples(child: Center(child: Text('Sem requisitos definidos.', style: D.legenda)))
+          CardSimples(child: Center(child: Text(ref.t('mobile_detcand_sem_requisitos'), style: D.legenda)))
         else
           for (final req in _requisitos)
             Padding(
@@ -356,7 +357,7 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
             ),
             child: _isSubmitting
                 ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('Submeter', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                : Text(ref.t('mobile_detcand_submeter'), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
           ),
         ),
       ],
@@ -374,19 +375,19 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
     if (evidencia == null) {
       cor = D.aviso;
       icone = Icons.upload_file_outlined;
-      texto = 'Sem evidência';
+      texto = ref.t('mobile_detcand_sem_evidencia');
     } else if (evidencia.aprovada) {
       cor = D.ok;
       icone = Icons.check_circle_outline;
-      texto = 'Aprovada';
+      texto = ref.t('mobile_cand_tab_aprovados_singular');
     } else if (evidencia.rejeitada) {
       cor = D.erro;
       icone = Icons.cancel_outlined;
-      texto = 'Rejeitada';
+      texto = ref.t('mobile_cand_tab_rejeitados_singular');
     } else {
       cor = D.azul600;
       icone = Icons.hourglass_empty_outlined;
-      texto = 'Pendente';
+      texto = ref.t('mobile_detcand_pendente');
     }
 
     return Padding(
@@ -427,7 +428,7 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
 
   Widget _buildTimeline() {
     if (_historico.isEmpty) {
-      return CardSimples(child: Center(child: Text('Sem histórico disponível.', style: D.legenda)));
+      return CardSimples(child: Center(child: Text(ref.t('mobile_detcand_sem_historico'), style: D.legenda)));
     }
     final invertido = _historico.reversed.toList();
     return Column(
@@ -436,7 +437,7 @@ class _DetalhesCandidaturaState extends ConsumerState<DetalhesCandidatura> {
   }
 }
 
-class _ItemTimeline extends StatelessWidget {
+class _ItemTimeline extends ConsumerWidget {
   final HistoricoCandidatura entrada;
   final bool isLast;
   const _ItemTimeline({required this.entrada, required this.isLast});
@@ -450,12 +451,12 @@ class _ItemTimeline extends StatelessWidget {
     }
   }
 
-  String get _textoDecisao {
+  String _textoDecisao(WidgetRef ref) {
     switch (entrada.idEstadoAtual) {
-      case 5: return 'Aprovado';
-      case 6: return 'Rejeitado';
-      case 2: case 4: return 'Incorreto';
-      case 1: case 3: return 'Correto';
+      case 5: return ref.t('mobile_cand_tab_aprovados_singular');
+      case 6: return ref.t('mobile_cand_tab_rejeitados_singular');
+      case 2: case 4: return ref.t('mobile_detcand_incorreto');
+      case 1: case 3: return ref.t('mobile_detcand_correto');
       default: return '';
     }
   }
@@ -469,9 +470,10 @@ class _ItemTimeline extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final hora = '${entrada.dataAlteracao.day} ${_mesAbrev(entrada.dataAlteracao.month)} ${entrada.dataAlteracao.year} '
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hora = '${entrada.dataAlteracao.day} ${_mesAbrev(entrada.dataAlteracao.month, ref)} ${entrada.dataAlteracao.year} '
         '${entrada.dataAlteracao.hour.toString().padLeft(2, '0')}:${entrada.dataAlteracao.minute.toString().padLeft(2, '0')}';
+    final textoDecisao = _textoDecisao(ref);
 
     return IntrinsicHeight(
       child: Row(
@@ -501,12 +503,12 @@ class _ItemTimeline extends StatelessWidget {
                         ChipEstado(texto: entrada.nomeEstadoAtual, cor: D.tinta50, corFundo: D.fundoAlt),
                       ],
                     ),
-                    if (_textoDecisao.isNotEmpty) ...[
+                    if (textoDecisao.isNotEmpty) ...[
                       const SizedBox(height: D.e2),
                       Row(
                         children: [
-                          const Text('Decisão: ', style: D.legenda),
-                          ChipEstado(texto: _textoDecisao, cor: _corDecisao, corFundo: _corDecisao.withValues(alpha: 0.12)),
+                          Text('${ref.t('mobile_detcand_decisao')} ', style: D.legenda),
+                          ChipEstado(texto: textoDecisao, cor: _corDecisao, corFundo: _corDecisao.withValues(alpha: 0.12)),
                         ],
                       ),
                     ],
@@ -514,7 +516,7 @@ class _ItemTimeline extends StatelessWidget {
                       const SizedBox(height: D.e2),
                       RichText(
                         text: TextSpan(style: D.legenda.copyWith(fontSize: 12), children: [
-                          const TextSpan(text: 'Comentário: ', style: TextStyle(color: D.tinta30)),
+                          TextSpan(text: '${ref.t('mobile_detcand_comentario')} ', style: const TextStyle(color: D.tinta30)),
                           TextSpan(text: entrada.comentario!, style: const TextStyle(color: D.tinta50)),
                         ]),
                       ),
@@ -529,8 +531,12 @@ class _ItemTimeline extends StatelessWidget {
     );
   }
 
-  String _mesAbrev(int mes) {
-    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    return meses[mes - 1];
+  String _mesAbrev(int mes, WidgetRef ref) {
+    final chaves = [
+      'mobile_mes_jan', 'mobile_mes_fev', 'mobile_mes_mar', 'mobile_mes_abr',
+      'mobile_mes_mai', 'mobile_mes_jun', 'mobile_mes_jul', 'mobile_mes_ago',
+      'mobile_mes_set', 'mobile_mes_out', 'mobile_mes_nov', 'mobile_mes_dez',
+    ];
+    return ref.t(chaves[mes - 1]);
   }
 }
