@@ -11,6 +11,7 @@ import 'package:pint_mobile/providers/objetivos_resumo_provider.dart';
 import 'package:pint_mobile/providers/badges_recomendados_provider.dart';
 import 'package:pint_mobile/widgets/saudacao_evento.dart';
 import 'package:pint_mobile/widgets/celebracao_marco.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 
 // ConsumerWidget: padrão do Riverpod 
 class CustomDrawer extends ConsumerWidget {
@@ -46,22 +47,25 @@ class CustomDrawer extends ConsumerWidget {
 
   // Pede confirmação, limpa os 3 providers e faz logout
   Future<void> _terminarSessao(BuildContext context, WidgetRef ref) async {
+    // ref.tr(...): estamos num callback (não no build), por isso lemos o
+    // idioma uma vez em vez de o observar (ver TraducaoRef em idioma_provider.dart)
+    final tituloSessao = ref.tr('mobile_geral_terminar_sessao');
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Terminar sessão'),
-        content: const Text('Pretende terminar a sua sessão?'),
+        title: Text(tituloSessao),
+        content: Text(ref.tr('mobile_geral_terminar_sessao_confirmar')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(ref.tr('mobile_geral_cancelar')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppConstants.corPrimaria,
             ),
-            child: const Text('Terminar sessão', style: TextStyle(color: Colors.white)),
+            child: Text(tituloSessao, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -118,14 +122,14 @@ class CustomDrawer extends ConsumerWidget {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  _buildMenuItem(context, 'Dashboard', AppConstants.routeDashboard),
-                  _buildMenuItem(context, 'Os Meus Badges', AppConstants.routeMeusBadges),
-                  _buildMenuItem(context, 'Catálogo de Badges', AppConstants.routeCatalogo),
-                  _buildMenuItem(context, 'Candidaturas', AppConstants.routeCandidaturas),
-                  _buildMenuItem(context, 'Os Meus Objetivos', AppConstants.routeObjetivos),
-                  _buildMenuItem(context, 'Gamification', AppConstants.routeGamification),
-                  _buildMenuItem(context, 'O Meu Perfil', AppConstants.routePerfil),
-                  _buildMenuItem(context, 'Terminar Sessão', '', onTapOverride: () => _terminarSessao(context, ref)),
+                  _buildMenuItem(context, ref.t('mobile_drawer_dashboard'), AppConstants.routeDashboard),
+                  _buildMenuItem(context, ref.t('mobile_drawer_meus_badges'), AppConstants.routeMeusBadges),
+                  _buildMenuItem(context, ref.t('mobile_drawer_catalogo'), AppConstants.routeCatalogo),
+                  _buildMenuItem(context, ref.t('mobile_drawer_candidaturas'), AppConstants.routeCandidaturas),
+                  _buildMenuItem(context, ref.t('mobile_drawer_objetivos'), AppConstants.routeObjetivos),
+                  _buildMenuItem(context, ref.t('mobile_drawer_gamification'), AppConstants.routeGamification),
+                  _buildMenuItem(context, ref.t('mobile_drawer_perfil'), AppConstants.routePerfil),
+                  _buildMenuItem(context, ref.t('mobile_geral_terminar_sessao'), '', onTapOverride: () => _terminarSessao(context, ref)),
                 ],
               ),
             ),

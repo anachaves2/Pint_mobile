@@ -1,22 +1,24 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 
 // connectivity_plus
 // Widget que envolve toda a app e mostra um banner vermelho
 // quando o telemóvel não tem ligação à internet.
 // Como a app é offline-first (SQLite), continua a funcionar —
 // apenas avisamos o utilizador que está a ver dados guardados.
-class BannerSemRede extends StatefulWidget {
+class BannerSemRede extends ConsumerStatefulWidget {
   // Recebe o ecrã filho (a app inteira) como parâmetro
   final Widget child;
   const BannerSemRede({super.key, required this.child});
 
   @override
-  State<BannerSemRede> createState() => _BannerSemRedeState();
+  ConsumerState<BannerSemRede> createState() => _BannerSemRedeState();
 }
 
-class _BannerSemRedeState extends State<BannerSemRede> {
+class _BannerSemRedeState extends ConsumerState<BannerSemRede> {
   // true = sem rede, false = com rede
   bool _semRede = false;
 
@@ -66,14 +68,14 @@ class _BannerSemRedeState extends State<BannerSemRede> {
               width: double.infinity,
               color: Colors.red[700],
               padding: const EdgeInsets.symmetric(vertical: 6),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.wifi_off, color: Colors.white, size: 16),
-                  SizedBox(width: 8),
+                  const Icon(Icons.wifi_off, color: Colors.white, size: 16),
+                  const SizedBox(width: 8),
                   Text(
-                    'Sem ligação à internet — a mostrar dados guardados',
-                    style: TextStyle(color: Colors.white, fontSize: 12),
+                    ref.t('mobile_geral_sem_rede_banner'),
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
                 ),
               ],
             ),

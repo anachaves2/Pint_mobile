@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/models/requisitos.dart';
 import 'package:pint_mobile/utils/design.dart';
 import 'package:pint_mobile/widgets/card_gradiente.dart';
 import 'package:pint_mobile/widgets/texto_traduzido.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 
 // Cartão de requisito com upload de evidência (ficheiro ou câmara).
 // Partilhado entre nova_candidatura_screen.dart (candidatura nova) e o
@@ -10,7 +12,7 @@ import 'package:pint_mobile/widgets/texto_traduzido.dart';
 // (retificação de uma candidatura já submetida) — antes estava só
 // implementado no primeiro, o segundo não existia.
 
-class RequisitoEvidenciaTile extends StatelessWidget {
+class RequisitoEvidenciaTile extends ConsumerWidget {
   final Requisito requisito;
   final bool temEvidencia;
   final bool emUpload;
@@ -29,7 +31,7 @@ class RequisitoEvidenciaTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return CardSimples(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,7 +65,7 @@ class RequisitoEvidenciaTile extends StatelessWidget {
               const SizedBox(width: D.e3),
               Expanded(
                 child: Text(
-                  nomeFicheiro ?? 'Clica para carregar',
+                  nomeFicheiro ?? ref.t('mobile_geral_clica_carregar'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: D.legenda.copyWith(color: nomeFicheiro != null ? D.tinta50 : D.tinta30),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pint_mobile/utils/design.dart';
+import 'package:pint_mobile/providers/idioma_provider.dart';
 
 // REQUISITO 16 — "Celebração de marcos alcançados"
 //
@@ -34,7 +36,11 @@ class CelebracaoMarco {
 
   /// Compara o estado atual com o anterior e devolve os marcos a celebrar.
   /// Devolve lista vazia quando não há nada de novo.
+  ///
+  /// [ref] serve só para traduzir os textos (ref.tr — não estamos num
+  /// build(), por isso não se usa ref.watch aqui, ver TraducaoRef).
   static List<Marco> calcular({
+    required WidgetRef ref,
     required int badgesAgora,
     required int especiaisAgora,
     required int objetivosAgora,
@@ -55,10 +61,12 @@ class CelebracaoMarco {
     if (novosBadges > 0) {
       marcos.add(Marco(
         icone: Icons.military_tech,
-        titulo: novosBadges == 1 ? 'Novo badge conquistado!' : '$novosBadges novos badges!',
+        titulo: novosBadges == 1
+            ? ref.tr('mobile_marco_badge_titulo_um')
+            : '$novosBadges ${ref.tr('mobile_marco_badges_titulo_sufixo')}',
         mensagem: novosBadges == 1
-            ? 'Ganhaste mais um badge. Continua assim!'
-            : 'Conquistaste $novosBadges badges desde a última visita.',
+            ? ref.tr('mobile_marco_badge_msg_um')
+            : '${ref.tr('mobile_marco_badges_msg_prefixo')} $novosBadges ${ref.tr('mobile_marco_badges_msg_sufixo')}',
       ));
     }
 
@@ -66,10 +74,10 @@ class CelebracaoMarco {
     if (novosEspeciais > 0) {
       marcos.add(Marco(
         icone: Icons.star,
-        titulo: 'Conquista especial!',
+        titulo: ref.tr('mobile_marco_especial_titulo'),
         mensagem: novosEspeciais == 1
-            ? 'Desbloqueaste um badge especial pelo teu percurso.'
-            : 'Desbloqueaste $novosEspeciais badges especiais.',
+            ? ref.tr('mobile_marco_especial_msg_um')
+            : '${ref.tr('mobile_marco_especial_msg_varios_prefixo')} $novosEspeciais ${ref.tr('mobile_marco_especial_msg_varios_sufixo')}',
       ));
     }
 
@@ -77,20 +85,25 @@ class CelebracaoMarco {
     if (novosObjetivos > 0) {
       marcos.add(Marco(
         icone: Icons.flag,
-        titulo: novosObjetivos == 1 ? 'Objetivo alcançado!' : '$novosObjetivos objetivos alcançados!',
-        mensagem: 'Cumpriste o que tinhas proposto. Define o próximo!',
+        titulo: novosObjetivos == 1
+            ? ref.tr('mobile_marco_objetivo_titulo_um')
+            : '$novosObjetivos ${ref.tr('mobile_marco_objetivos_titulo_sufixo')}',
+        mensagem: ref.tr('mobile_marco_objetivo_msg'),
       ));
     }
 
     // Patamar de badges ultrapassado
     for (final p in _patamaresBadges) {
       if (badgesAntes < p && badgesAgora >= p) {
+        final sufixoBadge = p == 1
+            ? ref.tr('mobile_marco_patamar_badge_sufixo_singular')
+            : ref.tr('mobile_marco_patamar_badge_sufixo_plural');
         marcos.add(Marco(
           icone: Icons.workspace_premium,
-          titulo: 'Marco: $p badge${p == 1 ? '' : 's'}!',
+          titulo: '${ref.tr('mobile_marco_patamar_prefixo')} $p $sufixoBadge',
           mensagem: p == 1
-              ? 'Este é o teu primeiro badge na plataforma.'
-              : 'Já somas $p badges conquistados.',
+              ? ref.tr('mobile_marco_patamar_badge_msg_um')
+              : '${ref.tr('mobile_marco_patamar_badge_msg_varios_prefixo')} $p ${ref.tr('mobile_marco_patamar_badge_msg_varios_sufixo')}',
         ));
       }
     }
@@ -100,8 +113,8 @@ class CelebracaoMarco {
       if (pontosAntes < p && pontosAgora >= p) {
         marcos.add(Marco(
           icone: Icons.emoji_events,
-          titulo: 'Marco: $p pontos!',
-          mensagem: 'Atingiste $p pontos de gamification.',
+          titulo: '${ref.tr('mobile_marco_patamar_prefixo')} $p ${ref.tr('mobile_marco_patamar_pontos_sufixo')}',
+          mensagem: '${ref.tr('mobile_marco_patamar_pontos_msg_prefixo')} $p ${ref.tr('mobile_marco_patamar_pontos_msg_sufixo')}',
         ));
       }
     }
@@ -111,9 +124,13 @@ class CelebracaoMarco {
 
   /// Mostra o diálogo de celebração, se houver marcos e ainda não tiver
   /// sido mostrado nesta sessão.
-  static Future<void> mostrar(BuildContext context, List<Marco> marcos) async {
+  static Future<void> mostrar(BuildContext context, WidgetRef ref, List<Marco> marcos) async {
     if (_jaMostrou || marcos.isEmpty || !context.mounted) return;
     _jaMostrou = true;
+
+    // Traduzido uma vez antes do diálogo abrir (ref.tr, não estamos em build())
+    final tituloParabens = ref.tr('mobile_marco_parabens');
+    final textoBoa = ref.tr('mobile_marco_boa');
 
     await showDialog<void>(
       context: context,
@@ -131,7 +148,7 @@ class CelebracaoMarco {
                 child: const Icon(Icons.celebration, size: 36, color: D.aviso),
               ),
               const SizedBox(height: D.e4),
-              Text('Parabéns!',
+              Text(tituloParabens,
                   style: D.tituloSeccao.copyWith(fontSize: 22, color: D.azul600)),
               const SizedBox(height: D.e4),
 
@@ -176,7 +193,7 @@ class CelebracaoMarco {
                     padding: const EdgeInsets.symmetric(vertical: D.e3),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
                   ),
-                  child: const Text('Boa!', style: TextStyle(fontWeight: FontWeight.w600)),
+                  child: Text(textoBoa, style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
               ),
             ],

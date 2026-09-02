@@ -412,6 +412,60 @@ class Traducoes {
       'mobile_candsub_numero': 'Candidatura Nº',
       'mobile_candsub_ver_candidaturas': 'Ver Candidaturas',
       'mobile_camera_titulo': 'Câmara',
+
+      // ── Widgets partilhados (lib/widgets) ───────────────────────────
+      'mobile_geral_sem_rede_banner': 'Sem ligação à internet — a mostrar dados guardados',
+      'mobile_geral_terminar_sessao': 'Terminar Sessão',
+      'mobile_geral_terminar_sessao_confirmar': 'Pretende terminar a sua sessão?',
+      'mobile_geral_clica_carregar': 'Clica para carregar',
+
+      // Menu lateral (custom_drawer.dart)
+      'mobile_drawer_dashboard': 'Dashboard',
+      'mobile_drawer_meus_badges': 'Os Meus Badges',
+      'mobile_drawer_catalogo': 'Catálogo de Badges',
+      'mobile_drawer_candidaturas': 'Candidaturas',
+      'mobile_drawer_objetivos': 'Os Meus Objetivos',
+      'mobile_drawer_gamification': 'Gamification',
+      'mobile_drawer_perfil': 'O Meu Perfil',
+
+      // Celebração de marcos (celebracao_marco.dart)
+      'mobile_marco_parabens': 'Parabéns!',
+      'mobile_marco_boa': 'Boa!',
+      'mobile_marco_badge_titulo_um': 'Novo badge conquistado!',
+      'mobile_marco_badges_titulo_sufixo': 'novos badges!',
+      'mobile_marco_badge_msg_um': 'Ganhaste mais um badge. Continua assim!',
+      'mobile_marco_badges_msg_prefixo': 'Conquistaste',
+      'mobile_marco_badges_msg_sufixo': 'badges desde a última visita.',
+      'mobile_marco_especial_titulo': 'Conquista especial!',
+      'mobile_marco_especial_msg_um': 'Desbloqueaste um badge especial pelo teu percurso.',
+      'mobile_marco_especial_msg_varios_prefixo': 'Desbloqueaste',
+      'mobile_marco_especial_msg_varios_sufixo': 'badges especiais.',
+      'mobile_marco_objetivo_titulo_um': 'Objetivo alcançado!',
+      'mobile_marco_objetivos_titulo_sufixo': 'objetivos alcançados!',
+      'mobile_marco_objetivo_msg': 'Cumpriste o que tinhas proposto. Define o próximo!',
+      'mobile_marco_patamar_prefixo': 'Marco:',
+      'mobile_marco_patamar_badge_sufixo_singular': 'badge!',
+      'mobile_marco_patamar_badge_sufixo_plural': 'badges!',
+      'mobile_marco_patamar_badge_msg_um': 'Este é o teu primeiro badge na plataforma.',
+      'mobile_marco_patamar_badge_msg_varios_prefixo': 'Já somas',
+      'mobile_marco_patamar_badge_msg_varios_sufixo': 'badges conquistados.',
+      'mobile_marco_patamar_pontos_sufixo': 'pontos!',
+      'mobile_marco_patamar_pontos_msg_prefixo': 'Atingiste',
+      'mobile_marco_patamar_pontos_msg_sufixo': 'pontos de gamification.',
+
+      // Saudação de evento (saudacao_evento.dart)
+      'mobile_saudacao_bemvindo': 'Bem-vindo!',
+      'mobile_saudacao_bemvindo_novamente': 'Seja bem-vindo novamente!',
+      'mobile_saudacao_primeiro_acesso_msg': 'Esta é a tua plataforma de badges. Explora o catálogo e candidata-te ao teu primeiro badge.',
+      'mobile_saudacao_regresso_msg': 'Vê o que há de novo no catálogo desde a tua última visita.',
+      'mobile_saudacao_ola_prefixo': 'Olá',
+      'mobile_saudacao_regresso_prefixo': 'Que bom ver-te por cá outra vez,',
+      'mobile_saudacao_vamos_la': 'Vamos lá',
+
+      // Pódio (podio_ranking.dart)
+      'mobile_podio_posicao_1': '1º',
+      'mobile_podio_posicao_2': '2º',
+      'mobile_podio_posicao_3': '3º',
     },
     'en': {
       // ── Geral / partilhado ──────────────────────────────────────
@@ -814,6 +868,60 @@ class Traducoes {
       'mobile_candsub_numero': 'Application No.',
       'mobile_candsub_ver_candidaturas': 'View Applications',
       'mobile_camera_titulo': 'Camera',
+
+      // ── Shared widgets (lib/widgets) ────────────────────────────────
+      'mobile_geral_sem_rede_banner': 'No internet connection — showing saved data',
+      'mobile_geral_terminar_sessao': 'Log Out',
+      'mobile_geral_terminar_sessao_confirmar': 'Do you want to log out?',
+      'mobile_geral_clica_carregar': 'Tap to upload',
+
+      // Side menu (custom_drawer.dart)
+      'mobile_drawer_dashboard': 'Dashboard',
+      'mobile_drawer_meus_badges': 'My Badges',
+      'mobile_drawer_catalogo': 'Badge Catalog',
+      'mobile_drawer_candidaturas': 'Applications',
+      'mobile_drawer_objetivos': 'My Goals',
+      'mobile_drawer_gamification': 'Gamification',
+      'mobile_drawer_perfil': 'My Profile',
+
+      // Milestone celebration (celebracao_marco.dart)
+      'mobile_marco_parabens': 'Congratulations!',
+      'mobile_marco_boa': 'Nice!',
+      'mobile_marco_badge_titulo_um': 'New badge earned!',
+      'mobile_marco_badges_titulo_sufixo': 'new badges!',
+      'mobile_marco_badge_msg_um': 'You earned another badge. Keep it up!',
+      'mobile_marco_badges_msg_prefixo': 'You earned',
+      'mobile_marco_badges_msg_sufixo': 'badges since your last visit.',
+      'mobile_marco_especial_titulo': 'Special achievement!',
+      'mobile_marco_especial_msg_um': 'You unlocked a special badge for your journey.',
+      'mobile_marco_especial_msg_varios_prefixo': 'You unlocked',
+      'mobile_marco_especial_msg_varios_sufixo': 'special badges.',
+      'mobile_marco_objetivo_titulo_um': 'Goal achieved!',
+      'mobile_marco_objetivos_titulo_sufixo': 'goals achieved!',
+      'mobile_marco_objetivo_msg': 'You did what you set out to do. Set the next one!',
+      'mobile_marco_patamar_prefixo': 'Milestone:',
+      'mobile_marco_patamar_badge_sufixo_singular': 'badge!',
+      'mobile_marco_patamar_badge_sufixo_plural': 'badges!',
+      'mobile_marco_patamar_badge_msg_um': 'This is your first badge on the platform.',
+      'mobile_marco_patamar_badge_msg_varios_prefixo': "You've now earned",
+      'mobile_marco_patamar_badge_msg_varios_sufixo': 'badges.',
+      'mobile_marco_patamar_pontos_sufixo': 'points!',
+      'mobile_marco_patamar_pontos_msg_prefixo': "You've reached",
+      'mobile_marco_patamar_pontos_msg_sufixo': 'gamification points.',
+
+      // Event greeting (saudacao_evento.dart)
+      'mobile_saudacao_bemvindo': 'Welcome!',
+      'mobile_saudacao_bemvindo_novamente': 'Welcome back!',
+      'mobile_saudacao_primeiro_acesso_msg': 'This is your badge platform. Explore the catalog and apply for your first badge.',
+      'mobile_saudacao_regresso_msg': "Check out what's new in the catalog since your last visit.",
+      'mobile_saudacao_ola_prefixo': 'Hi',
+      'mobile_saudacao_regresso_prefixo': 'Great to see you again,',
+      'mobile_saudacao_vamos_la': "Let's go",
+
+      // Podium (podio_ranking.dart)
+      'mobile_podio_posicao_1': '1st',
+      'mobile_podio_posicao_2': '2nd',
+      'mobile_podio_posicao_3': '3rd',
     },
     'es': {
       // ── Geral / partilhado ──────────────────────────────────────
@@ -1216,6 +1324,60 @@ class Traducoes {
       'mobile_candsub_numero': 'Solicitud Nº',
       'mobile_candsub_ver_candidaturas': 'Ver Solicitudes',
       'mobile_camera_titulo': 'Cámara',
+
+      // ── Widgets compartidos (lib/widgets) ───────────────────────────
+      'mobile_geral_sem_rede_banner': 'Sin conexión a internet — mostrando datos guardados',
+      'mobile_geral_terminar_sessao': 'Cerrar Sesión',
+      'mobile_geral_terminar_sessao_confirmar': '¿Quieres cerrar la sesión?',
+      'mobile_geral_clica_carregar': 'Toca para subir',
+
+      // Menú lateral (custom_drawer.dart)
+      'mobile_drawer_dashboard': 'Panel',
+      'mobile_drawer_meus_badges': 'Mis Badges',
+      'mobile_drawer_catalogo': 'Catálogo de Badges',
+      'mobile_drawer_candidaturas': 'Solicitudes',
+      'mobile_drawer_objetivos': 'Mis Objetivos',
+      'mobile_drawer_gamification': 'Gamification',
+      'mobile_drawer_perfil': 'Mi Perfil',
+
+      // Celebración de logros (celebracao_marco.dart)
+      'mobile_marco_parabens': '¡Enhorabuena!',
+      'mobile_marco_boa': '¡Genial!',
+      'mobile_marco_badge_titulo_um': '¡Nuevo badge conseguido!',
+      'mobile_marco_badges_titulo_sufixo': 'badges nuevos!',
+      'mobile_marco_badge_msg_um': 'Has conseguido otro badge. ¡Sigue así!',
+      'mobile_marco_badges_msg_prefixo': 'Has conseguido',
+      'mobile_marco_badges_msg_sufixo': 'badges desde tu última visita.',
+      'mobile_marco_especial_titulo': '¡Logro especial!',
+      'mobile_marco_especial_msg_um': 'Has desbloqueado un badge especial por tu trayectoria.',
+      'mobile_marco_especial_msg_varios_prefixo': 'Has desbloqueado',
+      'mobile_marco_especial_msg_varios_sufixo': 'badges especiales.',
+      'mobile_marco_objetivo_titulo_um': '¡Objetivo alcanzado!',
+      'mobile_marco_objetivos_titulo_sufixo': 'objetivos alcanzados!',
+      'mobile_marco_objetivo_msg': 'Cumpliste lo que te propusiste. ¡Define el siguiente!',
+      'mobile_marco_patamar_prefixo': 'Logro:',
+      'mobile_marco_patamar_badge_sufixo_singular': 'badge!',
+      'mobile_marco_patamar_badge_sufixo_plural': 'badges!',
+      'mobile_marco_patamar_badge_msg_um': 'Este es tu primer badge en la plataforma.',
+      'mobile_marco_patamar_badge_msg_varios_prefixo': 'Ya sumas',
+      'mobile_marco_patamar_badge_msg_varios_sufixo': 'badges conseguidos.',
+      'mobile_marco_patamar_pontos_sufixo': 'puntos!',
+      'mobile_marco_patamar_pontos_msg_prefixo': 'Alcanzaste',
+      'mobile_marco_patamar_pontos_msg_sufixo': 'puntos de gamification.',
+
+      // Saludo de evento (saudacao_evento.dart)
+      'mobile_saudacao_bemvindo': '¡Bienvenido!',
+      'mobile_saudacao_bemvindo_novamente': '¡Bienvenido de nuevo!',
+      'mobile_saudacao_primeiro_acesso_msg': 'Esta es tu plataforma de badges. Explora el catálogo y postúlate para tu primer badge.',
+      'mobile_saudacao_regresso_msg': 'Mira las novedades del catálogo desde tu última visita.',
+      'mobile_saudacao_ola_prefixo': 'Hola',
+      'mobile_saudacao_regresso_prefixo': 'Qué bueno verte de nuevo,',
+      'mobile_saudacao_vamos_la': 'Vamos',
+
+      // Podio (podio_ranking.dart)
+      'mobile_podio_posicao_1': '1º',
+      'mobile_podio_posicao_2': '2º',
+      'mobile_podio_posicao_3': '3º',
     },
   };
 

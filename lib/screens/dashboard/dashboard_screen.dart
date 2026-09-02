@@ -91,6 +91,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     await SaudacaoEvento.mostrarSeNecessario(
       context,
+      ref,
       nome: utilizador.nome,
       primeiroAcesso: dados.primeiroAcesso,
       ultimoLoginAnterior: dados.ultimoLoginAnterior,
@@ -131,6 +132,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final antes = await prefs.lerMarcosVistos();
 
     final marcos = CelebracaoMarco.calcular(
+      ref: ref,
       badgesAgora: badges,
       especiaisAgora: especiais,
       objetivosAgora: objetivos,
@@ -150,7 +152,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     await SaudacaoEvento.concluida;
 
     if (!mounted) return;
-    await CelebracaoMarco.mostrar(context, marcos);
+    await CelebracaoMarco.mostrar(context, ref, marcos);
   }
 
   int get _notificacoesNaoLidas => _notificacoes.where((n) => !n.lida).length;
