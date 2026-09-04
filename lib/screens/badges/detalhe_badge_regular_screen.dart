@@ -12,6 +12,7 @@ import 'package:pint_mobile/utils/certificado_badge.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/widgets/texto_traduzido.dart';
 import 'package:pint_mobile/providers/utilizador_provider.dart';
+import 'package:pint_mobile/utils/assinatura_email.dart';
 
 // ECRÃ DETALHE BADGE REGULAR
 // Mostra os detalhes completos de um badge regular válido.
@@ -244,6 +245,22 @@ class DetalheBadgeRegular extends ConsumerWidget {
             ),
           ),
         const SizedBox(height: D.e2 + 2),
+        if (badge.tokenValidacao != null)
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => mostrarDialogAssinaturaEmail(context, ref, badge),
+              icon: const Icon(Icons.badge_outlined, size: 18),
+              label: Text(ref.t('mobile_badges_assinatura_email')),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: D.azul600,
+                side: const BorderSide(color: D.azul600),
+                padding: const EdgeInsets.symmetric(vertical: D.e3),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(D.rSm)),
+              ),
+            ),
+          ),
+        const SizedBox(height: D.e2 + 2),
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
@@ -309,13 +326,24 @@ class DetalheBadgeRegular extends ConsumerWidget {
     final url = urlPublica != null
         ? 'https://www.linkedin.com/sharing/share-offsite/?url=${Uri.encodeComponent(urlPublica)}'
         : 'https://www.linkedin.com';
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ref.tr('mobile_badges_erro_linkedin'))),
-      );
+    // O canLaunchUrl() pode dar falso negativo em Android/iOS quando a app
+    // não declara a query de intents/schemes correspondente, mesmo que o
+    // launchUrl() em si funcione perfeitamente — e era exatamente isso que
+    // fazia o botão parecer sempre avariado. Tenta abrir diretamente e só
+    // mostra o erro se o launchUrl() realmente falhar.
+    try {
+      final abriu = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      if (!abriu && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ref.tr('mobile_badges_erro_linkedin'))),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ref.tr('mobile_badges_erro_linkedin'))),
+        );
+      }
     }
   }
 
@@ -330,13 +358,20 @@ class DetalheBadgeRegular extends ConsumerWidget {
     }
     final urlPublica = AppConstants.urlVerificacaoBadge(badge.tokenValidacao);
     if (urlPublica == null) return;
-    final uri = Uri.parse(urlPublica);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ref.tr('mobile_badges_erro_pagina'))),
-      );
+    // Mesma correção do LinkedIn acima: não confiar no canLaunchUrl().
+    try {
+      final abriu = await launchUrl(Uri.parse(urlPublica), mode: LaunchMode.externalApplication);
+      if (!abriu && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ref.tr('mobile_badges_erro_pagina'))),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ref.tr('mobile_badges_erro_pagina'))),
+        );
+      }
     }
   }
 }

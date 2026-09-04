@@ -31,6 +31,18 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
   _FiltroEstado _filtroEstado = _FiltroEstado.todos;
 
   @override
+  void initState() {
+    super.initState();
+    // Ao contrário do ecrã de Objetivos, este nunca sincronizava ao abrir —
+    // só mostrava o que já estava em SQLite de uma sincronização anterior
+    // (ex.: a do arranque da app), e só se atualizava com um pull-to-refresh
+    // manual. Um badge atribuído entretanto (ex.: candidatura aprovada
+    // enquanto a app estava aberta) só aparecia depois de puxar a lista para
+    // baixo — daí a sensação de que "não atualiza logo".
+    ref.read(badgesProvider.notifier).atualizar();
+  }
+
+  @override
   void dispose() {
     _pesquisaController.dispose();
     super.dispose();

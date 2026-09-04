@@ -30,6 +30,15 @@ class _BadgesEspeciaisState extends ConsumerState<BadgesEspeciais> {
   String _queryPesquisa = '';
 
   @override
+  void initState() {
+    super.initState();
+    // Mesma correção do ecrã "Os Meus Badges": sem isto, este ecrã só
+    // mostrava o SQLite de uma sincronização anterior e só se atualizava
+    // com um pull-to-refresh manual.
+    ref.read(badgesProvider.notifier).atualizar();
+  }
+
+  @override
   void dispose() {
     _pesquisaController.dispose();
     super.dispose();
