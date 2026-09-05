@@ -11,7 +11,6 @@ import 'package:pint_mobile/widgets/podio_ranking.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:pint_mobile/models/badge_recomendado.dart';
-import 'package:pint_mobile/models/notificacao.dart';
 import 'package:pint_mobile/models/ranking_entrada.dart';
 import 'package:pint_mobile/providers/utilizador_provider.dart';
 import 'package:pint_mobile/providers/badges_provider.dart';
@@ -42,7 +41,6 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  List<Notificacao> _notificacoes = [];
   String _pesquisa = '';
   StreamSubscription? _subDados;
 
@@ -57,7 +55,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     APIService.instance.sincronizarTodos().then((_) {
       if (mounted) _verificarMarcos();
     });
-    _carregarExtras();
     _mostrarSaudacao();
     _subDados = atualizadorDados.stream.listen((_) {
       ref.invalidate(utilizadorProvider);
@@ -67,7 +64,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       ref.invalidate(objetivosResumoProvider);
       ref.invalidate(badgesRecomendadosProvider);
       ref.invalidate(rankingProvider);
-      _carregarExtras();
     });
   }
 
@@ -75,12 +71,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void dispose() {
     _subDados?.cancel();
     super.dispose();
-  }
-
-  // Notificações não têm provider: são carregadas directamente do SQLite
-  Future<void> _carregarExtras() async {
-    final notificacoes = await DatabaseService.instance.getNotificacoes();
-    if (mounted) setState(() => _notificacoes = notificacoes);
   }
 
   // Modal de boas-vindas / regresso — só aparece uma vez por sessão
@@ -155,8 +145,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     await CelebracaoMarco.mostrar(context, ref, marcos);
   }
 
-  int get _notificacoesNaoLidas => _notificacoes.where((n) => !n.lida).length;
-
   // ── Saudação por hora, igual à web (components/Saudacao.jsx) ──────────────
   String _saudacaoPorHora() {
     final h = DateTime.now().hour;
@@ -218,30 +206,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         title: Text(ref.t('mobile_dash_titulo'), style: D.tituloPagina),
         actions: [
-          Stack(
-            children: [
-              IconButton(
-                icon: SvgPicture.asset(
-                  'assets/icons/notificacoesprimaria.svg',
-                  height: 24,
-                  colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn),
-                ),
-                onPressed: () => context.push(AppConstants.routeNotificacoes),
-              ),
-              if (_notificacoesNaoLidas > 0)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(color: D.erro, shape: BoxShape.circle),
-                    child: Text(
-                      '$_notificacoesNaoLidas',
-                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-            ],
+          IconButton(
+            icon: SvgPicture.asset(
+              'assets/icons/notificacoesprimaria.svg',
+              height: 24,
+              colorFilter: const ColorFilter.mode(AppConstants.corPrimaria, BlendMode.srcIn),
+            ),
+            onPressed: () => context.push(AppConstants.routeNotificacoes),
           ),
         ],
       ),
@@ -257,7 +228,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ref.invalidate(objetivosResumoProvider);
                 ref.invalidate(badgesRecomendadosProvider);
                 ref.invalidate(rankingProvider);
-                await _carregarExtras();
               },
               color: D.azul600,
               child: SingleChildScrollView(
@@ -270,26 +240,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     Text(
                       '${_saudacaoPorHora()}, $primeiroNome 👋',
                       style: D.tituloSeccao.copyWith(fontSize: 18, color: D.azul600),
-                    ),
-                    const SizedBox(height: D.e4),
-
-                    // ─── Barra de pesquisa ────────────────
-                    Container(
-                      decoration: BoxDecoration(
-                        color: D.superficie,
-                        borderRadius: BorderRadius.circular(D.rMd),
-                        boxShadow: D.elev1,
-                      ),
-                      child: TextField(
-                        onChanged: (value) => setState(() => _pesquisa = value),
-                        decoration: InputDecoration(
-                          hintText: ref.t('mobile_geral_procurar'),
-                          hintStyle: const TextStyle(color: D.tinta30, fontSize: 14),
-                          prefixIcon: const Icon(Icons.search, color: D.tinta30, size: 20),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: D.e4, vertical: D.e3),
-                        ),
-                      ),
                     ),
                     const SizedBox(height: D.e5),
 
@@ -393,6 +343,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     const SizedBox(height: D.e5),
 
                     // ─── Badges Recomendados ──────────────
+                    // A barra de pesquisa vive aqui ao lado, e não lá em
+                    // cima perto da saudação — só filtra esta secção (é a
+                    // única lista com pesquisa no dashboard), por isso fica
+                    // junto ao que realmente afeta.
+                    Container(
+                      decoration: BoxDecoration(
+                        color: D.superficie,
+                        borderRadius: BorderRadius.circular(D.rMd),
+                        boxShadow: D.elev1,
+                      ),
+                      child: TextField(
+                        onChanged: (value) => setState(() => _pesquisa = value),
+                        decoration: InputDecoration(
+                          hintText: ref.t('mobile_dash_procurar_recomendados'),
+                          hintStyle: const TextStyle(color: D.tinta30, fontSize: 14),
+                          prefixIcon: const Icon(Icons.search, color: D.tinta30, size: 20),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: D.e4, vertical: D.e3),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: D.e3),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [

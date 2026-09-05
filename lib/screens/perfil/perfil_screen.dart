@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:pint_mobile/models/consultor.dart';
 import 'package:pint_mobile/models/badge_utilizador.dart';
 import 'package:pint_mobile/models/candidatura_badge.dart';
@@ -221,13 +223,18 @@ class _PerfilState extends ConsumerState<Perfil> {
                 texto: consultor.urlLinkedin ?? ref.t('mobile_perfil_sem_linkedin'),
                 vazio: consultor.urlLinkedin == null,
                 isLink: consultor.urlLinkedin != null,
+                url: consultor.urlLinkedin,
               ),
               _buildDivisor(),
               _buildLinhaInfo(
                 icon: Icons.language,
-                texto:
-                    'www.softinsa.pt/galeria-publico/${consultor.nome.toLowerCase().replaceAll(' ', '-')}',
+                // Link real da página pública do consultor (mesma rota que a
+                // web usa em App.jsx: /consultores/:id). Antes estava aqui um
+                // domínio inventado (www.softinsa.pt/galeria-publico/...) que
+                // nunca existiu.
+                texto: '${AppConstants.frontendUrl}/consultores/${consultor.id}',
                 isLink: true,
+                url: '${AppConstants.frontendUrl}/consultores/${consultor.id}',
               ),
               _buildDivisor(),
               _buildLinhaInfo(
@@ -258,8 +265,9 @@ class _PerfilState extends ConsumerState<Perfil> {
     required String texto,
     bool vazio = false,
     bool isLink = false,
+    String? url,
   }) {
-    return Padding(
+    final linha = Padding(
       padding: const EdgeInsets.symmetric(horizontal: D.e4, vertical: 13),
       child: Row(
         children: [
@@ -276,8 +284,49 @@ class _PerfilState extends ConsumerState<Perfil> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          // Botão de copiar — só nos links, e só quando há de facto um
+          // (o LinkedIn pode estar por preencher, mesmo com isLink=true
+          // se algum dia essa combinação surgir).
+          if (isLink && url != null)
+            IconButton(
+              icon: const Icon(Icons.copy, size: 16, color: D.tinta30),
+              tooltip: ref.t('mobile_perfil_copiar_link'),
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: url));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(ref.t('mobile_perfil_link_copiado'))),
+                  );
+                }
+              },
+            ),
         ],
       ),
+    );
+
+    if (!isLink || url == null) return linha;
+
+    // Toda a linha fica tocável para abrir o link — mesmo padrão (tentar
+    // abrir diretamente, sem confiar em canLaunchUrl()) já usado em
+    // detalhe_badge_regular_screen.dart / detalhe_badge_premium_screen.dart.
+    return InkWell(
+      onTap: () async {
+        try {
+          final abriu = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+          if (!abriu && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(ref.t('mobile_perfil_erro_link'))),
+            );
+          }
+        } catch (_) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(ref.t('mobile_perfil_erro_link'))),
+            );
+          }
+        }
+      },
+      child: linha,
     );
   }
 
