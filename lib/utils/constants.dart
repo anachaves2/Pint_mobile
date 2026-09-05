@@ -43,7 +43,7 @@ class AppConstants {
 
   static const String dbName = 'pint2526.db'; //base de dados local (SQlite)
   static const int dbVersion =
-      4; //versão da db -> compara e garante que o user tem a versão atual da db caso a altere
+      5; //versão da db -> compara e garante que o user tem a versão atual da db caso a altere
 
   //Tabelas locais
 

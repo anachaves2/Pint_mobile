@@ -94,21 +94,23 @@ class _OsMeusBadgesState extends ConsumerState<OsMeusBadges> {
 
   List<BadgeUtilizador> _badgesExpirados(List<BadgeUtilizador> todos) {
     final lista = todos.where((b) => b.jaExpirou).toList()
-      ..sort((a, b) => b.dataExpiracao.compareTo(a.dataExpiracao));
+      ..sort((a, b) => (b.dataExpiracao ?? DateTime(0)).compareTo(a.dataExpiracao ?? DateTime(0)));
     return _filtrar(lista).take(3).toList();
   }
 
   // ── Indicador de validade — igual ao corIndicadorValidade da web ──────────
   Color _corIndicadorValidade(BadgeUtilizador b) {
     if (!b.valido) return D.erro;
-    final horasRestantes = b.dataExpiracao.difference(DateTime.now()).inMinutes / 60;
+    if (b.dataExpiracao == null) return D.ok; // sem data de expiração = válido para sempre
+    final horasRestantes = b.dataExpiracao!.difference(DateTime.now()).inMinutes / 60;
     if (horasRestantes > 0 && horasRestantes <= 72) return D.aviso;
     return D.ok;
   }
 
   // ── Texto de expiração — igual ao formatarTempoRestante da web ───────────
   String _textoExpiracao(BadgeUtilizador b) {
-    final diff = b.dataExpiracao.difference(DateTime.now());
+    if (b.dataExpiracao == null) return ref.t('mobile_badges_sem_data_expiracao');
+    final diff = b.dataExpiracao!.difference(DateTime.now());
     if (diff.isNegative) return b.valido ? ref.t('mobile_badges_sem_data_expiracao') : ref.t('mobile_badges_invalida');
     final horas = diff.inHours;
     final minutos = diff.inMinutes % 60;

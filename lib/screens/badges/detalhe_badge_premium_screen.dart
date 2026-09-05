@@ -168,7 +168,7 @@ class DetalheBadgePremium extends ConsumerWidget {
         Expanded(
           child: _buildChipData(
             label: ref.t('mobile_badges_conquistado_em'),
-            data: _formatarData(badge.dataAtribuicao),
+            data: _formatarData(badge.dataAtribuicao, ref),
             cor: D.aviso,
           ),
         ),
@@ -176,7 +176,7 @@ class DetalheBadgePremium extends ConsumerWidget {
         Expanded(
           child: _buildChipData(
             label: ref.t('mobile_badges_valido_ate'),
-            data: _formatarData(badge.dataExpiracao),
+            data: _formatarData(badge.dataExpiracao, ref),
             cor: badge.estaProximoDeExpirar ? D.erro : D.tinta50,
           ),
         ),
@@ -184,8 +184,10 @@ class DetalheBadgePremium extends ConsumerWidget {
     );
   }
 
-  String _formatarData(DateTime data) =>
-      '${data.day.toString().padLeft(2, '0')}-${data.month.toString().padLeft(2, '0')}-${data.year}';
+  String _formatarData(DateTime? data, WidgetRef ref) {
+    if (data == null) return ref.t('mobile_badges_sem_data_expiracao');
+    return '${data.day.toString().padLeft(2, '0')}-${data.month.toString().padLeft(2, '0')}-${data.year}';
+  }
 
   Widget _buildChipData({required String label, required String data, required Color cor}) {
     return Container(

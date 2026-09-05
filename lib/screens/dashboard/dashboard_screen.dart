@@ -41,7 +41,6 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  String _pesquisa = '';
   StreamSubscription? _subDados;
 
   @override
@@ -343,28 +342,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     const SizedBox(height: D.e5),
 
                     // ─── Badges Recomendados ──────────────
-                    // A barra de pesquisa vive aqui ao lado, e não lá em
-                    // cima perto da saudação — só filtra esta secção (é a
-                    // única lista com pesquisa no dashboard), por isso fica
-                    // junto ao que realmente afeta.
-                    Container(
-                      decoration: BoxDecoration(
-                        color: D.superficie,
-                        borderRadius: BorderRadius.circular(D.rMd),
-                        boxShadow: D.elev1,
-                      ),
-                      child: TextField(
-                        onChanged: (value) => setState(() => _pesquisa = value),
-                        decoration: InputDecoration(
-                          hintText: ref.t('mobile_dash_procurar_recomendados'),
-                          hintStyle: const TextStyle(color: D.tinta30, fontSize: 14),
-                          prefixIcon: const Icon(Icons.search, color: D.tinta30, size: 20),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: D.e4, vertical: D.e3),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: D.e3),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -383,16 +360,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         child: Center(child: Text(ref.t('mobile_dash_badges_recomendados_erro'), style: D.legenda)),
                       ),
                       data: (recomendados) {
-                        final filtrados = _pesquisa.isEmpty
-                            ? recomendados
-                            : recomendados.where((b) => b.nome.toLowerCase().contains(_pesquisa.toLowerCase())).toList();
-                        if (filtrados.isEmpty) {
+                        if (recomendados.isEmpty) {
                           return CardSimples(
                             child: Center(child: Text(ref.t('mobile_dash_badges_recomendados_vazio'), style: D.legenda)),
                           );
                         }
                         return Column(
-                          children: [for (final b in filtrados.take(3)) _buildBadgeRecomendadoItem(b)],
+                          children: [for (final b in recomendados.take(3)) _buildBadgeRecomendadoItem(b)],
                         );
                       },
                     ),

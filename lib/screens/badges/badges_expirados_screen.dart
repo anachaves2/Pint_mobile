@@ -43,7 +43,7 @@ class _BadgesExpiradosState extends ConsumerState<BadgesExpirados> {
 
   List<BadgeUtilizador> _aplicarFiltro(List<BadgeUtilizador> todos) {
     final expirados = todos.where((b) => b.jaExpirou).toList()
-      ..sort((a, b) => b.dataExpiracao.compareTo(a.dataExpiracao));
+      ..sort((a, b) => (b.dataExpiracao ?? DateTime(0)).compareTo(a.dataExpiracao ?? DateTime(0)));
 
     if (_queryPesquisa.isEmpty) return expirados;
 

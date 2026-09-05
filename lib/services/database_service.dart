@@ -115,7 +115,7 @@ class DatabaseService {
         nomeArea TEXT,
         idArea INTEGER,
         dataAtribuicao TEXT NOT NULL,
-        dataExpiracao TEXT NOT NULL,
+        dataExpiracao TEXT,
         valido INTEGER NOT NULL,
         urlPublico TEXT,
         tokenValidacao TEXT
@@ -279,6 +279,38 @@ class DatabaseService {
         'ALTER TABLE ${AppConstants.tableUsers} ADD COLUMN primeiroAcesso INTEGER NOT NULL DEFAULT 0',
       );
     }
+    if (oldVersion < 5) {
+      // dataExpiracao passou a poder ser NULL (badges especiais sem
+      // validade definida) — o SQLite não permite alterar um NOT NULL
+      // existente com ALTER TABLE, por isso a tabela é recriada. É só uma
+      // cache (saveBadges() apaga tudo e volta a inserir a cada
+      // sincronização), portanto perder o conteúdo aqui não perde dados
+      // reais, só obriga a uma sincronização já vai acontecer de qualquer forma.
+      await db.execute('DROP TABLE IF EXISTS ${AppConstants.tableBadgesCache}');
+      await db.execute('''
+        CREATE TABLE ${AppConstants.tableBadgesCache} (
+          id INTEGER PRIMARY KEY,
+          idBadgeRegular INTEGER,
+          idBadgeEspecial INTEGER,
+          nomeBadge TEXT NOT NULL,
+          nomeNivel TEXT,
+          idNivel INTEGER,
+          tipoNivel TEXT,
+          descricao TEXT,
+          pontos INTEGER,
+          urlImagem TEXT,
+          nomeServiceLine TEXT,
+          idServiceLine INTEGER,
+          nomeArea TEXT,
+          idArea INTEGER,
+          dataAtribuicao TEXT NOT NULL,
+          dataExpiracao TEXT,
+          valido INTEGER NOT NULL,
+          urlPublico TEXT,
+          tokenValidacao TEXT
+        )
+      ''');
+    }
   }
   //==============================================================
   //Métodos CRUD para o CONSULTOR
@@ -411,7 +443,7 @@ class DatabaseService {
             'nomeArea': badge.nomeArea,
             'idArea': badge.idArea,
             'dataAtribuicao': badge.dataAtribuicao.toIso8601String(),
-            'dataExpiracao': badge.dataExpiracao.toIso8601String(),
+            'dataExpiracao': badge.dataExpiracao?.toIso8601String(),
             'valido': badge.valido ? 1 : 0,
             'urlPublico': badge.urlPublico,
             'tokenValidacao': badge.tokenValidacao,
@@ -445,7 +477,7 @@ class DatabaseService {
             nomeArea: map['nomeArea'] as String?,
             idArea: map['idArea'] as int?,
             dataAtribuicao: DateTime.parse(map['dataAtribuicao'] as String),
-            dataExpiracao: DateTime.parse(map['dataExpiracao'] as String),
+            dataExpiracao: map['dataExpiracao'] != null ? DateTime.parse(map['dataExpiracao'] as String) : null,
             valido: map['valido'] == 1,
             urlPublico: map['urlPublico'] as String?,
             tokenValidacao: map['tokenValidacao'] as String?,

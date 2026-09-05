@@ -184,7 +184,7 @@ class DetalheBadgeRegular extends ConsumerWidget {
         Expanded(
           child: _buildChipData(
             label: ref.t('mobile_badges_valido_ate'),
-            data: BadgeUtils.formatarData(badge.dataExpiracao),
+            data: BadgeUtils.formatarData(badge.dataExpiracao, semData: ref.t('mobile_badges_sem_data_expiracao')),
             cor: badge.estaProximoDeExpirar ? D.aviso : D.tinta50,
           ),
         ),

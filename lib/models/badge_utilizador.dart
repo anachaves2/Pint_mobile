@@ -17,7 +17,7 @@ class BadgeUtilizador {
   final String? nomeArea;
   final int? idArea;
   final DateTime dataAtribuicao;
-  final DateTime dataExpiracao;
+  final DateTime? dataExpiracao; // NULL = badge sem data de expiração (ex.: alguns especiais)
   final bool valido; //se já expirou ou não
   final String? urlPublico;
   final String? tokenValidacao;
@@ -40,7 +40,7 @@ class BadgeUtilizador {
     this.nomeArea,
     this.idArea,
     required this.dataAtribuicao,
-    required this.dataExpiracao,
+    this.dataExpiracao,
     required this.valido,
     this.urlPublico,
     this.tokenValidacao,
@@ -66,7 +66,11 @@ class BadgeUtilizador {
       nomeArea: json['nomeArea'],
       idArea: json['idArea'],
       dataAtribuicao: DateTime.parse(json['dataAtribuicao']),
-      dataExpiracao: DateTime.parse(json['dataExpiracao']),
+      // ATENÇÃO: dataExpiracao pode vir NULL da API (badges especiais sem
+      // validade definida) — DateTime.parse(null) rebentava aqui e, como o
+      // .map() da lista inteira falhava de uma vez, NENHUM badge do
+      // consultor chegava a ser guardado, mesmo os que tinham data válida.
+      dataExpiracao: json['dataExpiracao'] != null ? DateTime.parse(json['dataExpiracao']) : null,
       valido: json['valido'] is bool
           ? json['valido']
           : json['valido'] ==
@@ -96,7 +100,7 @@ class BadgeUtilizador {
       'idArea': idArea,
       'dataAtribuicao': dataAtribuicao
           .toIso8601String(), // Iso 8601 - norma que define formato da data e hora
-      'dataExpiracao': dataExpiracao.toIso8601String(),
+      'dataExpiracao': dataExpiracao?.toIso8601String(),
       'valido': valido,
       'urlPublico': urlPublico,
       'tokenValidacao': tokenValidacao,
@@ -104,14 +108,17 @@ class BadgeUtilizador {
   }
 
   // Métodos auxiliares: badge próximo de expirar e badge expirado
+  // Sem dataExpiracao = badge nunca expira, por isso ambos são false.
 
   bool get estaProximoDeExpirar {
-    final diasRestantes = dataExpiracao.difference(DateTime.now()).inDays;
+    if (dataExpiracao == null) return false;
+    final diasRestantes = dataExpiracao!.difference(DateTime.now()).inDays;
     return diasRestantes <= AppConstants.diasAlertaExpiracao &&
         diasRestantes >= 0;
   }
 
   bool get jaExpirou {
-    return dataExpiracao.isBefore(DateTime.now());
+    if (dataExpiracao == null) return false;
+    return dataExpiracao!.isBefore(DateTime.now());
   }
 }

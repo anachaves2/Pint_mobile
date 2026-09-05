@@ -32,7 +32,10 @@ class BadgeUtils {
   }
 
   // Formata um DateTime para o formato DD-MM-AAAA usado em toda a app.
-  static String formatarData(DateTime data) {
+  // dataExpiracao pode ser NULL (badge sem validade definida) — nesse
+  // caso mostra o texto passado em semData (ou '—' por omissão).
+  static String formatarData(DateTime? data, {String semData = '—'}) {
+    if (data == null) return semData;
     return '${data.day.toString().padLeft(2, '0')}-'
         '${data.month.toString().padLeft(2, '0')}-'
         '${data.year}';

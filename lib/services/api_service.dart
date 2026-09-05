@@ -56,7 +56,11 @@ class APIService {
     final token = await DatabaseService.instance.getToken();
     return {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
+      // Sem isto, um token nulo (ex.: sincronização em fundo ainda a meio
+      // quando o logout já apagou a sessão) interpolava para a string
+      // literal "Bearer null" — o backend via isso como um JWT malformado
+      // em vez de simplesmente "sem autenticação".
+      if (token != null) 'Authorization': 'Bearer $token',
     };
   }
 
