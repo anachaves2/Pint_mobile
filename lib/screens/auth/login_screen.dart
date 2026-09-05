@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pint_mobile/services/api_service.dart';
 import 'package:pint_mobile/utils/constants.dart';
@@ -25,11 +26,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _obscurePassword = true;
   bool _manterSessao = false;
   bool _isLoading = false;
+  StreamSubscription? _subSessaoExpirada;
+
+  @override
+  void initState() {
+    super.initState();
+    // Chegou aqui porque uma sincronização em fundo detetou 401 e a
+    // APIService já fez logout()/navegou para cá sozinha — só falta
+    // avisar a pessoa do porquê.
+    _subSessaoExpirada = sessaoExpirouEvento.stream.listen((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ref.tr('mobile_login_sessao_expirada'))),
+      );
+    });
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _subSessaoExpirada?.cancel();
     super.dispose();
   }
 

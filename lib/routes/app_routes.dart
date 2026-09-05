@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/utils/navigator_key.dart';
 import 'package:pint_mobile/models/notificacao.dart';
 import 'package:pint_mobile/models/badge_utilizador.dart';
 import 'package:pint_mobile/models/badge_regular.dart';
@@ -44,6 +45,7 @@ import 'package:pint_mobile/screens/auth/trocar_password_primeiro_acesso_screen.
 import 'package:pint_mobile/screens/auth/aceitar_rgpd_screen.dart';
 
 final GoRouter appRouter = GoRouter(
+  navigatorKey: navigatorKey,
   initialLocation: AppConstants.routeLanding,
   redirect: (context, state) async {
     //Só verifica nas rotas de auth (landing e login)

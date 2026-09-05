@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
 import 'package:http/http.dart' as http;
+import 'package:go_router/go_router.dart';
 import 'package:pint_mobile/utils/constants.dart';
+import 'package:pint_mobile/utils/navigator_key.dart';
 import 'package:pint_mobile/services/database_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:pint_mobile/services/preferencias_service.dart';
@@ -33,6 +35,11 @@ import 'package:pint_mobile/models/badge_recomendado.dart';
 //Os nomes dos campos JSON que a API deve devolver estão definidos nos fromJson de cada modelo
 //um Stream Controller global, acessível de qualquer menu
 final StreamController<void> atualizadorDados = StreamController<void>.broadcast();
+
+// Emitido quando uma sincronização em fundo deteta que a sessão expirou
+// (401 do backend). O LoginScreen ouve isto para mostrar o aviso, depois
+// da navegação automática já ter acontecido.
+final StreamController<void> sessaoExpirouEvento = StreamController<void>.broadcast();
 
 // Converte uma lista JSON para uma lista de objetos, item a item, em vez de
 // um único .map().toList() que rebenta todo de uma vez ao primeiro item
@@ -72,6 +79,31 @@ class APIService {
 
   // Controla se a sincronização periódica está activa
   bool _sincronizacaoAtiva = false;
+
+  // Evita tratar a sessão expirada mais do que uma vez seguida — o
+  // sincronizarTodos() dispara vários pedidos em paralelo (Future.wait),
+  // e se o token estiver morto, todos falham com 401 quase ao mesmo tempo.
+  // Sem esta flag, isso significaria vários logout()/navegações em
+  // simultâneo. É reposta a false assim que um login tem sucesso.
+  bool _sessaoExpiradaTratada = false;
+
+  // Chamado por qualquer sincronização em fundo que receba 401 do backend.
+  // Faz logout local (limpa tudo, incluindo o token) e manda a app para o
+  // login — sem isto, uma sessão morta ficava a martelar o servidor de 5
+  // em 5 minutos para sempre, sem ninguém dar por isso.
+  Future<void> _tratarSessaoExpirada() async {
+    if (_sessaoExpiradaTratada) return;
+    _sessaoExpiradaTratada = true;
+
+    debugPrint('[APIService] Sessão expirada — a terminar sessão e a voltar ao login.');
+    await logout(); // já chama pararSincronizacao() e limpa o token
+
+    final ctx = navigatorKey.currentContext;
+    if (ctx != null && ctx.mounted) {
+      GoRouter.of(ctx).go(AppConstants.routeLogin);
+    }
+    sessaoExpirouEvento.add(null);
+  }
 
   // Headers HTTP:
   // OS pedidos autenticados precisam do token JWT guardado no SQLite
@@ -116,6 +148,7 @@ class APIService {
       );
 
       if (response.statusCode == 200) {
+        _sessaoExpiradaTratada = false; // nova sessão válida — pode voltar a detetar expiração no futuro
         final json = jsonDecode(response.body);
         final token = json['token'] as String;
 
@@ -354,6 +387,8 @@ class APIService {
         final List<dynamic> jsonList = jsonDecode(response.body);
         final badges = parseListaSegura(jsonList, BadgeUtilizador.fromJson, 'sincronizarBadges');
         await DatabaseService.instance.saveBadges(badges);
+      } else if (response.statusCode == 401) {
+        await _tratarSessaoExpirada();
       }
     } catch (e) {
       // Sem internet — mantém os dados locais, a UI continua a funcionar
@@ -394,6 +429,8 @@ class APIService {
           badgesEspeciais,
         );
         await DatabaseService.instance.saveRequisitos(requisitos);
+      } else if (response.statusCode == 401) {
+        await _tratarSessaoExpirada();
       }
     } catch (e) {
       debugPrint('[APIService] sincronizarCatalogo: sem ligação ($e)');
@@ -416,6 +453,8 @@ class APIService {
         final List<dynamic> jsonList = jsonDecode(response.body);
         final candidaturas = parseListaSegura(jsonList, CandidaturaBadge.fromJson, 'sincronizarCandidaturas');
         await DatabaseService.instance.saveCandidaturas(candidaturas);
+      } else if (response.statusCode == 401) {
+        await _tratarSessaoExpirada();
       }
     } catch (e) {
       debugPrint('[APIService] sincronizarCandidaturas: sem ligação ($e)');
@@ -447,6 +486,8 @@ class APIService {
           json['evidencias'] as List, Evidencia.fromJson, 'sincronizarDetalhesCandidatura:evidencias',
         );
         await DatabaseService.instance.saveEvidencias(evidencias);
+      } else if (response.statusCode == 401) {
+        await _tratarSessaoExpirada();
       }
     } catch (e) {
       debugPrint('[APIService] sincronizarDetalhesCandidatura: sem ligação ($e)');
@@ -469,6 +510,8 @@ class APIService {
         final List<dynamic> jsonList = jsonDecode(response.body);
         final estados = parseListaSegura(jsonList, EstadoCandidatura.fromJson, 'sincronizarEstados');
         await DatabaseService.instance.saveEstados(estados);
+      } else if (response.statusCode == 401) {
+        await _tratarSessaoExpirada();
       }
     } catch (e) {
       debugPrint('[APIService] sincronizarEstados: sem ligação ($e)');
@@ -490,6 +533,8 @@ class APIService {
         final List<dynamic> jsonList = jsonDecode(response.body);
         final objetivos = parseListaSegura(jsonList, Objetivo.fromJson, 'sincronizarObjetivos');
         await DatabaseService.instance.saveObjetivos(objetivos);
+      } else if (response.statusCode == 401) {
+        await _tratarSessaoExpirada();
       }
     } catch (e) {
       debugPrint('[APIService] sincronizarObjetivos: sem ligação ($e)');
@@ -512,6 +557,8 @@ class APIService {
         final List<dynamic> jsonList = jsonDecode(response.body);
         final tipos = parseListaSegura(jsonList, TipoObjetivo.fromJson, 'sincronizarTiposObjetivo');
         await DatabaseService.instance.saveTiposObjetivo(tipos);
+      } else if (response.statusCode == 401) {
+        await _tratarSessaoExpirada();
       }
     } catch (e) {
       debugPrint('[APIService] sincronizarTiposObjetivo: sem ligação ($e)');
@@ -550,6 +597,8 @@ class APIService {
         final List<dynamic> jsonList = jsonDecode(response.body);
         final notificacoes = parseListaSegura(jsonList, Notificacao.fromJson, 'sincronizarNotificacoes');
         await DatabaseService.instance.saveNotificacoes(notificacoes);
+      } else if (response.statusCode == 401) {
+        await _tratarSessaoExpirada();
       }
     } catch (e) {
       debugPrint('[APIService] sincronizarNotificacoes: sem ligação ($e)');
@@ -601,6 +650,8 @@ class APIService {
         if (token != null) {
           await DatabaseService.instance.saveUser(atualizado, token);
         }
+      } else if (response.statusCode == 401) {
+        await _tratarSessaoExpirada();
       }
     } catch (e) {
       debugPrint('[APIService] sincronizarPerfil: sem ligação ($e)');

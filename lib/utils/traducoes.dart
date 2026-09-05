@@ -35,6 +35,7 @@ class Traducoes {
       'mobile_login_manter_sessao': 'Manter sessão iniciada',
       'mobile_login_esqueci_password': 'Esqueci-me da password',
       'mobile_login_entrar': 'Entrar',
+      'mobile_login_sessao_expirada': 'A tua sessão expirou. Inicia sessão novamente.',
 
       // ── Dashboard ────────────────────────────────────────────────
       'mobile_dash_titulo': 'DASHBOARD',
@@ -504,6 +505,7 @@ class Traducoes {
       'mobile_login_manter_sessao': 'Keep me signed in',
       'mobile_login_esqueci_password': 'Forgot my password',
       'mobile_login_entrar': 'Log in',
+      'mobile_login_sessao_expirada': 'Your session has expired. Please log in again.',
 
       // ── Dashboard ────────────────────────────────────────────────
       'mobile_dash_titulo': 'DASHBOARD',
@@ -973,6 +975,7 @@ class Traducoes {
       'mobile_login_manter_sessao': 'Mantener sesión iniciada',
       'mobile_login_esqueci_password': 'Olvidé mi contraseña',
       'mobile_login_entrar': 'Entrar',
+      'mobile_login_sessao_expirada': 'Tu sesión ha caducado. Inicia sesión de nuevo.',
 
       // ── Dashboard ────────────────────────────────────────────────
       'mobile_dash_titulo': 'PANEL',
