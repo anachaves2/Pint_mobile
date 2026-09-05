@@ -2,7 +2,7 @@ class Notificacao {
   final int id;
   final String tipoNotificacao;
   final String? descricao;
-  final DateTime data; // data quando foi gerada
+  final DateTime? data; // data quando foi gerada — NULL é permitido no schema (allowNull: true)
   final bool lida; // se o consultor já a leu
   final int? numCandidatura; // se for sobre uma candidatura
   final int? idObjetivo; // se for sobre um objetivo
@@ -14,7 +14,7 @@ class Notificacao {
     required this.id,
     required this.tipoNotificacao,
     this.descricao,
-    required this.data,
+    this.data,
     required this.lida,
     this.numCandidatura,
     this.idObjetivo,
@@ -29,7 +29,10 @@ class Notificacao {
       id: json['id'],
       tipoNotificacao: json['tipoNotificacao'],
       descricao: json['descricao'],
-      data: DateTime.parse(json['data']),
+      // Mesma classe de bug do dataExpiracao dos badges: a coluna permite
+      // NULL, e DateTime.parse(null) rebentava a lista TODA de notificações
+      // de uma vez (ver .map() em sincronizarNotificacoes).
+      data: json['data'] != null ? DateTime.parse(json['data']) : null,
       lida: json['lida'] is bool
           ? json['lida']
           : json['lida'] ==
@@ -47,7 +50,7 @@ class Notificacao {
       'id': id,
       'tipoNotificacao': tipoNotificacao,
       'descricao': descricao,
-      'data': data.toIso8601String(),
+      'data': data?.toIso8601String(),
       'lida': lida,
       'numCandidatura': numCandidatura,
       'idObjetivo': idObjetivo,

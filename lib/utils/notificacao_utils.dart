@@ -88,7 +88,8 @@ class NotificacaoUtils {
   static NotificacaoConfig configPara(String tipo) => _configs[tipo] ?? _defeito;
 
   // Igual ao tempoRelativo() da web (components/NotificacoesConteudo.jsx)
-  static String tempoRelativo(DateTime data, WidgetRef ref) {
+  static String tempoRelativo(DateTime? data, WidgetRef ref) {
+    if (data == null) return ref.t('mobile_notif_sem_data');
     final diff = DateTime.now().difference(data);
     if (diff.inMinutes < 1) return ref.t('mobile_notif_tempo_agora');
     if (diff.inMinutes < 60) return '${ref.t('mobile_notif_tempo_ha')} ${diff.inMinutes} ${ref.t('mobile_notif_tempo_min')}';
@@ -100,7 +101,8 @@ class NotificacaoUtils {
   // Igual ao grupoData() da web — agrupa por Hoje / Ontem / Esta Semana / Mais Antigas.
   // Devolve a CHAVE de tradução, não o texto — quem mostra o grupo é que
   // chama ref.t(grupo) (mesma correção que já fizemos na web para o mesmo bug).
-  static String grupoData(DateTime data) {
+  static String grupoData(DateTime? data) {
+    if (data == null) return 'mobile_notif_grupo_antigas';
     final agora = DateTime.now();
     final hoje = DateTime(agora.year, agora.month, agora.day);
     final ontem = hoje.subtract(const Duration(days: 1));

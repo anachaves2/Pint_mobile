@@ -79,8 +79,8 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
       lista = lista.where((b) {
         return b.nome.toLowerCase().contains(q) ||
             b.nomeNivel.toLowerCase().contains(q) ||
-            b.nomeArea.toLowerCase().contains(q) ||
-            b.nomeServiceLine.toLowerCase().contains(q);
+            (b.nomeArea?.toLowerCase().contains(q) ?? false) ||
+            (b.nomeServiceLine?.toLowerCase().contains(q) ?? false);
       }).toList();
     }
 
@@ -106,7 +106,7 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
   }
 
   Widget _buildConteudo(Set<int> idsObtidos) {
-    final areas = {for (final b in _catalogo!) b.nomeArea}.toList()..sort();
+    final areas = {for (final b in _catalogo!) if (b.nomeArea != null) b.nomeArea!}.toList()..sort();
     final filtrados = _aplicarFiltro(_catalogo!);
 
     return RefreshIndicator(
@@ -246,7 +246,7 @@ class _TodosOsBadgesState extends ConsumerState<TodosOsBadges> {
                 children: [
                   Text(badge.nome, style: D.tituloCard),
                   const SizedBox(height: 2),
-                  Text('${badge.nomeNivel} · ${badge.nomeArea}', style: D.legenda),
+                  Text('${badge.nomeNivel} · ${badge.nomeArea ?? '—'}', style: D.legenda),
                 ],
               ),
             ),

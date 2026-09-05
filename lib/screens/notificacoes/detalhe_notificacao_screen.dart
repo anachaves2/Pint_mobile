@@ -79,9 +79,10 @@ class _DetalheNotificacaoScreenState extends ConsumerState<DetalheNotificacaoScr
   Widget build(BuildContext context) {
     final notificacao = widget.notificacao;
     final config = NotificacaoUtils.configPara(notificacao.tipoNotificacao);
-    final dataFmt =
-        '${notificacao.data.day.toString().padLeft(2, '0')}-${notificacao.data.month.toString().padLeft(2, '0')}-${notificacao.data.year}  '
-        '${notificacao.data.hour.toString().padLeft(2, '0')}:${notificacao.data.minute.toString().padLeft(2, '0')}';
+    final dataFmt = notificacao.data == null
+        ? ref.t('mobile_notif_sem_data')
+        : '${notificacao.data!.day.toString().padLeft(2, '0')}-${notificacao.data!.month.toString().padLeft(2, '0')}-${notificacao.data!.year}  '
+            '${notificacao.data!.hour.toString().padLeft(2, '0')}:${notificacao.data!.minute.toString().padLeft(2, '0')}';
 
     return Scaffold(
       backgroundColor: D.fundo,

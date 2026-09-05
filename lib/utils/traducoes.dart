@@ -234,6 +234,7 @@ class Traducoes {
 
       // ── Tempo relativo / agrupamento ─────────────────────────────
       'mobile_notif_tempo_agora': 'agora mesmo',
+      'mobile_notif_sem_data': 'Data desconhecida',
       'mobile_notif_tempo_ha': 'há',
       'mobile_notif_tempo_min': 'min',
       'mobile_notif_grupo_hoje': 'Hoje',
@@ -702,6 +703,7 @@ class Traducoes {
 
       // ── Tempo relativo / agrupamento ─────────────────────────────
       'mobile_notif_tempo_agora': 'just now',
+      'mobile_notif_sem_data': 'Unknown date',
       'mobile_notif_tempo_ha': '',
       'mobile_notif_tempo_min': 'min ago',
       'mobile_notif_grupo_hoje': 'Today',
@@ -1170,6 +1172,7 @@ class Traducoes {
 
       // ── Tiempo relativo / agrupación ──────────────────────────────
       'mobile_notif_tempo_agora': 'ahora mismo',
+      'mobile_notif_sem_data': 'Fecha desconocida',
       'mobile_notif_tempo_ha': 'hace',
       'mobile_notif_tempo_min': 'min',
       'mobile_notif_grupo_hoje': 'Hoy',

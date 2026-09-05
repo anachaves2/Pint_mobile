@@ -133,10 +133,10 @@ class DatabaseService {
         validadeDias INTEGER,
         idNivel INTEGER NOT NULL,
         nomeNivel TEXT NOT NULL,
-        idServiceLine INTEGER NOT NULL,
-        nomeServiceLine TEXT NOT NULL,
-        idArea INTEGER NOT NULL,
-        nomeArea TEXT NOT NULL
+        idServiceLine INTEGER,
+        nomeServiceLine TEXT,
+        idArea INTEGER,
+        nomeArea TEXT
       )
     ''');
 
@@ -207,7 +207,7 @@ class DatabaseService {
         id INTEGER PRIMARY KEY,
         tipoNotificacao TEXT NOT NULL,
         descricao TEXT,
-        data TEXT NOT NULL,
+        data TEXT,
         lida INTEGER NOT NULL,
         numCandidatura INTEGER,
         idObjetivo INTEGER,
@@ -308,6 +308,47 @@ class DatabaseService {
           valido INTEGER NOT NULL,
           urlPublico TEXT,
           tokenValidacao TEXT
+        )
+      ''');
+    }
+    if (oldVersion < 6) {
+      // Mesmo caso do dataExpiracao dos badges (migração da versão 5):
+      // notificacao.data também permite NULL no schema (é o caso, por
+      // exemplo, de notificações antigas/importadas sem data definida).
+      await db.execute('DROP TABLE IF EXISTS ${AppConstants.tableNotificacoesCache}');
+      await db.execute('''
+        CREATE TABLE ${AppConstants.tableNotificacoesCache} (
+          id INTEGER PRIMARY KEY,
+          tipoNotificacao TEXT NOT NULL,
+          descricao TEXT,
+          data TEXT,
+          lida INTEGER NOT NULL,
+          numCandidatura INTEGER,
+          idObjetivo INTEGER,
+          idBadgeUtilizador INTEGER,
+          idBadgeEspecial INTEGER
+        )
+      ''');
+    }
+    if (oldVersion < 7) {
+      // badge_regular.id_area/id_service_line também permitem NULL no
+      // schema — um badge cujo Nível não tenha (ainda) área associada
+      // ficaria com isto a null. Mesma solução: recriar a cache.
+      await db.execute('DROP TABLE IF EXISTS ${AppConstants.tableCatalogoBadges}');
+      await db.execute('''
+        CREATE TABLE ${AppConstants.tableCatalogoBadges} (
+          id INTEGER PRIMARY KEY,
+          nome TEXT NOT NULL,
+          descricao TEXT,
+          pontos INTEGER,
+          urlImagem TEXT,
+          validadeDias INTEGER,
+          idNivel INTEGER NOT NULL,
+          nomeNivel TEXT NOT NULL,
+          idServiceLine INTEGER,
+          nomeServiceLine TEXT,
+          idArea INTEGER,
+          nomeArea TEXT
         )
       ''');
     }
@@ -728,7 +769,7 @@ Future<void> deleteCandidaturas() async {
             'id': n.id,
             'tipoNotificacao': n.tipoNotificacao,
             'descricao': n.descricao,
-            'data': n.data.toIso8601String(),
+            'data': n.data?.toIso8601String(),
             'lida': lidaFinal ? 1 : 0,
             'numCandidatura': n.numCandidatura,
             'idObjetivo': n.idObjetivo,
@@ -751,7 +792,7 @@ Future<void> deleteCandidaturas() async {
       id: map['id'] as int,
       tipoNotificacao: map['tipoNotificacao'] as String,
       descricao: map['descricao'] as String?,
-      data: DateTime.parse(map['data'] as String),
+      data: map['data'] != null ? DateTime.parse(map['data'] as String) : null,
       lida: map['lida'] == 1,
       numCandidatura: map['numCandidatura'] as int?,
       idObjetivo: map['idObjetivo'] as int?,
@@ -957,10 +998,10 @@ Future<void> deleteCandidaturas() async {
             validadeDias: map['validadeDias'] as int?,
             idNivel: map['idNivel'] as int,
             nomeNivel: map['nomeNivel'] as String,
-            idServiceLine: map['idServiceLine'] as int,
-            nomeServiceLine: map['nomeServiceLine'] as String,
-            idArea: map['idArea'] as int,
-            nomeArea: map['nomeArea'] as String,
+            idServiceLine: map['idServiceLine'] as int?,
+            nomeServiceLine: map['nomeServiceLine'] as String?,
+            idArea: map['idArea'] as int?,
+            nomeArea: map['nomeArea'] as String?,
           ),
         )
         .toList();

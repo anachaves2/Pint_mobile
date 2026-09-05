@@ -34,6 +34,31 @@ import 'package:pint_mobile/models/badge_recomendado.dart';
 //um Stream Controller global, acessível de qualquer menu
 final StreamController<void> atualizadorDados = StreamController<void>.broadcast();
 
+// Converte uma lista JSON para uma lista de objetos, item a item, em vez de
+// um único .map().toList() que rebenta todo de uma vez ao primeiro item
+// problemático (foi exatamente isto que apagou os badges e notificações da
+// Ines Dias: um único registo com data_expiracao/data nulas deitava fora a
+// lista inteira, e o erro era depois mascarado como "sem ligação").
+//
+// Com isto, um item malformado é ignorado (e fica registado no debugPrint
+// para se conseguir investigar), mas os restantes continuam a ser
+// guardados normalmente — a sincronização deixa de ser tudo-ou-nada.
+List<T> parseListaSegura<T>(
+  List<dynamic> jsonList,
+  T Function(Map<String, dynamic>) fromJson,
+  String nomeLista,
+) {
+  final resultado = <T>[];
+  for (final item in jsonList) {
+    try {
+      resultado.add(fromJson(item as Map<String, dynamic>));
+    } catch (e) {
+      debugPrint('[APIService] $nomeLista: item ignorado por erro de parsing ($e) — item: $item');
+    }
+  }
+  return resultado;
+}
+
 //SINGLETON - > garante que só há uma instancia da API
 class APIService {
   static APIService? _instance;
@@ -327,9 +352,7 @@ class APIService {
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = jsonDecode(response.body);
-        final badges = jsonList
-            .map((j) => BadgeUtilizador.fromJson(j))
-            .toList();
+        final badges = parseListaSegura(jsonList, BadgeUtilizador.fromJson, 'sincronizarBadges');
         await DatabaseService.instance.saveBadges(badges);
       }
     } catch (e) {
@@ -353,17 +376,17 @@ class APIService {
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
 
-        final badgesRegulares = (json['regulares'] as List)
-            .map((j) => BadgeRegular.fromJson(j))
-            .toList();
+        final badgesRegulares = parseListaSegura(
+          json['regulares'] as List, BadgeRegular.fromJson, 'sincronizarCatalogo:regulares',
+        );
 
-        final badgesEspeciais = (json['especiais'] as List)
-            .map((j) => BadgeEspecial.fromJson(j))
-            .toList();
+        final badgesEspeciais = parseListaSegura(
+          json['especiais'] as List, BadgeEspecial.fromJson, 'sincronizarCatalogo:especiais',
+        );
 
-        final requisitos = (json['requisitos'] as List)
-            .map((j) => Requisito.fromJson(j))
-            .toList();
+        final requisitos = parseListaSegura(
+          json['requisitos'] as List, Requisito.fromJson, 'sincronizarCatalogo:requisitos',
+        );
 
         // Guarda tudo no SQLite
         await DatabaseService.instance.saveCatalogoBadges(badgesRegulares);
@@ -391,9 +414,7 @@ class APIService {
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = jsonDecode(response.body);
-        final candidaturas = jsonList
-            .map((j) => CandidaturaBadge.fromJson(j))
-            .toList();
+        final candidaturas = parseListaSegura(jsonList, CandidaturaBadge.fromJson, 'sincronizarCandidaturas');
         await DatabaseService.instance.saveCandidaturas(candidaturas);
       }
     } catch (e) {
@@ -416,15 +437,15 @@ class APIService {
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
-        final historico = (json['historico'] as List)
-            .map((j) => HistoricoCandidatura.fromJson(j))
-            .toList();
+        final historico = parseListaSegura(
+          json['historico'] as List, HistoricoCandidatura.fromJson, 'sincronizarDetalhesCandidatura:historico',
+        );
         await DatabaseService.instance.saveHistorico(historico);
 
         // Adiciona isto após saveHistorico
-        final evidencias = (json['evidencias'] as List)
-            .map((j) => Evidencia.fromJson(j))
-            .toList();
+        final evidencias = parseListaSegura(
+          json['evidencias'] as List, Evidencia.fromJson, 'sincronizarDetalhesCandidatura:evidencias',
+        );
         await DatabaseService.instance.saveEvidencias(evidencias);
       }
     } catch (e) {
@@ -446,9 +467,7 @@ class APIService {
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = jsonDecode(response.body);
-        final estados = jsonList
-            .map((j) => EstadoCandidatura.fromJson(j))
-            .toList();
+        final estados = parseListaSegura(jsonList, EstadoCandidatura.fromJson, 'sincronizarEstados');
         await DatabaseService.instance.saveEstados(estados);
       }
     } catch (e) {
@@ -469,7 +488,7 @@ class APIService {
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = jsonDecode(response.body);
-        final objetivos = jsonList.map((j) => Objetivo.fromJson(j)).toList();
+        final objetivos = parseListaSegura(jsonList, Objetivo.fromJson, 'sincronizarObjetivos');
         await DatabaseService.instance.saveObjetivos(objetivos);
       }
     } catch (e) {
@@ -491,7 +510,7 @@ class APIService {
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = jsonDecode(response.body);
-        final tipos = jsonList.map((j) => TipoObjetivo.fromJson(j)).toList();
+        final tipos = parseListaSegura(jsonList, TipoObjetivo.fromJson, 'sincronizarTiposObjetivo');
         await DatabaseService.instance.saveTiposObjetivo(tipos);
       }
     } catch (e) {
@@ -529,7 +548,7 @@ class APIService {
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = jsonDecode(response.body);
-        final notificacoes = jsonList.map((j) => Notificacao.fromJson(j)).toList();
+        final notificacoes = parseListaSegura(jsonList, Notificacao.fromJson, 'sincronizarNotificacoes');
         await DatabaseService.instance.saveNotificacoes(notificacoes);
       }
     } catch (e) {
@@ -691,7 +710,7 @@ class APIService {
         ),
       );
 
-      request.headers['Authorization'] = 'Bearer $token';
+      if (token != null) request.headers['Authorization'] = 'Bearer $token';
       // Adiciona o campo idRequisito como campo de texto
       request.fields['idRequisito'] = idRequisito.toString();
       // Adiciona o ficheiro como campo 'ficheiro' (nome esperado pelo multer no backend)
@@ -992,7 +1011,7 @@ class APIService {
         'POST',
         Uri.parse('${AppConstants.baseUrl}/perfil/foto'),
       );
-      pedido.headers['Authorization'] = 'Bearer $token';
+      if (token != null) pedido.headers['Authorization'] = 'Bearer $token';
       pedido.files.add(await http.MultipartFile.fromPath('foto', caminhoFicheiro));
 
       final streamed = await pedido.send();

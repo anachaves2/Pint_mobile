@@ -159,9 +159,9 @@ class _DetalheBadgeCatalogoState extends ConsumerState<DetalheBadgeCatalogo> {
       decoration: BoxDecoration(color: D.fundoAlt, borderRadius: BorderRadius.circular(D.rLg)),
       child: Column(
         children: [
-          _buildLinhaInfo(ref.t('mobile_badges_service_line'), badge.nomeServiceLine),
+          _buildLinhaInfo(ref.t('mobile_badges_service_line'), badge.nomeServiceLine ?? '—'),
           const SizedBox(height: D.e2),
-          _buildLinhaInfo(ref.t('mobile_badges_area'), badge.nomeArea),
+          _buildLinhaInfo(ref.t('mobile_badges_area'), badge.nomeArea ?? '—'),
           const SizedBox(height: D.e2),
           _buildLinhaInfo(ref.t('mobile_dash_gamification_titulo'), '${badge.pontos ?? 0} ${ref.t('mobile_ranking_pontos')}', destaque: true),
           if (badge.validadeDias != null) ...[

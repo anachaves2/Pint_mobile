@@ -7,10 +7,13 @@ class BadgeRegular {
   final String? urlImagem;
   final int idNivel;
   final String nomeNivel;
-  final int idServiceLine;
-  final String nomeServiceLine;
-  final int idArea;
-  final String nomeArea;
+  // idArea/idServiceLine permitem NULL no schema (badge_regular.id_area e
+  // id_service_line são allowNull: true) — um badge criado sem nível
+  // devidamente associado a uma área ficaria com isto a null.
+  final int? idServiceLine;
+  final String? nomeServiceLine;
+  final int? idArea;
+  final String? nomeArea;
   final int? validadeDias;
 
   //construtor
@@ -22,10 +25,10 @@ class BadgeRegular {
     this.urlImagem,
     required this.idNivel,
     required this.nomeNivel,
-    required this.idServiceLine,
-    required this.nomeServiceLine,
-    required this.idArea,
-    required this.nomeArea,
+    this.idServiceLine,
+    this.nomeServiceLine,
+    this.idArea,
+    this.nomeArea,
     this.validadeDias,
   });
 

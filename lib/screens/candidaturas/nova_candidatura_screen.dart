@@ -306,7 +306,7 @@ class _NovaCandidaturaState extends ConsumerState<NovaCandidatura> {
     return _badges.where((b) =>
         b.nome.toLowerCase().contains(q) ||
         b.nomeNivel.toLowerCase().contains(q) ||
-        b.nomeArea.toLowerCase().contains(q)).toList();
+        (b.nomeArea?.toLowerCase().contains(q) ?? false)).toList();
   }
 
   @override
@@ -390,7 +390,7 @@ class _NovaCandidaturaState extends ConsumerState<NovaCandidatura> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(b.nome, style: D.tituloCard),
-                                    Text('${b.nomeNivel} · ${b.nomeArea}', style: D.legenda),
+                                    Text('${b.nomeNivel} · ${b.nomeArea ?? '—'}', style: D.legenda),
                                   ],
                                 ),
                               ),
@@ -439,8 +439,8 @@ class _NovaCandidaturaState extends ConsumerState<NovaCandidatura> {
                 CardSimples(
                   child: Column(children: [
                     _linhaInfo(ref.t('mobile_detcand_badge_label'), _badgeSelecionado!.nome),
-                    _linhaInfo(ref.t('mobile_novacand_service_line_label'), _badgeSelecionado!.nomeServiceLine),
-                    _linhaInfo(ref.t('mobile_novacand_area_label'), _badgeSelecionado!.nomeArea),
+                    _linhaInfo(ref.t('mobile_novacand_service_line_label'), _badgeSelecionado!.nomeServiceLine ?? '—'),
+                    _linhaInfo(ref.t('mobile_novacand_area_label'), _badgeSelecionado!.nomeArea ?? '—'),
                     _linhaInfo(ref.t('mobile_detcand_nivel_label'), _badgeSelecionado!.nomeNivel),
                   ]),
                 ),
